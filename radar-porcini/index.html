@@ -976,6 +976,19 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
   .wrap { max-width: 1480px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); column-gap: 44px; align-items: start; }
   #mappa { height: clamp(440px, 70vh, 780px); }
 }
+/* foto del diario */
+.d-foto { display: grid; gap: 8px; }
+.foto-anteprime { display: flex; gap: 10px; flex-wrap: wrap; }
+.foto-anteprime:empty { display: none; }
+.anteprima { position: relative; margin: 0; width: 76px; height: 76px; }
+.anteprima img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); display: block; }
+.toglifoto { position: absolute; top: -8px; right: -8px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-size: 17px; line-height: 1; padding: 0; }
+.foto-uscita { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+.miniatura { width: 58px; height: 58px; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface-2); cursor: pointer; }
+.miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.miniatura.manca { cursor: default; }
+.lightbox { position: fixed; inset: 0; z-index: 5000; background: rgba(0, 0, 0, 0.9); display: grid; grid-template-rows: 1fr auto; place-items: center; gap: 12px; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); }
+.lightbox img { max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; }
 </style>
 
 <div class="wrap">
@@ -1022,6 +1035,8 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
       <input type="search" id="pos-q" list="luoghi" placeholder="Comune, stazione o coordinate" aria-label="Comune, stazione o coordinate">
       <button class="linkbtn" type="submit">Vai</button>
       <button class="linkbtn" type="button" id="pos-gps">Dove sono</button>
+      <button class="linkbtn" type="button" id="pos-foto">Da una foto</button>
+      <input type="file" id="pos-foto-file" accept="image/jpeg,image/*" hidden>
     </form>
     <datalist id="luoghi"></datalist>
     <p class="note" id="pos-msg" hidden></p>
@@ -1067,7 +1082,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <details class="sposta" id="sposta">
       <summary>Copia o sposta posti e diario</summary>
       <div class="sposta-body">
-        <p class="note">Per portare posti e uscite tra la versione dentro Claude e quella installata sul telefono: copia il testo da una, incollalo nell'altra e premi «Aggiungi». Il testo contiene i tuoi posti: non condividerlo.</p>
+        <p class="note">Per portare posti e uscite tra la versione dentro Claude e quella installata sul telefono: copia il testo da una, incollalo nell'altra e premi «Aggiungi». Le foto del diario non vengono copiate. Il testo contiene i tuoi posti: non condividerlo.</p>
         <div class="row-f"><button class="linkbtn" type="button" id="sposta-copia">Copia i miei dati</button><button class="linkbtn" type="button" id="sposta-aggiungi">Aggiungi dal testo incollato</button></div>
         <textarea id="sposta-testo" rows="4" spellcheck="false" aria-label="Dati da copiare o incollare"></textarea>
         <p class="note" id="sposta-msg" role="status"></p>
@@ -1126,11 +1141,21 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
           </div>
         </div>
         <label class="wide">Note<input type="text" id="d-note" maxlength="200" placeholder="Facoltative: quanti, che bosco, che versante"></label>
+        <div class="wide d-foto" id="d-foto-box">
+          <div class="row-f"><button class="linkbtn" type="button" id="d-foto-scegli">Aggiungi foto</button><span class="note" id="d-foto-msg" role="status"></span></div>
+          <input type="file" id="d-foto" accept="image/jpeg,image/*" multiple hidden>
+          <div class="foto-anteprime" id="d-foto-anteprime"></div>
+          <div class="row-f" id="d-foto-usa" hidden></div>
+        </div>
         <p class="note wide" id="d-luogo"></p>
         <div class="wide row-f"><button class="linkbtn" id="d-salva" type="submit">Salva l'uscita</button><span class="note" id="d-msg" role="status"></span></div>
       </form>
       <div id="diario-sintesi"></div>
       <ul class="diario-lista" id="diario-lista"></ul>
+    </div>
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Foto dell'uscita" hidden>
+      <img id="lightbox-img" alt="">
+      <button class="linkbtn" type="button" id="lightbox-chiudi">Chiudi</button>
     </div>
   </section>
 
@@ -1189,6 +1214,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Regole del giorno.</b> Per il giorno scelto la scheda del punto dà l'orario di raccolta (da un'ora prima dell'alba a un'ora dopo il tramonto, calcolati per il punto), i limiti del comune presi dall'elenco della Regione e i giorni di caccia al cinghiale in braccata del calendario venatorio regionale.</li>
         <li><b>Sentieri e mappa.</b> I sentieri sono quelli della Rete escursionistica toscana nel catasto del Club Alpino Italiano (dati OpenStreetMap), semplificati a circa 12 m: tocca un sentiero per numero, difficoltà e percorribilità. Dove il browser lo permette c'è anche la mappa topografica con strade e curve di livello (OpenTopoMap); dentro Claude può non caricarsi.</li>
         <li><b>I miei posti e avvisi.</b> I posti salvati nella versione dentro Claude restano nel database privato dell'app; quelli della versione installata restano nel telefono. Ogni mattina l'aggiornamento calcola il punteggio dei posti salvati dentro Claude per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
+        <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
         <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
       </ul>
@@ -3929,18 +3955,180 @@ if (typeof module !== "undefined") module.exports = RP;
     function locale() {
       try { localStorage.setItem(LS_ARCH + "prova", "1"); localStorage.removeItem(LS_ARCH + "prova"); }
       catch (e) { cb(null, null, "Questo browser non lascia salvare dati: diario e posti non sono disponibili."); return; }
+      foto.locale = typeof indexedDB !== "undefined";
       cb(archivioLocale("uscite"), archivioLocale("posti"), null);
     }
     var cl = window.claude && typeof window.claude.use === "function" ? window.claude : null;
     if (PWA || COPIA || !cl) { locale(); return; }
-    Promise.all([cl.use("db"), cl.use("user")]).then(function (res) {
+    Promise.all([cl.use("db"), cl.use("user"), cl.use("assets").catch(function () { return null; })]).then(function (res) {
       var db = res[0], user = res[1];
+      foto.assets = res[2] || null;
       if (!db) { cb(null, null, "Diario e posti non sono disponibili qui: apri l'app dal tuo account."); return; }
       (user ? Promise.resolve(user.isOwner()) : Promise.resolve(true)).then(function (own) {
         if (!own) { cb(null, null, "Diario e posti sono personali: li usa solo chi ha creato l'app."); return; }
         cb(archivioDb(db, "uscite", "data"), archivioDb(db, "posti", "creato"), null);
       });
     }).catch(function () { cb(null, null, "Diario e posti non sono disponibili in questo momento."); });
+  }
+
+  // ---------- foto: posizione e ora dagli EXIF (JPEG); riduzione e archivio delle foto del diario ----------
+  function leggiExif(buf) {
+    var v = new DataView(buf), n = v.byteLength;
+    if (n < 4 || v.getUint16(0) !== 0xFFD8) return null;
+    var p = 2;
+    while (p + 4 <= n) {
+      if (v.getUint8(p) !== 0xFF) return null;
+      var m = v.getUint8(p + 1), len = v.getUint16(p + 2);
+      if (m === 0xE1 && p + 10 <= n && v.getUint32(p + 4) === 0x45786966 && v.getUint16(p + 8) === 0) return leggiTiff(v, p + 10, Math.min(n, p + 2 + len));
+      if (m === 0xDA || m === 0xD9) return null;
+      p += 2 + len;
+    }
+    return null;
+  }
+  function leggiTiff(v, t0, fine) {
+    if (t0 + 8 > fine) return null;
+    var le = v.getUint16(t0) === 0x4949;
+    function u16(o) { return v.getUint16(o, le); }
+    function u32(o) { return v.getUint32(o, le); }
+    if (u16(t0 + 2) !== 42) return null;
+    var DIM = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 };
+    function ifd(off) {
+      var o = t0 + off, out = {};
+      if (!off || o + 2 > fine) return out;
+      var k = u16(o);
+      for (var i = 0; i < k; i++) {
+        var e = o + 2 + i * 12; if (e + 12 > fine) break;
+        var type = u16(e + 2), count = u32(e + 4), size = (DIM[type] || 1) * count;
+        out[u16(e)] = { count: count, off: size <= 4 ? e + 8 : t0 + u32(e + 8) };
+      }
+      return out;
+    }
+    function razionali(x) { var a = []; for (var i = 0; i < x.count && i < 3; i++) { var o = x.off + 8 * i; if (o + 8 > fine) return null; var d = u32(o + 4); a.push(d ? u32(o) / d : 0); } return a; }
+    function testo(x) { var s = ""; for (var i = 0; i < x.count && x.off + i < fine; i++) { var c = v.getUint8(x.off + i); if (!c) break; s += String.fromCharCode(c); } return s; }
+    var I0 = ifd(u32(t0 + 4)), out = {};
+    if (I0[0x8769]) { var ex = ifd(u32(I0[0x8769].off)), dto = ex[0x9003] || ex[0x9004]; if (dto) out.quando = testo(dto); }
+    if (!out.quando && I0[0x0132]) out.quando = testo(I0[0x0132]);
+    if (I0[0x8825]) {
+      var g = ifd(u32(I0[0x8825].off));
+      if (g[2] && g[4]) {
+        var la = razionali(g[2]), lo = razionali(g[4]);
+        if (la && lo && la.length === 3 && lo.length === 3) {
+          var lat = la[0] + la[1] / 60 + la[2] / 3600, lon = lo[0] + lo[1] / 60 + lo[2] / 3600;
+          if (g[1] && testo(g[1]).toUpperCase() === "S") lat = -lat;
+          if (g[3] && testo(g[3]).toUpperCase() === "W") lon = -lon;
+          if (isFinite(lat) && isFinite(lon) && !(lat === 0 && lon === 0)) { out.lat = +lat.toFixed(6); out.lon = +lon.toFixed(6); }
+        }
+      }
+    }
+    var m = /^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2})/.exec(out.quando || "");
+    if (m) { out.giorno = m[1] + "-" + m[2] + "-" + m[3]; out.ora = m[4] + ":" + m[5]; }
+    return out;
+  }
+  function exifDi(file) {
+    return file.slice(0, 256 * 1024).arrayBuffer().then(function (b) { try { return leggiExif(b) || {}; } catch (e) { return {}; } }, function () { return {}; });
+  }
+  // riduce a 1600 px e ricomprime in JPEG: la foto perde gli EXIF (la posizione resta solo nel diario)
+  function riduciFoto(file) {
+    return new Promise(function (ok, ko) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var s = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight)), w = Math.max(1, Math.round(img.naturalWidth * s)), h = Math.max(1, Math.round(img.naturalHeight * s));
+        var c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        c.toBlob(function (b) { if (b) ok(b); else ko({ code: "formato" }); }, "image/jpeg", 0.82);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); ko({ code: "formato" }); };
+      img.src = url;
+    });
+  }
+  // foto della versione installata e della copia scaricata: IndexedDB del browser
+  var FotoLocali = (function () {
+    var dbp = null;
+    function apri() {
+      if (!dbp) dbp = new Promise(function (ok, ko) {
+        var r = indexedDB.open("radar-porcini-foto", 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore("foto"); };
+        r.onsuccess = function () { ok(r.result); };
+        r.onerror = function () { ko(r.error); };
+      });
+      return dbp;
+    }
+    function fai(modo, fn) {
+      return apri().then(function (db) {
+        return new Promise(function (ok, ko) {
+          var t = db.transaction("foto", modo), req = fn(t.objectStore("foto"));
+          t.oncomplete = function () { ok(req ? req.result : undefined); };
+          t.onerror = function () { ko(t.error); }; t.onabort = function () { ko(t.error); };
+        });
+      });
+    }
+    return {
+      metti: function (blob) { var k = "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); return fai("readwrite", function (s) { return s.put(blob, k); }).then(function () { return k; }); },
+      prendi: function (k) { return fai("readonly", function (s) { return s.get(k); }); },
+      togli: function (k) { return fai("readwrite", function (s) { return s.delete(k); }); }
+    };
+  })();
+  var foto = { assets: null, locale: false, urls: {}, inAttesa: [] };
+  function fotoDisponibili() { return !!(foto.assets || foto.locale); }
+  function salvaFoto(blob) {
+    if (foto.assets) return foto.assets.upload(blob, { type: "image/jpeg" }).then(function (r) { return r.id; });
+    return FotoLocali.metti(blob).then(function (k) { return "idb:" + k; });
+  }
+  function urlFoto(ref) {
+    if (foto.urls[ref]) return Promise.resolve(foto.urls[ref]);
+    if (String(ref).indexOf("idb:") === 0) return FotoLocali.prendi(ref.slice(4)).then(function (b) { return b ? (foto.urls[ref] = URL.createObjectURL(b)) : null; }, function () { return null; });
+    return Promise.resolve(foto.urls[ref] = "/_blob/" + ref);
+  }
+  function togliFoto(ref) {
+    if (String(ref).indexOf("idb:") === 0) return FotoLocali.togli(ref.slice(4)).catch(function () {});
+    return foto.assets ? foto.assets.delete(ref).catch(function () {}) : Promise.resolve();
+  }
+  function apriFoto(ref) {
+    urlFoto(ref).then(function (u) {
+      if (!u) return;
+      var lb = document.getElementById("lightbox"); document.getElementById("lightbox-img").src = u;
+      lb.hidden = false; document.getElementById("lightbox-chiudi").focus();
+    });
+  }
+  function chiudiFoto() { var lb = document.getElementById("lightbox"); if (!lb.hidden) { lb.hidden = true; document.getElementById("lightbox-img").removeAttribute("src"); } }
+  document.getElementById("lightbox").addEventListener("click", chiudiFoto);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") chiudiFoto(); });
+  function testoQuando(x) { return x.giorno ? fmtShort.format(parseISO(x.giorno)) + (x.ora ? " alle " + x.ora : "") : ""; }
+
+  // foto in attesa nel modulo del diario: anteprime, e luogo e giorno della foto da usare se servono
+  function renderAttesa() {
+    var box = document.getElementById("d-foto-anteprime"), usa = document.getElementById("d-foto-usa");
+    box.innerHTML = ""; usa.innerHTML = ""; usa.hidden = true;
+    foto.inAttesa.forEach(function (f, i) {
+      var fig = el("figure", "anteprima"), img = el("img"); img.alt = "Foto " + (i + 1); img.src = f.url; fig.appendChild(img);
+      var x = el("button", "toglifoto", "×"); x.type = "button"; x.setAttribute("aria-label", "Togli la foto " + (i + 1));
+      x.addEventListener("click", function () { URL.revokeObjectURL(f.url); foto.inAttesa.splice(i, 1); renderAttesa(); });
+      fig.appendChild(x); box.appendChild(fig);
+    });
+    var conGps = foto.inAttesa.filter(function (f) { return f.exif.lat != null; })[0], conData = foto.inAttesa.filter(function (f) { return f.exif.giorno; })[0];
+    if (conGps && (!state.pos || RP.distanzaKm(state.pos.lat, state.pos.lon, conGps.exif.lat, conGps.exif.lon) > 0.15)) {
+      var b1 = el("button", "linkbtn", "Usa il luogo della foto"); b1.type = "button";
+      b1.addEventListener("click", function () { mettiPuntoDaFoto(conGps.exif); renderAttesa(); });
+      usa.appendChild(b1); usa.hidden = false;
+    }
+    if (conData && document.getElementById("d-data").value !== conData.exif.giorno) {
+      var b2 = el("button", "linkbtn", "Usa il giorno della foto (" + fmtShort.format(parseISO(conData.exif.giorno)) + ")"); b2.type = "button";
+      b2.addEventListener("click", function () { document.getElementById("d-data").value = conData.exif.giorno; renderAttesa(); });
+      usa.appendChild(b2); usa.hidden = false;
+    }
+  }
+  function aggiungiAttesa(files) {
+    var msg = document.getElementById("d-foto-msg");
+    var lista = [].slice.call(files || []).filter(function (f) { return /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name); });
+    var posto = Math.max(0, 3 - foto.inAttesa.length);
+    if (lista.length > posto) msg.textContent = "Al massimo 3 foto per uscita.";
+    return Promise.all(lista.slice(0, posto).map(function (f) { return exifDi(f).then(function (x) { return { file: f, exif: x, url: URL.createObjectURL(f) }; }); }))
+      .then(function (arr) { foto.inAttesa = foto.inAttesa.concat(arr); renderAttesa(); return arr; });
+  }
+  function mettiPuntoDaFoto(x) {
+    impostaPos({ nome: "Foto" + (x.giorno ? " del " + testoQuando(x) : ""), lat: x.lat, lon: x.lon }, false);
+    if (mappa) mappa.setView([x.lat, x.lon], Math.max(mappa.getZoom(), 13));
   }
 
   var diario = { arch: null, lista: [], esito: null, conferma: null, taratura: null };
@@ -3991,10 +4179,23 @@ if (typeof module !== "undefined") module.exports = RP;
       del.addEventListener("click", function () {
         if (diario.conferma !== u.id) { diario.conferma = u.id; renderDiario(); return; }
         diario.conferma = null;
-        diario.arch.togli(u.id).catch(function (err) { document.getElementById("d-msg").textContent = "Non sono riuscito a eliminarla (" + (err && err.code || "errore") + ")."; });
+        diario.arch.togli(u.id).then(function () { (Array.isArray(u.foto) ? u.foto : []).forEach(togliFoto); })
+          .catch(function (err) { document.getElementById("d-msg").textContent = "Non sono riuscito a eliminarla (" + (err && err.code || "errore") + ")."; });
       });
       li.appendChild(del);
       li.appendChild(el("span", "sub", nomeSpDiario(u.specie) + (u.quota != null ? " · " + nf(u.quota) + " m" : "") + (u.stima != null ? " · stima dell'app " + u.stima : "") + (u.note ? " · " + u.note : "")));
+      if (Array.isArray(u.foto) && u.foto.length) {
+        var fr = el("span", "foto-uscita");
+        u.foto.forEach(function (ref, i) {
+          var b = el("button", "miniatura"); b.type = "button"; b.setAttribute("aria-label", "Apri la foto " + (i + 1) + " dell'uscita del " + fmtShort.format(parseISO(u.data)));
+          var img = el("img"); img.alt = ""; img.loading = "lazy";
+          img.onerror = function () { b.classList.add("manca"); img.remove(); };
+          urlFoto(ref).then(function (x) { if (x) img.src = x; else { b.classList.add("manca"); img.remove(); } });
+          b.appendChild(img); b.addEventListener("click", function () { apriFoto(ref); });
+          fr.appendChild(b);
+        });
+        li.appendChild(fr);
+      }
       ul.appendChild(li);
     });
     var con = L.filter(function (u) { return u.stima != null; }), T = diario.taratura;
@@ -4077,6 +4278,7 @@ if (typeof module !== "undefined") module.exports = RP;
       var ps = document.getElementById("posti-stato");
       if (!da) { stato.textContent = msg; ps.textContent = msg; document.getElementById("sposta").hidden = true; return; }
       diario.arch = da; posti.arch = pa;
+      document.getElementById("d-foto-box").hidden = !fotoDisponibili();
       stato.hidden = true;
       document.getElementById("diario-form").hidden = false;
       if (da.locale) {
@@ -4117,12 +4319,25 @@ if (typeof module !== "undefined") module.exports = RP;
       bosco: h ? (h.scelto != null ? h.scelto : h.centro) : null, specie: spId, esito: diario.esito, note: (document.getElementById("d-note").value || "").trim().slice(0, 200),
       stima: r ? r.score : null, stimaSpecie: r ? r.specie : null, fase: r ? r.fase.id : null, giorniDallaPioggia: r && r.d != null ? Math.round(r.d) : null,
       mmPioggia: r && r.evento ? r.evento.mm : null, acqua: r && r.acqua != null ? Math.round(r.acqua * 100) : null, datiDel: state.data.giorno, salvato: new Date().toISOString() };
-    btn.disabled = true; msg.textContent = "Salvataggio…";
-    diario.arch.aggiungi(doc).then(function () {
-      msg.textContent = "Uscita salvata.";
+    btn.disabled = true; msg.textContent = foto.inAttesa.length ? "Preparo le foto…" : "Salvataggio…";
+    var daSalvare = fotoDisponibili() ? foto.inAttesa.slice() : [], salvate = [];
+    daSalvare.reduce(function (c, f) {
+      return c.then(function () { return riduciFoto(f.file); }).then(salvaFoto).then(function (ref) { salvate.push(ref); });
+    }, Promise.resolve()).then(function () {
+      if (salvate.length) doc.foto = salvate;
+      msg.textContent = "Salvataggio…";
+      return diario.arch.aggiungi(doc);
+    }).then(function () {
+      msg.textContent = "Uscita salvata" + (salvate.length ? " con " + (salvate.length === 1 ? "1 foto" : salvate.length + " foto") : "") + ".";
       diario.esito = null; setPressed("#d-esito", "x"); document.getElementById("d-note").value = "";
+      foto.inAttesa.forEach(function (f) { URL.revokeObjectURL(f.url); }); foto.inAttesa = []; renderAttesa();
     }).catch(function (err) {
-      msg.textContent = err && err.code === "quota_exceeded" ? "Il diario è pieno: elimina qualche uscita vecchia." : "Non sono riuscito a salvare (" + (err && err.code || "errore") + "). Riprova.";
+      salvate.forEach(togliFoto);
+      var c = err && err.code;
+      msg.textContent = c === "quota_exceeded" ? "Il diario è pieno: elimina qualche uscita vecchia."
+        : c === "formato" ? "Una foto non si apre: scegli una foto JPEG (le HEIC dell'iPhone vanno prima convertite)."
+        : c === "too_large" || c === "quota_or_state" ? "Spazio per le foto esaurito o foto troppo grande: togli qualche foto e riprova."
+        : "Non sono riuscito a salvare (" + (c || "errore") + "). Riprova.";
     }).then(function () { btn.disabled = false; });
   });
 
@@ -4228,6 +4443,36 @@ if (typeof module !== "undefined") module.exports = RP;
         : "Posizione non disponibile adesso: riprova all'aperto, oppure incolla le coordinate da Google Maps.";
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
   });
+  // posizione da una foto: GPS e ora negli EXIF; la foto resta pronta da allegare al diario
+  document.getElementById("pos-foto").addEventListener("click", function () { var i = document.getElementById("pos-foto-file"); i.value = ""; i.click(); });
+  document.getElementById("pos-foto-file").addEventListener("change", function () {
+    var f = this.files && this.files[0], msg = document.getElementById("pos-msg");
+    if (!f) return;
+    msg.hidden = false; msg.textContent = "Leggo la foto…";
+    exifDi(f).then(function (x) {
+      if (x.lat == null) {
+        msg.textContent = "Questa foto non contiene la posizione" + (x.giorno ? " (è del " + testoQuando(x) + ")" : "") + ". Può mancare perché il GPS era spento quando l'hai scattata, oppure perché su Android il browser spesso la toglie prima di passare la foto alla pagina: dal computer, con la foto originale, funziona. Altrimenti usa «Dove sono» quando sei sul posto.";
+        return;
+      }
+      if (x.lat < 41.3 || x.lat > 45.2 || x.lon < 8.5 || x.lon > 13.5) { msg.textContent = "La foto è stata scattata fuori dalla Toscana (" + x.lat.toFixed(4) + ", " + x.lon.toFixed(4) + ")."; return; }
+      mettiPuntoDaFoto(x);
+      var allegata = false;
+      if (diario.arch && fotoDisponibili() && foto.inAttesa.length < 3 && !foto.inAttesa.some(function (g) { return g.file.name === f.name && g.file.size === f.size; })) {
+        aggiungiAttesa([f]); allegata = true;
+        if (x.giorno) document.getElementById("d-data").value = x.giorno;
+      }
+      msg.hidden = false;
+      msg.textContent = "Punto messo dove è stata scattata la foto" + (x.giorno ? ", " + testoQuando(x) : "") + "." + (allegata ? " La foto è pronta da allegare a un'uscita nel diario, col giorno della foto: indica cosa hai trovato e salva." : "");
+    });
+  });
+  document.getElementById("d-foto-scegli").addEventListener("click", function () { var i = document.getElementById("d-foto"); i.value = ""; i.click(); });
+  document.getElementById("d-foto").addEventListener("change", function () {
+    var msg = document.getElementById("d-foto-msg"); msg.textContent = "";
+    aggiungiAttesa(this.files).then(function (arr) {
+      if (arr.length && !arr.some(function (f) { return f.exif.lat != null; })) msg.textContent = "Senza posizione nella foto: l'uscita usa il punto scelto sulla mappa.";
+    });
+  });
+  document.getElementById("lightbox-chiudi").addEventListener("click", function (e) { e.stopPropagation(); chiudiFoto(); });
   document.getElementById("more").addEventListener("click", function () { state.shown += PAGINA; renderLista(); });
   document.getElementById("zone-more").addEventListener("click", function () { state.allZones = !state.allZones; renderVerdetto(); });
   document.getElementById("f-pos").addEventListener("submit", function (e) {

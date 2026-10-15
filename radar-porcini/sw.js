@@ -1,6 +1,6 @@
 /* Radar Porcini: lavoro senza rete. La pagina e i dati si prendono prima dalla rete (sempre i più recenti) e, senza
    campo, dalla copia salvata; le tessere della mappa topografica restano salvate dopo la prima volta. */
-var VERSIONE = "rp-03f3555692", DATI = "rp-dati", TESSERE = "rp-tessere", FONT = "rp-font";
+var VERSIONE = "rp-82a7bf7582", DATI = "rp-dati", TESSERE = "rp-tessere", FONT = "rp-font";
 var GUSCIO = ["./", "./index.html", "./manifest.webmanifest", "./icona-192.png", "./icona-512.png", "./icona-maskable-512.png"];
 
 self.addEventListener("install", function (e) {

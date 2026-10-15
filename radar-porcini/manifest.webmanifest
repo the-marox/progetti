@@ -1,0 +1,31 @@
+{
+ "name": "Radar Porcini",
+ "short_name": "Radar Porcini",
+ "description": "Dove e quando cercare funghi in Toscana: stazioni CFR, radar e previsioni.",
+ "lang": "it",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#EDF0E8",
+ "theme_color": "#39663A",
+ "icons": [
+  {
+   "src": "icona-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icona-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icona-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

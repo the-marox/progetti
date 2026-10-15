@@ -1,0 +1,1063 @@
+#!/usr/bin/env python3
+"""Radar Porcini - aggiornamento giornaliero, tutto nel cloud.
+
+La pioggia di un giorno segue la convenzione del Servizio Idrologico Regionale: dalle 9 alle 9, ora solare.
+Qui il giorno D indica la pioggia dalle 9 di D alle 9 di D+1 (nell'archivio SIR porta la data D+1);
+temperature, umidita e vento restano per giorno di calendario.
+
+Parti (ognuna scrive i suoi file nella cartella corrente solo se riesce e stampa una riga JSON con l'esito):
+  python3 aggiorna.py misure                       -> data.json, aria.json  (tabelle CFR in tempo reale)
+  python3 aggiorna.py previsioni                   -> previsioni.json       (ICON-EU, poi ECMWF fino a 10 giorni)
+  python3 aggiorna.py archivio [storico.json]      -> storico.json          (pioggia 90 giorni, minime e massime 40)
+  python3 aggiorna.py radar [radar.json]           -> radar.json            (pioggia da radar e pluviometri, 90 giorni)
+  python3 aggiorna.py [storico.json] [radar.json]  -> tutte le parti, una dopo l'altra
+  python3 aggiorna.py valida <cartella>            -> copia nella cartella i soli file validi (e li elenca)
+  python3 aggiorna.py avvisi <posti> <pagina.html> [avvisi.json di ieri] -> avvisi.json: punteggi dei posti salvati e
+                                                      testo della mail se un posto diventa buono o ottimo in un giorno nuovo
+Ogni lancio aggiunge il proprio esito, con l'ora e la durata, a esito.json nella stessa cartella.
+Va lanciato poco dopo le 9 ora solare (8:16 UTC): con la lettura delle 9 la pioggia del giorno prima e' esatta.
+Richiede: Playwright con Chromium, numpy, Pillow, pygrib (pip install pygrib), curl"""
+import base64, bz2, glob, io, json, os, re, shutil, subprocess, sys, tempfile, time, datetime as dt, concurrent.futures as cf
+import numpy as np
+
+UTC = dt.timezone.utc
+INIZIO = time.time()
+GIORNO = dt.timedelta(days=1)
+LAPSE = 0.0065  # gradi per metro
+TMP = tempfile.mkdtemp(prefix="radarporcini_")
+
+
+def scrivi(obj, percorso):
+    """Scrive il JSON in modo atomico: un file interrotto a meta' non sostituisce mai quello buono."""
+    with open(percorso + ".tmp", "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(percorso + ".tmp", percorso)
+
+
+def curl(url, out=None, head=False, intervallo=None, corpo=None):
+    a = ["curl", "-sf", "--retry", "2", "-m", "90"] + (["-I"] if head else []) + (["-r", intervallo] if intervallo else [])
+    if corpo is not None:
+        a += ["-X", "POST", "-H", "Content-Type: application/json", "-d", corpo]
+    a += (["-o", out] if out else []) + [url]
+    r = subprocess.run(a, capture_output=True)
+    return r.returncode == 0 and (True if (out or head) else r.stdout.decode("utf-8", "replace"))
+
+
+def ora_di(s, predefinita=9.0):
+    m = re.search(r"(\d+):(\d+)", s or "")
+    return (int(m.group(1)) + int(m.group(2)) / 60) if m else predefinita
+
+
+def rif_lettura(dati):
+    """Ora della lettura CFR in UTC (le tabelle sono in ora solare, UTC+1); senza dati: adesso."""
+    try:
+        m = re.match(r"(\d+)/(\d+)/(\d+) (\d+):(\d+)", json.load(open(dati))["pioggia_al"])
+        d, mo, y, h, mi = map(int, m.groups())
+        return dt.datetime(y, mo, d, h, mi, tzinfo=UTC) - dt.timedelta(hours=1)
+    except Exception:
+        return dt.datetime.now(UTC).replace(second=0, microsecond=0)
+
+
+def finestra_pioggia(D):
+    """Dalle 9 di D alle 9 di D+1, ora solare (8 UTC)."""
+    a = dt.datetime(D.year, D.month, D.day, 8, tzinfo=UTC)
+    return a, a + GIORNO
+
+
+def finestra_giorno(D):
+    """Giorno di calendario in ora solare: dalle 23 UTC del giorno prima."""
+    a = dt.datetime(D.year, D.month, D.day, tzinfo=UTC) - dt.timedelta(hours=1)
+    return a, a + GIORNO
+
+
+# ---------------------------------------------------------------- 1) misure CFR
+JS_DATA = r"""async () => {
+const num=s=>{s=String(s??'').replace(/<[^>]+>/g,'').trim();if(s===''||s==='-')return null;const v=parseFloat(s.replace(',','.'));return isNaN(v)?null:v;};
+const tt=[...document.querySelectorAll('table')].find(x=>x.querySelectorAll('tbody tr').length>10);
+const tref=(document.body.innerText.match(/riferite al ([0-9\/]+ [0-9\.]+)/)||[])[1]||'';
+const T={};
+jQuery(tt).DataTable().rows().nodes().toArray().forEach(r=>{const c=[...r.cells].map(c=>c.innerText.trim());const v=[num(c[7]),num(c[9]),num(c[11]),num(c[13])];if(v[0]===0&&v[1]===0){v[0]=null;v[1]=null;}if(v[2]===0&&v[3]===0){v[2]=null;v[3]=null;}if(v.every(x=>x===null))return;T[c[0]]=v;});
+const hp=await fetch('/monitoraggio/stazioni.php?type=pluvio_men').then(r=>r.text());
+const pref=(hp.replace(/&nbsp;/g,' ').match(/riferite al\s+([0-9\/]+\s+[0-9\.]+)/)||[])[1]||'';
+const M=[];const re=/VALUES\[\d+\]\s*=\s*new Array\((.*?)\);/g;let m;
+while((m=re.exec(hp))){const c=JSON.parse('['+m[1]+']');M.push([c[0],num(c[5]),num(c[7]),num(c[8]),num(c[9]),num(c[10]),num(c[11]),num(c[12]),num(c[13]),num(c[14])].concat(T[c[0]]||[null,null,null,null]));}
+const dd=pref.split(' ')[0].split('/');
+const hm=s=>s.replace(/(\d+)\.(\d+)$/,'$1:$2')+' (ora solare)';
+return JSON.stringify({fonte:'Centro Funzionale Regione Toscana – rete SIR (pluviometri e termometri), dati in tempo reale non validati',giorno:dd[2]+'-'+dd[1]+'-'+dd[0],pioggia_al:hm(pref),temperature_al:hm(tref),letti_il:new Date().toISOString(),campi:['codice','oggi','g1','g2','g5','g7','g10','g15','g30','ggSecchi','tminOggi','tmaxOggi','tminIeri','tmaxIeri'],misure:M});
+}"""
+
+JS_ARIA = r"""async () => {
+const num=s=>{s=String(s??'').trim();if(s===''||s==='-')return null;const v=parseFloat(s.replace(',','.'));return isNaN(v)?null:v;};
+async function tabella(type){const f=document.createElement('iframe');f.style.cssText='position:absolute;width:1200px;height:800px;left:-5000px;top:0';f.src='/monitoraggio/stazioni.php?type='+type;document.body.appendChild(f);await new Promise(r=>f.onload=r);for(let i=0;i<160;i++){const w=f.contentWindow;const t=[...f.contentDocument.querySelectorAll('table')].find(x=>x.querySelectorAll('tbody tr').length>10);if(t&&w.jQuery&&w.jQuery.fn.dataTable&&w.jQuery.fn.dataTable.isDataTable(t)){const rows=w.jQuery(t).DataTable().rows().nodes().toArray().map(r=>[...r.cells].map(c=>c.innerText.trim()));const ref=(f.contentDocument.body.textContent.replace(/\u00a0/g,' ').match(/riferit\w*\s+al\s+([0-9\/]+\s+[0-9\.]+)/)||[])[1]||'';f.remove();return{rows,ref};}await new Promise(r=>setTimeout(r,250));}f.remove();throw new Error('tabella '+type+' non caricata');}
+async function coord(type){const j=await fetch('/monitoraggio/actions.php?action=list&rt=0&type_gauge='+type+'&speed=km/h').then(r=>r.json());const C={};j.features.forEach(p=>{C[p.IDStazione]=[+(+p.Lat).toFixed(4),+(+p.Lon).toFixed(4)];});return C;}
+const [U,W,CU,CW]=await Promise.all([tabella('igro'),tabella('anemo'),coord('igro'),coord('anemo')]);
+const z2=(a,b)=>(a===0&&b===0)?[null,null]:[a,b];
+const umid=U.rows.filter(c=>CU[c[0]]).map(c=>[c[0],...CU[c[0]],num(c[4]),...z2(num(c[7]),num(c[9])),...z2(num(c[11]),num(c[13]))]).filter(r=>r.slice(4).some(v=>v!==null));
+const vento=W.rows.filter(c=>CW[c[0]]).map(c=>[c[0],...CW[c[0]],num(c[4]),num(c[10]),num(c[9]),num(c[14]),num(c[13]),num(c[11]),num(c[15])]).filter(r=>r.slice(4,8).some(v=>v!==null));
+const hm=s=>s?s.replace(/(\d+)\.(\d+)$/,'$1:$2')+' (ora solare)':'';
+return JSON.stringify({umidita_al:hm(U.ref),vento_al:hm(W.ref),letti_il:new Date().toISOString(),campi_umidita:['codice','lat','lon','quota','urMinOggi','urMaxOggi','urMinIeri','urMaxIeri'],campi_vento:['codice','lat','lon','quota','velMaxOggi','raffMaxOggi','velMaxIeri','raffMaxIeri','dirMaxOggi','dirMaxIeri'],umidita:umid,vento:vento});
+}"""
+
+
+def breve(e, n=400):
+    """Messaggio d'errore su una riga, abbastanza corto da stare in esito.json."""
+    return re.sub(r"\s+", " ", "%s: %s" % (type(e).__name__, e)).strip()[:n]
+
+
+def avvia_chromium(p, opz):
+    """Prova il Chromium di Playwright, poi quelli installati in /opt/pw-browsers."""
+    errori = []
+    for exe in [None, "/opt/pw-browsers/chromium"] + sorted(
+            os.path.join(r, f) for r, _, fs in os.walk("/opt/pw-browsers") for f in fs if f in ("chrome", "headless_shell")):
+        try:
+            return p.chromium.launch(**opz) if exe is None else p.chromium.launch(executable_path=exe, **opz)
+        except Exception as e:
+            errori.append("%s -> %s" % (exe or "predefinito", breve(e, 200)))
+    raise RuntimeError("Chromium non parte: " + " | ".join(errori))
+
+
+def leggi_cfr(out="."):
+    from playwright.sync_api import sync_playwright
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    esito = {}
+    with sync_playwright() as p:
+        opz = {"headless": True, "proxy": {"server": proxy} if proxy else None}
+        b = avvia_chromium(p, opz)
+        page = b.new_page(viewport={"width": 1280, "height": 900})
+        for tentativo in range(3):
+            if tentativo and time.time() - INIZIO > 150:
+                break
+            try:
+                page.goto("https://www.sir.toscana.it/monitoraggio/stazioni.php?type=termo", wait_until="domcontentloaded", timeout=60000)
+                page.wait_for_function("() => window.jQuery && [...document.querySelectorAll('table')].some(t => t.querySelectorAll('tbody tr').length > 10)", timeout=60000)
+                d = json.loads(page.evaluate(JS_DATA))
+                if len(d["misure"]) < 300:
+                    raise RuntimeError("solo %d stazioni" % len(d["misure"]))
+                scrivi(d, os.path.join(out, "data.json"))
+                esito["data"] = "pioggia al %s, %d stazioni" % (d["pioggia_al"], len(d["misure"]))
+                break
+            except Exception as e:
+                esito["data"] = "errore: %s" % breve(e)
+                time.sleep(10)
+        for tentativo in range(3):
+            if tentativo and time.time() - INIZIO > 240:
+                break
+            try:
+                page.goto("https://www.cfr.toscana.it/index.php?IDS=42&IDSS=279", wait_until="domcontentloaded", timeout=60000)
+                a = json.loads(page.evaluate(JS_ARIA))
+                if len(a["umidita"]) < 100 or len(a["vento"]) < 50:
+                    raise RuntimeError("umidita %d, vento %d" % (len(a["umidita"]), len(a["vento"])))
+                scrivi(a, os.path.join(out, "aria.json"))
+                esito["aria"] = "umidita e vento al %s" % a["umidita_al"]
+                break
+            except Exception as e:
+                esito["aria"] = "errore: %s" % breve(e)
+                time.sleep(10)
+        b.close()
+    return esito
+
+
+# ---------------------------------------------------------------- 2) previsioni: ICON-EU, poi ECMWF
+try:
+    import pygrib  # noqa: E402
+except ImportError:  # senza pygrib si aggiornano comunque misure, archivio e radar
+    pygrib = None
+
+BASE = "https://opendata.dwd.de/weather/nwp/icon-eu/grib"
+EC = "https://data.ecmwf.int/forecasts"
+PASSO = 0.0625
+J0, J1, I0, I1 = 203, 241, 530, 575  # griglia ICON-EU: lat 42,1875-44,5625, lon 9,625-12,4375
+LAT0, LON0, NLAT, NLON = 29.5 + J0 * PASSO, -23.5 + I0 * PASSO, J1 - J0 + 1, I1 - I0 + 1
+VARS = ("t_2m", "relhum_2m", "u_10m", "v_10m")
+GIORNI_PREV = 11  # oggi e i dieci giorni dopo
+EC_PASSI = list(range(0, 145, 3)) + list(range(150, 361, 6))
+EGRIGLIA = {"lat0": 42.0, "lon0": 9.5, "passo": 0.25, "nlat": 12, "nlon": 13}  # celle ECMWF sopra la Toscana, da sud
+
+
+def url(run, var, step):
+    return f"{BASE}/{run:%H}/{var}/icon-eu_europe_regular-lat-lon_single-level_{run:%Y%m%d%H}_{step:03d}_{var.upper()}.grib2.bz2"
+
+
+def scegli_corsa():
+    cand = set()
+    for h in ("00", "06", "12", "18"):
+        for m in re.findall(r"single-level_(\d{10})_000_TOT_PREC", curl(f"{BASE}/{h}/tot_prec/") or ""):
+            cand.add(dt.datetime.strptime(m, "%Y%m%d%H").replace(tzinfo=UTC))
+    for run in sorted(cand, reverse=True):
+        if all(curl(url(run, v, 120), head=True) for v in ("tot_prec",) + VARS):
+            return run
+    raise RuntimeError("nessuna corsa ICON-EU completa disponibile")
+
+
+def campo(job):
+    run, var, step = job
+    if time.time() - INIZIO > 420:
+        raise RuntimeError("tempo scaduto durante lo scaricamento delle previsioni")
+    f = os.path.join(TMP, f"{var}_{step:03d}.bz2")
+    u = (f"{BASE}/{run:%H}/hsurf/icon-eu_europe_regular-lat-lon_time-invariant_{run:%Y%m%d%H}_HSURF.grib2.bz2"
+         if var == "hsurf" else url(run, var, step))
+    if not curl(u, f):
+        raise RuntimeError("download non riuscito: " + u)
+    m = pygrib.fromstring(bz2.decompress(open(f, "rb").read()))
+    os.remove(f)
+    return (var, step), np.asarray(m.values, dtype=np.float64)[J0:J1 + 1, I0:I1 + 1]
+
+
+def passi(s):  # passi ICON attorno a s ore (orari fino a 78, poi ogni 3) e peso
+    s = min(max(s, 0.0), 120.0)
+    k = 1 if s <= 78 else 3
+    a, b = int(k * np.floor(s / k)), int(k * np.ceil(s / k))
+    return a, b, (0.0 if a == b else (s - a) / (b - a))
+
+
+def riassunto(tmin, tmax, U, uu, vv):
+    sp = np.hypot(uu, vv) * 3.6
+    im = sp.argmax(axis=0)
+    pick = lambda X: np.take_along_axis(X, im[None], axis=0)[0]
+    dirm = (np.degrees(np.arctan2(-pick(uu), -pick(vv))) + 360) % 360
+    return {"tmin": tmin, "tmax": tmax, "urMin": np.clip(U.min(0), 0, 100), "urMax": np.clip(U.max(0), 0, 100), "vento": sp.max(0), "dir": dirm}
+
+
+def icon_giorni(giorni, rif):
+    run = scegli_corsa()
+    fine = run + dt.timedelta(hours=120)
+    ore = lambda x: (x - run).total_seconds() / 3600
+    tp_passi = set()
+    for D in giorni:
+        a, b = finestra_pioggia(D)
+        if a < fine:
+            for x in (max(a, run), min(b, fine)):
+                p = passi(ore(x)); tp_passi |= {p[0], p[1]}
+    p = passi(ore(min(max(rif, run), fine))); tp_passi |= {p[0], p[1]}
+    tp_passi.discard(0)
+    jobs = [(run, "tot_prec", s) for s in sorted(tp_passi)] + [(run, v, s) for v in VARS for s in range(0, 121, 3)] + [(run, "hsurf", 0)]
+    F = {}
+    with cf.ThreadPoolExecutor(12) as ex:
+        for k, v in ex.map(campo, jobs):
+            F[k] = v
+    zero = np.zeros_like(F[("hsurf", 0)])
+
+    def tp(x):
+        a, b, w = passi(ore(x))
+        A = zero if a == 0 else F[("tot_prec", a)]
+        B = zero if b == 0 else F[("tot_prec", b)]
+        return A * (1 - w) + B * w
+
+    out = {}
+    for D in giorni:
+        a, b = finestra_pioggia(D)
+        if a >= fine:
+            continue
+        g = {"data": D.isoformat(), "modello": "ICON-EU", "copertura": round(max(0.0, (min(b, fine) - max(a, run)).total_seconds() / 86400), 2),
+             "pioggia": np.maximum(0, tp(min(b, fine)) - tp(max(a, run)))}
+        ga, gb = finestra_giorno(D)
+        cs = [s for s in range(0, 121, 3) if ga <= run + dt.timedelta(hours=s) < gb]
+        if len(cs) >= 5:
+            T = np.stack([F[("t_2m", s)] for s in cs]) - 273.15
+            g.update(riassunto(T.min(0), T.max(0), np.stack([F[("relhum_2m", s)] for s in cs]),
+                               np.stack([F[("u_10m", s)] for s in cs]), np.stack([F[("v_10m", s)] for s in cs])))
+        out[D] = g
+    a, b = finestra_pioggia(giorni[0])
+    x0 = max(rif, a, run)
+    resto = (x0, np.maximum(0, tp(min(b, fine)) - tp(x0))) if x0 < min(b, fine) else None
+    return {"run": run, "quota": F[("hsurf", 0)], "giorni": out, "resto": resto}
+
+
+def ec_url(run, step, ext):
+    return f"{EC}/{run:%Y%m%d}/{run:%H}z/ifs/0p25/oper/{run:%Y%m%d%H}0000-{step}h-oper-fc.{ext}"
+
+
+def ec_attorno(h):  # passi ECMWF che racchiudono h ore dall'inizio della corsa, e peso
+    if h <= 0:
+        return 0, 0, 0.0
+    for a, b in zip(EC_PASSI, EC_PASSI[1:]):
+        if a <= h <= b:
+            return a, b, (0.0 if a == b else (h - a) / (b - a))
+    return EC_PASSI[-1], EC_PASSI[-1], 0.0
+
+
+def ec_indice(job):
+    run, step = job
+    txt = curl(ec_url(run, step, "index"))
+    if not txt:
+        raise RuntimeError("indice ECMWF mancante al passo %d" % step)
+    idx = {}
+    for riga in txt.splitlines():
+        if riga.strip():
+            x = json.loads(riga)
+            if x.get("levtype") == "sfc":
+                idx[x["param"]] = (x["_offset"], x["_length"])
+    return step, idx
+
+
+def su_griglia(m):
+    """Celle ECMWF (0,25 gradi) sopra la Toscana, righe da sud a nord come la griglia ICON."""
+    v = np.asarray(m.values, dtype=np.float64)
+    la1, lo1 = m["latitudeOfFirstGridPointInDegrees"], m["longitudeOfFirstGridPointInDegrees"]
+    dla, dlo = m["jDirectionIncrementInDegrees"], m["iDirectionIncrementInDegrees"]
+    g = EGRIGLIA
+    lat, lon = g["lat0"] + g["passo"] * np.arange(g["nlat"]), g["lon0"] + g["passo"] * np.arange(g["nlon"])
+    j = np.round(((lat - la1) / dla) if m["jScansPositively"] else ((la1 - lat) / dla)).astype(int)
+    i = np.round(((lon - lo1) % 360) / dlo).astype(int)
+    return v[np.ix_(j, i)]
+
+
+def ec_campo(job):
+    run, step, param, off, lun = job
+    if time.time() - INIZIO > 420:
+        raise RuntimeError("tempo scaduto durante lo scaricamento delle previsioni ECMWF")
+    f = os.path.join(TMP, "ec_%s_%d.grib2" % (param, step))
+    if not curl(ec_url(run, step, "grib2"), f, intervallo="%d-%d" % (off, off + lun - 1)):
+        raise RuntimeError("download ECMWF non riuscito: %s al passo %d" % (param, step))
+    m = pygrib.fromstring(open(f, "rb").read())
+    os.remove(f)
+    return (param, step), su_griglia(m)
+
+
+def es(t):  # tensione di vapore saturo (hPa), t in gradi
+    return 6.112 * np.exp(17.67 * t / (t + 243.5))
+
+
+def ecmwf_giorni(giorni):
+    """Giorni dal modello IFS del Centro europeo (dati aperti a 0,25 gradi), sulle sue celle; quota della sua orografia."""
+    adesso = dt.datetime.now(UTC)
+    base = adesso.replace(hour=12 if adesso.hour >= 12 else 0, minute=0, second=0, microsecond=0)
+    ultimo = finestra_pioggia(giorni[-1])[1]
+    run = None
+    for k in range(4):
+        r = base - dt.timedelta(hours=12 * k)
+        h = (ultimo - r).total_seconds() / 3600
+        s = next((p for p in EC_PASSI if p >= h), None)
+        if s is not None and curl(ec_url(r, s, "index"), head=True):
+            run = r
+            break
+    if run is None:
+        raise RuntimeError("nessuna corsa ECMWF disponibile")
+    ore = lambda x: (x - run).total_seconds() / 3600
+    serve = {0: {"z"}}
+
+    def add(s, p):
+        serve.setdefault(s, set()).add(p)
+
+    for D in giorni:
+        for x in finestra_pioggia(D):
+            a, b, w = ec_attorno(ore(x))
+            for s in (a, b):
+                if s > 0:
+                    add(s, "tp")
+        ga, gb = finestra_giorno(D)
+        for s in EC_PASSI:
+            if ga <= run + dt.timedelta(hours=s) < gb:
+                for p in ("2t", "2d", "10u", "10v"):
+                    add(s, p)
+            P = 3 if s <= 144 else 6
+            if s > 0 and ga <= run + dt.timedelta(hours=s - P / 2) < gb:
+                add(s, "mx2t%d" % P); add(s, "mn2t%d" % P)
+    with cf.ThreadPoolExecutor(8) as ex:
+        idx = dict(ex.map(ec_indice, [(run, s) for s in serve]))
+    jobs = [(run, s, p) + idx[s][p] for s in serve for p in sorted(serve[s]) if p in idx[s]]
+    F = {}
+    with cf.ThreadPoolExecutor(12) as ex:
+        for k, v in ex.map(ec_campo, jobs):
+            F[k] = v
+    zq = F[("z", 0)] / 9.80665
+
+    def tp(x):
+        a, b, w = ec_attorno(ore(x))
+        A = 0.0 if a == 0 else F[("tp", a)]
+        B = 0.0 if b == 0 else F[("tp", b)]
+        return (A * (1 - w) + B * w) * 1000
+
+    out = {}
+    for D in giorni:
+        a, b = finestra_pioggia(D)
+        g = {"data": D.isoformat(), "modello": "ECMWF", "copertura": round(max(0.0, (b - max(a, run)).total_seconds() / 86400), 2),
+             "pioggia": np.maximum(0, tp(b) - tp(max(a, run)))}
+        ga, gb = finestra_giorno(D)
+        cs = [s for s in EC_PASSI if ga <= run + dt.timedelta(hours=s) < gb and ("2t", s) in F]
+        if len(cs) >= 3:
+            T = np.stack([F[("2t", s)] for s in cs]) - 273.15
+            Td = np.stack([F[("2d", s)] for s in cs]) - 273.15
+            U = 100 * es(Td) / es(T)
+            mx = [F[(p, s)] for (p, s) in F if p.startswith("mx2t") and ga <= run + dt.timedelta(hours=s - (3 if s <= 144 else 6) / 2) < gb]
+            mn = [F[(p, s)] for (p, s) in F if p.startswith("mn2t") and ga <= run + dt.timedelta(hours=s - (3 if s <= 144 else 6) / 2) < gb]
+            tmax = np.max(np.stack(mx), 0) - 273.15 if mx else T.max(0)
+            tmin = np.min(np.stack(mn), 0) - 273.15 if mn else T.min(0)
+            g.update(riassunto(tmin, tmax, U, np.stack([F[("10u", s)] for s in cs]), np.stack([F[("10v", s)] for s in cs])))
+        out[D] = g
+    return {"run": run, "quota": zq, "giorni": out}
+
+
+EP_SOGLIE = (5, 10, 20)  # mm in 24 ore
+
+
+def ep_url(run, fine, ext):
+    return f"{EC}/{run:%Y%m%d}/{run:%H}z/ifs/0p25/enfo/{run:%Y%m%d%H}0000-{fine}h-enfo-ep.{ext}"
+
+
+def ep_indice(run, fine):
+    txt = curl(ep_url(run, fine, "index"))
+    if not txt:
+        return None
+    idx = {}
+    for riga in txt.splitlines():
+        if riga.strip():
+            x = json.loads(riga)
+            if x.get("type") == "ep" and str(x.get("param", "")).startswith("tpg"):
+                idx[(x["param"], x["step"])] = (x["_offset"], x["_length"])
+    return idx
+
+
+def ep_campo(job):
+    run, fine, param, step, off, lun = job
+    if time.time() - INIZIO > 450:
+        raise RuntimeError("tempo scaduto durante lo scaricamento delle probabilita' ECMWF")
+    f = os.path.join(TMP, "ep_%s_%s.grib2" % (param, step))
+    if not curl(ep_url(run, fine, "grib2"), f, intervallo="%d-%d" % (off, off + lun - 1)):
+        raise RuntimeError("download delle probabilita' ECMWF non riuscito: %s %s" % (param, step))
+    m = pygrib.fromstring(open(f, "rb").read())
+    os.remove(f)
+    return (param, step), su_griglia(m)
+
+
+def ecmwf_probabilita(giorni):
+    """Probabilita' di superare 5, 10 e 20 mm in 24 ore dall'insieme di 51 previsioni ECMWF (dati aperti). Le finestre
+    dell'insieme vanno dalle 12 alle 12 UTC: si usa quella che parte alle 12 del giorno, 4 ore dopo il giorno di pioggia 9-9."""
+    adesso = dt.datetime.now(UTC)
+    base = adesso.replace(hour=12 if adesso.hour >= 12 else 0, minute=0, second=0, microsecond=0)
+    for k in range(4):
+        run = base - dt.timedelta(hours=12 * k)
+        finestre = {}
+        for D in giorni:
+            h = int((dt.datetime(D.year, D.month, D.day, 12, tzinfo=UTC) - run).total_seconds() // 3600)
+            if h >= 0 and h % 12 == 0 and h + 24 <= 360:
+                finestre[D] = ("%d-%d" % (h, h + 24), 240 if h + 24 <= 240 else 360)
+        if len(finestre) < len(giorni) - 1:
+            continue
+        indici = {}
+        for fine in sorted({f for _, f in finestre.values()}):
+            indici[fine] = ep_indice(run, fine)
+        if not all(indici.values()):
+            continue
+        jobs = []
+        for D, (step, fine) in finestre.items():
+            for s in EP_SOGLIE:
+                key = ("tpg%d" % s, step)
+                if key in indici[fine]:
+                    jobs.append((run, fine, key[0], step) + indici[fine][key])
+        if not jobs:
+            continue
+        F = {}
+        with cf.ThreadPoolExecutor(8) as ex:
+            for kk, v in ex.map(ep_campo, jobs):
+                F[kk] = v
+        out = []
+        for D in giorni:
+            if D not in finestre:
+                continue
+            step = finestre[D][0]
+            g = {"data": D.isoformat()}
+            for s in EP_SOGLIE:
+                v = F.get(("tpg%d" % s, step))
+                if v is not None:
+                    g["p%d" % s] = [int(round(float(x))) for x in np.clip(np.asarray(v), 0, 100).ravel()]
+            if len(g) > 1:
+                out.append(g)
+        if out:
+            return {"corsa": run.strftime("%Y-%m-%dT%H:%MZ"), "soglie": list(EP_SOGLIE), "griglia": EGRIGLIA,
+                    "finestra": "24 ore dalle 13 ora solare del giorno (il giorno di pioggia va dalle 9 alle 9)",
+                    "unita": "percentuale delle 51 previsioni dell'insieme ECMWF", "giorni": out}
+    raise RuntimeError("probabilita' ECMWF non disponibili")
+
+
+def previsioni(dati="data.json", uscita="previsioni.json"):
+    """Pioggia per giorni dalle 9 alle 9 (come l'archivio), il resto per giorno di calendario. ICON-EU per i giorni che copre
+    per intero (di solito fino al quarto), poi ECMWF fino al decimo; in piu' la probabilita' di pioggia dall'insieme ECMWF."""
+    if pygrib is None:
+        raise RuntimeError("manca pygrib (pip install pygrib)")
+    rif = rif_lettura(dati)
+    G = (rif + dt.timedelta(hours=1)).date()
+    giorni = [G + k * GIORNO for k in range(GIORNI_PREV)]
+    note, icon, ecm = [], None, None
+    try:
+        icon = icon_giorni(giorni, rif)
+        note.append("ICON-EU %s UTC" % icon["run"].strftime("%Y-%m-%d %H"))
+    except Exception as e:
+        note.append("ICON-EU non disponibile (%s)" % e)
+    complete = {D for D, g in (icon["giorni"].items() if icon else []) if g["copertura"] >= 0.99}
+    mancano = [D for D in giorni if D not in complete]
+    if mancano:
+        try:
+            ecm = ecmwf_giorni(mancano)
+            note.append("ECMWF %s UTC" % ecm["run"].strftime("%Y-%m-%d %H"))
+        except Exception as e:
+            note.append("ECMWF non disponibile (%s)" % e)
+    scelti = []
+    for D in giorni:
+        if D in complete:
+            scelti.append(icon["giorni"][D])
+        elif ecm and D in ecm["giorni"]:
+            scelti.append(ecm["giorni"][D])
+        elif icon and D in icon["giorni"]:
+            scelti.append(icon["giorni"][D])
+    if not scelti:
+        raise RuntimeError("nessuna previsione: " + "; ".join(note))
+    prob = None
+    try:
+        prob = ecmwf_probabilita(giorni)
+        note.append("probabilita' ECMWF %s UTC" % prob["corsa"][:13].replace("T", " "))
+    except Exception as e:
+        note.append("probabilita' non disponibili (%s)" % breve(e, 120))
+    q = lambda arr, k=1: [int(round(float(v) * k)) for v in np.asarray(arr).ravel()]
+    out_giorni = []
+    for g in scelti:
+        x = {"data": g["data"], "modello": g["modello"], "copertura": g["copertura"], "pioggia": q(g["pioggia"], 10)}
+        if "tmin" in g:
+            x.update(tmin=q(g["tmin"], 10), tmax=q(g["tmax"], 10), urMin=q(g["urMin"]), urMax=q(g["urMax"]), vento=q(g["vento"]), dir=q(g["dir"]))
+        out_giorni.append(x)
+    resto = None
+    if icon and icon["resto"] and giorni[0] in complete:
+        resto = {"giorno": G.isoformat(), "dalle": icon["resto"][0].strftime("%Y-%m-%dT%H:%MZ"), "pioggia": q(icon["resto"][1], 10)}
+    corsa = icon["run"] if icon else ecm["run"]
+    out = {"fonte": "DWD, modello ICON-EU, e ECMWF, modello IFS (dati aperti, licenza CC BY 4.0)",
+           "corsa": corsa.strftime("%Y-%m-%dT%H:%MZ"), "corsa_ecmwf": ecm["run"].strftime("%Y-%m-%dT%H:%MZ") if ecm else None,
+           "creato": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "finestra_pioggia": "dalle 9 del giorno alle 9 del giorno dopo, ora solare",
+           "griglia": {"lat0": LAT0, "lon0": LON0, "passo": PASSO, "nlat": NLAT, "nlon": NLON} if icon else EGRIGLIA,
+           "griglia_ecmwf": EGRIGLIA if ecm else None, "quota_ecmwf": q(ecm["quota"]) if ecm else None,
+           "unita": {"pioggia": "0,1 mm", "tmin": "0,1 °C", "tmax": "0,1 °C", "urMin": "%", "urMax": "%", "vento": "km/h (massimo dei valori ogni 3 o 6 ore)", "dir": "gradi, provenienza del vento più forte"},
+           "quota": q(icon["quota"] if icon else ecm["quota"]), "resto_oggi": resto, "giorni": out_giorni, "probabilita": prob}
+    scrivi(out, uscita)
+    n_ec = sum(1 for g in out_giorni if g["modello"] == "ECMWF")
+    return "%s; %d giorni (%d ICON-EU, %d ECMWF)" % ("; ".join(note), len(out_giorni), len(out_giorni) - n_ec, n_ec)
+
+
+# ---------------------------------------------------------------- 3) archivio giornaliero delle stazioni
+SIR = "https://www.sir.toscana.it/archivio/dati.php?A={anno}&IDS={cod}&IDST={tipo}"
+NP, NT = 90, 40  # giorni di pioggia e di temperature conservati
+LIMITE = 510  # secondi dall'avvio: lo script deve stare nei 10 minuti di un comando
+CONVENZIONE = "pioggia dalle 9 alle 9 ora solare, con la data di inizio; temperature per giorno di calendario"
+
+
+def analizza(h, tipo, anno):
+    """Valori giornalieri di un anno: pioggia in mm ('-' = niente pioggia) oppure (minima, massima)."""
+    out = {}
+    for riga in re.findall(r"<tr[^>]*>(.*?)</tr>", h, re.S):
+        celle = re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", riga, re.S)
+        if len(celle) < 13:
+            continue
+        g = re.sub(r"<[^>]+>", "", celle[0]).replace("&nbsp;", "").strip()
+        if not g.isdigit():
+            continue
+        for mese, c in enumerate(celle[1:13], start=1):
+            try:
+                giorno = dt.date(anno, mese, int(g))
+            except ValueError:
+                continue
+            if tipo == "pluvio":
+                s = re.sub(r"<[^>]+>", "", c).replace("&nbsp;", "").strip()
+                if s == "-":
+                    out[giorno] = 0.0
+                elif s:
+                    try:
+                        out[giorno] = float(s.replace(",", "."))
+                    except ValueError:
+                        pass
+            else:
+                vals = []
+                for x in re.split(r"<br\s*/?>", c)[:2]:
+                    s = re.sub(r"<[^>]+>", "", x).replace("&nbsp;", "").strip()
+                    try:
+                        vals.append(float(s.replace(",", ".")))
+                    except ValueError:
+                        vals.append(None)
+                while len(vals) < 2:
+                    vals.append(None)
+                if vals[0] is not None or vals[1] is not None:
+                    out[giorno] = (vals[1], vals[0])  # (minima, massima): la massima e' scritta per prima
+    return out
+
+
+def scarica_archivi(jobs, tempo_max=300):
+    """Scarica in sequenza con una sola connessione: l'archivio regge circa una richiesta ogni 4 secondi."""
+    cartella = tempfile.mkdtemp(prefix="sir_")
+    cfg = os.path.join(cartella, "curl.cfg")
+    with open(cfg, "w") as f:
+        for i, (c, tipo, anno) in enumerate(jobs):
+            f.write('url = "%s"\noutput = "%s"\n' % (SIR.format(anno=anno, cod=c, tipo=tipo), os.path.join(cartella, "%d.html" % i)))
+    try:
+        subprocess.run(["curl", "-sf", "--retry", "2", "-m", "90", "-K", cfg], capture_output=True, timeout=tempo_max)
+    except subprocess.TimeoutExpired:
+        pass  # i file non scaricati restano mancanti e si riprovano alla prossima esecuzione
+    out = []
+    for i, (c, tipo, anno) in enumerate(jobs):
+        try:
+            h = open(os.path.join(cartella, "%d.html" % i), encoding="utf-8", errors="replace").read()
+            valido = ("Anno" in h and "</table>" in h) or "Nessun risultato" in h  # anno senza dati: risposta valida
+            out.append(((c, tipo, anno), analizza(h, tipo, anno) if valido else None))
+        except Exception:
+            out.append(((c, tipo, anno), None))
+    return out
+
+
+def aggiorna_storico(dati="data.json", precedente=None, uscita="storico.json", max_richieste=100, tempo_max=None):
+    """Pioggia giornaliera dalle 9 alle 9 (90 giorni) e minime e massime (40 giorni) fino a ieri, per stazione.
+    Con la lettura delle 9 del giorno G la pioggia del giorno G-1 e' esatta: «oggi» (da mezzanotte alle 9) piu'
+    «1 giorno» (dalle 9 di ieri a mezzanotte). Con una lettura a un'altra ora la finestra e' spostata: il valore resta tra
+    le «stime» e si sostituisce col dato d'archivio appena c'e'. Minime e massime di ieri vengono dalle tabelle di oggi.
+    I giorni che mancano, o che sono stimati, si prendono dall'archivio della stazione (un anno per richiesta) finche' c'e'
+    tempo; per ogni stazione «verificato» dice fino a che giorno l'archivio e' gia' stato cercato."""
+    d = json.load(open(dati))
+    G = dt.date.fromisoformat(d["giorno"])
+    al = G - GIORNO
+    ora = ora_di(d.get("pioggia_al"))
+    esatta = abs(ora - 9) <= 0.3
+    giorniP = [al - (NP - 1 - i) * GIORNO for i in range(NP)]
+    giorniT = giorniP[-NT:]
+    live = {m[0]: m for m in d["misure"]}
+    P = {c: {} for c in live}         # giorno -> mm (None: l'archivio non ha il dato)
+    T = {c: {} for c in live}         # giorno -> (minima, massima)
+    stime = {c: set() for c in live}  # giorni di pioggia da sostituire con l'archivio
+    verif = {"pluvio": {}, "termo": {}}
+    termo = {c for c, m in live.items() if any(v is not None for v in m[10:14])}
+    if precedente and os.path.exists(precedente):
+        try:
+            s = json.load(open(precedente))
+            al0 = dt.date.fromisoformat(s["al"])
+            vecchia = "convenzione" not in s  # file della prima versione: pioggia con la data di fine
+            sposta = GIORNO if vecchia else dt.timedelta(0)
+
+            def giorni(arr, k=dt.timedelta(0)):
+                for i, v in enumerate(arr):
+                    yield al0 - (len(arr) - 1 - i) * GIORNO - k, (None if v is None else v / 10)
+
+            for c, arr in s["pioggia"]["valori"].items():
+                if c in live:
+                    for g, x in giorni(arr, sposta):
+                        if giorniP[0] <= g <= al and not (vecchia and g == al0 - GIORNO):
+                            P[c][g] = x
+            for k, i in (("tmin", 0), ("tmax", 1)):
+                for c, arr in s["temperature"][k].items():
+                    if c in live:
+                        termo.add(c)
+                        for g, x in giorni(arr):
+                            if giorniT[0] <= g <= al:
+                                t = list(T[c].get(g, (None, None)))
+                                t[i] = x
+                                T[c][g] = tuple(t)
+            if not vecchia:
+                for g, codici in (s.get("stime") or {}).items():
+                    g = dt.date.fromisoformat(g)
+                    for c in codici:
+                        if c in live and giorniP[0] <= g <= al:
+                            stime[c].add(g)
+                for tipo in verif:
+                    for c, g in ((s.get("verificato") or {}).get(tipo) or {}).items():
+                        verif[tipo][c] = dt.date.fromisoformat(g)
+        except Exception as e:
+            print("storico precedente non leggibile:", e, file=sys.stderr)
+    # pioggia di ieri (dalle 9 di ieri alle 9 di oggi) e minime e massime di ieri dalle tabelle in tempo reale
+    for c, m in live.items():
+        if m[12] is not None or m[13] is not None:
+            t = T[c].get(al, (None, None))
+            T[c][al] = (t[0] if m[12] is None else m[12], t[1] if m[13] is None else m[13])
+            termo.add(c)
+        if m[1] is None or m[2] is None or (P[c].get(al) is not None and al not in stime[c]):
+            continue
+        P[c][al] = round(m[1] + m[2], 1)
+        asciutto = (m[3] or 0) + (m[1] or 0) < 1.0  # meno di 1 mm in due giorni: lo spostamento della finestra non conta
+        if esatta or asciutto:
+            stime[c].discard(al)
+        else:
+            stime[c].add(al)
+    # richieste all'archivio: prima la pioggia che manca, poi le temperature, poi i giorni stimati.
+    # Nell'archivio la pioggia del giorno g ha la data g+1; le temperature la data g.
+    MIN = dt.date.min
+
+    def manca(tipo, c, g):
+        if tipo == "pluvio":
+            if g == al:
+                return False  # nell'archivio arriva domani
+            if g not in P[c]:
+                return True
+            vuoto = P[c][g] is None
+        else:
+            t = T[c].get(g)
+            if t is None:
+                return True
+            vuoto = t[0] is None or t[1] is None
+        return vuoto and g > verif[tipo].get(c, MIN)
+
+    servono = {}
+    for c in live:
+        for g in giorniP:
+            if manca("pluvio", c, g):
+                servono.setdefault((c, "pluvio"), set()).add((g + GIORNO).year)
+    for c in sorted(termo):
+        for g in giorniT:
+            if manca("termo", c, g):
+                servono.setdefault((c, "termo"), set()).add(g.year)
+    jobs = [(0 if tipo == "pluvio" else 1, c, tipo, a) for (c, tipo), anni in servono.items() for a in sorted(anni)]
+    for c in live:
+        for a in sorted({(g + GIORNO).year for g in stime[c] if g < al} - servono.get((c, "pluvio"), set())):
+            jobs.append((2, c, "pluvio", a))
+    jobs.sort()
+    rimandate = max(0, len(jobs) - max_richieste)
+    jobs = [(c, tipo, a) for _, c, tipo, a in jobs[:max_richieste]]
+    tempo = tempo_max if tempo_max is not None else max(20, min(300, LIMITE - (time.time() - INIZIO)))
+    falliti, presi = 0, {}
+    for (c, tipo, a), res in (scarica_archivi(jobs, tempo) if jobs else []):
+        presi.setdefault((c, tipo), set())
+        if res is None:
+            falliti += 1
+            continue
+        presi[(c, tipo)].add(a)
+        if tipo == "termo":
+            for g in giorniT:
+                if g.year == a:
+                    t, r = T[c].get(g, (None, None)), res.get(g, (None, None))
+                    primo, secondo = (r, t) if g < al else (t, r)  # l'archivio vale piu' delle tabelle, tranne ieri
+                    T[c][g] = tuple(x if x is not None else y for x, y in zip(primo, secondo))
+            continue
+        for g in giorniP:
+            if g >= al or (g + GIORNO).year != a:
+                continue
+            v = res.get(g + GIORNO)
+            if v is not None:
+                P[c][g] = v
+            elif g not in P[c]:
+                P[c][g] = None
+            stime[c].discard(g)  # cercato nell'archivio: se non c'e' resta la stima
+    for (c, tipo), anni in presi.items():
+        if anni >= servono.get((c, tipo), set()):
+            verif[tipo][c] = max(verif[tipo].get(c, MIN), al - GIORNO)
+    q = lambda v: None if v is None else int(round(v * 10))
+    stimati = sorted({g for c in live for g in stime[c] if giorniP[0] <= g <= al})
+    out = {"fonte": "Servizio Idrologico Regionale Toscana: archivio delle stazioni (dati pre-validati) e tabelle in tempo reale",
+           "convenzione": CONVENZIONE, "al": al.isoformat(), "aggiornato": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "lettura": {"giorno": G.isoformat(), "ora": round(ora, 2)},
+           "pioggia": {"giorni": NP, "unita": "0,1 mm", "valori": {c: [q(P[c].get(g)) for g in giorniP] for c in live}},
+           "temperature": {"giorni": NT, "unita": "0,1 gradi C",
+                           "tmin": {c: [q(T[c].get(g, (None, None))[0]) for g in giorniT] for c in sorted(termo)},
+                           "tmax": {c: [q(T[c].get(g, (None, None))[1]) for g in giorniT] for c in sorted(termo)}},
+           "stime": {g.isoformat(): sorted(c for c in live if g in stime[c]) for g in stimati},
+           "verificato": {tipo: {c: g.isoformat() for c, g in sorted(verif[tipo].items()) if c in live} for tipo in verif}}
+    scrivi(out, uscita)
+    pieni = sum(1 for c in live for g in giorniP[-30:] if P[c].get(g) is not None)
+    n_stime = sum(len(v) for v in out["stime"].values())
+    return "al %s (lettura delle %s), %d richieste all'archivio (%d fallite, %d rimandate), %d valori stimati da rifare, %d%% dei giorni di pioggia recenti presenti" % (
+        al, "%d:%02d" % (int(ora), round(ora % 1 * 60)), len(jobs), falliti, rimandate, n_stime, round(100 * pieni / max(1, 30 * len(live))))
+
+
+# ---------------------------------------------------------------- 4) pioggia da radar e pluviometri (Protezione Civile)
+RADAR_API = "https://radar-api.protezionecivile.it"
+RLAT0, RLON0, RPASSO, RNLAT, RNLON = 44.50, 9.60, 0.02, 115, 140  # bordo nord, bordo ovest, celle di circa 1,6 x 2,2 km
+RCOL = 10  # giorni per riga nell'immagine dell'archivio
+
+
+def radar_giorno(g):
+    """Pioggia dalle 9 di g alle 9 di g+1 (ora solare): prodotto «Merging» (radar corretto coi pluviometri) cumulato
+    sulle 24 ore che finiscono alle 8 UTC di g+1, griglia di 0,01 gradi; ridotto a celle di 0,02 gradi. None se non c'e'."""
+    from PIL import Image
+    t = dt.datetime(g.year, g.month, g.day, 8, tzinfo=UTC) + GIORNO
+    r = curl(RADAR_API + "/downloadProduct", corpo=json.dumps({"productType": "CUM24", "productDate": int(t.timestamp() * 1000)}))
+    try:
+        j = json.loads(r)
+    except Exception:
+        return None
+    if ("Merging_%s_24h" % t.strftime("%Y%m%d%H%M")) not in str(j.get("key", "")):
+        return None  # prodotto non ancora pronto
+    f = os.path.join(TMP, "radar_%s.tif" % g.isoformat())
+    if not curl(j["url"], f):
+        return None
+    try:
+        a = np.array(Image.open(f), dtype=np.float32)
+    finally:
+        os.remove(f)
+    r0, c0 = int(round((47.58 - RLAT0) / 0.01)), int(round((RLON0 - 5.60) / 0.01))  # la griglia parte da 47,58 N e 5,60 E
+    sub = a[r0:r0 + 2 * RNLAT, c0:c0 + 2 * RNLON].astype(np.float64).reshape(RNLAT, 2, RNLON, 2)
+    ok = sub >= 0
+    n = ok.sum(axis=(1, 3))
+    s = np.where(ok, sub, 0).sum(axis=(1, 3))
+    return np.where(n > 0, s / np.maximum(n, 1), np.nan)
+
+
+def codifica(mm):  # 0-254: radice quadrata per 16 (fine con poca pioggia, fino a 252 mm); 255 = nessun dato
+    return np.where(np.isnan(mm), 255, np.clip(np.round(np.sqrt(np.maximum(np.nan_to_num(mm), 0)) * 16), 0, 254)).astype(np.uint8)
+
+
+def decodifica(v):
+    return np.where(v == 255, np.nan, (v.astype(np.float64) / 16) ** 2)
+
+
+def aggiorna_radar(precedente=None, uscita="radar.json", attesa=540):
+    """Archivio di 90 giorni della pioggia stimata da radar e pluviometri, in un'immagine (un riquadro per giorno)."""
+    from PIL import Image
+    adesso = dt.datetime.now(UTC)
+    G = (adesso + dt.timedelta(hours=1)).date()  # oggi in ora solare
+    al = G - GIORNO if adesso >= dt.datetime(G.year, G.month, G.day, 8, tzinfo=UTC) else G - 2 * GIORNO
+    giorni = [al - (NP - 1 - i) * GIORNO for i in range(NP)]
+    A = np.full((NP, RNLAT, RNLON), np.nan)
+    if precedente and os.path.exists(precedente):
+        try:
+            s = json.load(open(precedente))
+            al0, n0, col = dt.date.fromisoformat(s["al"]), s["giorni"], s["colonne"]
+            im = np.array(Image.open(io.BytesIO(base64.b64decode(s["png"].split(",", 1)[1]))).convert("L"))
+            for k in range(n0):
+                g = al0 - (n0 - 1 - k) * GIORNO
+                if giorni[0] <= g <= al:
+                    r, c = divmod(k, col)
+                    A[(g - giorni[0]).days] = decodifica(im[r * RNLAT:(r + 1) * RNLAT, c * RNLON:(c + 1) * RNLON])
+        except Exception as e:
+            print("radar precedente non leggibile:", e, file=sys.stderr)
+    mancanti = [k for k in range(NP) if np.isnan(A[k]).all()]
+    presi = 0
+    with cf.ThreadPoolExecutor(6) as ex:
+        for k, m in zip(mancanti, ex.map(lambda k: radar_giorno(giorni[k]) if time.time() - INIZIO < 300 else None, mancanti)):
+            if m is not None:
+                A[k] = m
+                presi += 1
+    # l'ultimo giorno si chiude alle 9 ora solare e il prodotto esce verso le 8:30 UTC: se serve si aspetta qualche minuto
+    while np.isnan(A[-1]).all() and al == G - GIORNO and time.time() - INIZIO < attesa:
+        time.sleep(30)
+        m = radar_giorno(al)
+        if m is not None:
+            A[-1] = m
+            presi += 1
+    righe = (NP + RCOL - 1) // RCOL
+    img = np.full((righe * RNLAT, RCOL * RNLON), 255, np.uint8)
+    for k in range(NP):
+        r, c = divmod(k, RCOL)
+        img[r * RNLAT:(r + 1) * RNLAT, c * RNLON:(c + 1) * RNLON] = codifica(A[k])
+    buf = io.BytesIO()
+    Image.fromarray(img, "L").save(buf, format="PNG", optimize=True)
+    vuoti = [k for k in range(NP) if np.isnan(A[k]).all()]
+    out = {"fonte": "Dipartimento della Protezione Civile: pioggia stimata da radar e pluviometri (prodotto «Merging», cumulata di 24 ore), licenza CC BY-SA 4.0",
+           "al": al.isoformat(), "aggiornato": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "giorni": NP,
+           "finestra": "dalle 9 del giorno alle 9 del giorno dopo, ora solare",
+           "griglia": {"lat0": RLAT0, "lon0": RLON0, "passo": RPASSO, "nlat": RNLAT, "nlon": RNLON, "bordi": True},
+           "colonne": RCOL, "codifica": "mm = (v/16)^2, 255 = nessun dato", "mancanti": vuoti,
+           "png": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()}
+    if len(vuoti) == NP:
+        raise RuntimeError("nessun giorno di radar disponibile")
+    scrivi(out, uscita)
+    return "al %s, %d giorni scaricati, %d mancanti" % (al, presi, len(vuoti))
+
+
+# ---------------------------------------------------------------- 5) file validi e avvisi per i posti salvati
+def valida(dest=None):
+    """I file della cartella corrente che si possono pubblicare; con dest li copia li'."""
+    def carica(n):
+        try:
+            return json.load(open(n, encoding="utf-8"))
+        except Exception:
+            return None
+    ok = []
+    d = carica("data.json")
+    if d and len(d.get("misure") or []) >= 300:
+        ok.append("data.json")
+    a = carica("aria.json")
+    if a and len(a.get("umidita") or []) >= 100 and len(a.get("vento") or []) >= 50:
+        ok.append("aria.json")
+    p = carica("previsioni.json")
+    if p and len(p.get("giorni") or []) >= 4:
+        ok.append("previsioni.json")
+    h = carica("storico.json")
+    if h and h.get("al") and h.get("pioggia"):
+        ok.append("storico.json")
+    r = carica("radar.json")
+    if r and r.get("al") and r.get("png"):
+        ok.append("radar.json")
+    if carica("esito.json") is not None:
+        ok.append("esito.json")
+    if dest:
+        os.makedirs(dest, exist_ok=True)
+        for f in ok:
+            if os.path.abspath(f) != os.path.abspath(os.path.join(dest, f)):
+                shutil.copyfile(f, os.path.join(dest, f))
+    return ok
+
+
+def leggi_posti(origine):
+    """Un file JSON con l'elenco dei posti, oppure una cartella di file JSON (uno per posto, anche annidati)."""
+    docs = []
+    if os.path.isdir(origine):
+        for f in sorted(glob.glob(os.path.join(origine, "**", "*.json"), recursive=True)):
+            try:
+                x = json.load(open(f, encoding="utf-8"))
+            except Exception:
+                continue
+            docs.append((os.path.splitext(os.path.basename(f))[0], x))
+    elif os.path.exists(origine):
+        x = json.load(open(origine, encoding="utf-8"))
+        for i, y in enumerate(x if isinstance(x, list) else x.get("documents") or x.get("docs") or x.get("posti") or []):
+            docs.append((str(i), y))
+    posti = []
+    for nome_file, x in docs:
+        if not isinstance(x, dict):
+            continue
+        campi = x.get("data") if isinstance(x.get("data"), dict) and "lat" in x["data"] else x
+        try:
+            lat, lon = float(campi["lat"]), float(campi["lon"])
+        except Exception:
+            continue
+        if not (41.3 <= lat <= 45.2 and 8.5 <= lon <= 13.5):
+            continue
+        posti.append({"id": str(x.get("id") or x.get("doc_id") or nome_file), "nome": str(campi.get("nome") or "Posto")[:60], "lat": lat, "lon": lon,
+                      "quota": campi.get("quota"), "bosco": campi.get("bosco"), "comune": str(campi.get("comune") or "")[:60],
+                      "specie": str(campi.get("specie") or "porcini")})
+    return posti
+
+
+GIORNI_IT = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
+MESI_IT = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
+
+
+def giorno_it(iso):
+    d = dt.date.fromisoformat(iso)
+    return "%s %d %s" % (GIORNI_IT[d.weekday()], d.day, MESI_IT[d.month - 1])
+
+
+def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://claude.ai/artifact/QHRhL7qEY1tL79RvNu1wsQ"):
+    """Calcola nella pagina vera (Chromium senza schermo) il punteggio dei posti salvati per oggi e i 10 giorni dopo, con i dati
+    della cartella corrente. Prepara la mail se un posto arriva a «Buono» o «Ottimo» in un giorno che ieri non lo era."""
+    posti = leggi_posti(origine)
+    oggi = dt.datetime.now(UTC).date().isoformat()
+    prima = {}
+    if precedente and os.path.exists(precedente):
+        try:
+            prima = json.load(open(precedente, encoding="utf-8")).get("segnalati") or {}
+        except Exception:
+            prima = {}
+    out = {"quando": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "posti": [], "segnalati": {}, "nuovi": [], "invia": False, "oggetto": "", "testo": ""}
+    if not posti:
+        scrivi(out, uscita)
+        return "nessun posto salvato"
+    sito = tempfile.mkdtemp(prefix="radarsito_")
+    shutil.copyfile(pagina, os.path.join(sito, "index.html"))
+    for f in ("data.json", "aria.json", "previsioni.json", "storico.json", "radar.json", "sentieri.json"):
+        if os.path.exists(f):
+            shutil.copyfile(f, os.path.join(sito, f))
+    tipi = {".html": "text/html; charset=utf-8", ".json": "application/json"}
+    from playwright.sync_api import sync_playwright
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    with sync_playwright() as p:
+        b = avvia_chromium(p, {"headless": True, "proxy": {"server": proxy} if proxy else None})
+        pg = b.new_page(viewport={"width": 1200, "height": 900})
+
+        def servi(route):
+            nome = route.request.url.split("?")[0].split("radar.locale/", 1)[-1] or "index.html"
+            f = os.path.join(sito, os.path.basename(nome))
+            if os.path.isfile(f):
+                route.fulfill(status=200, body=open(f, "rb").read(), headers={"content-type": tipi.get(os.path.splitext(f)[1], "application/octet-stream")})
+            else:
+                route.fulfill(status=404, body=b"")
+        pg.route("http://radar.locale/**", servi)
+        pg.goto("http://radar.locale/index.html", wait_until="domcontentloaded", timeout=90000)
+        pg.wait_for_function("() => window.RadarPorcini && window.RadarPorcini.pronto()", timeout=150000)
+        stato = pg.evaluate("RadarPorcini.stato()")
+        risultati = pg.evaluate("(l) => RadarPorcini.punteggi(l)", posti)
+        b.close()
+    out["dati"] = stato
+    out["posti"] = risultati
+    righe, nuovi = [], []
+    for r in risultati:
+        buoni = [g for g in r["giorni"] if g["data"] >= oggi and g["livello"] >= 3]
+        for g in buoni:
+            k = "%s|%s" % (r["id"] or r["nome"], g["data"])
+            out["segnalati"][k] = g["livello"]
+            if prima.get(k, 0) < g["livello"]:
+                nuovi.append((r, g))
+        if buoni:
+            righe.append("%s (%s%s m, %s): %s." % (r["nome"], (r["comune"].replace(" (", ", ").rstrip(")") + ", ") if r["comune"] else "",
+                                                   int(round(r["quota"] or 0)), r["nomeSpecie"],
+                                                   "; ".join("%s %s (%d)" % (g["nome"].lower(), giorno_it(g["data"]), g["score"]) for g in buoni)))
+    out["nuovi"] = ["%s %s %s" % (r["nome"], g["data"], g["nome"]) for r, g in nuovi]
+    if nuovi:
+        r0, g0 = max(nuovi, key=lambda x: x[1]["score"])
+        altri = len({x[0]["nome"] for x in nuovi}) - 1
+        out["invia"] = True
+        out["oggetto"] = "Radar Porcini: %s %s %s%s" % (r0["nome"], g0["nome"].lower(), giorno_it(g0["data"]), (" e un altro posto" if altri == 1 else " e altri %d posti" % altri) if altri > 0 else "")
+        out["testo"] = ("Buone notizie dai tuoi posti salvati in Radar Porcini.\n\n" + "\n".join(righe) +
+                        "\n\nPunteggio da 0 a 100: buono da 45, ottimo da 65. Dati CFR %s; stima indicativa, controlla la scheda del punto prima di andare.\n\n"
+                        "Apri l'app: %s\nVersione da installare sul telefono: https://the-marox.github.io/progetti/radar-porcini/\n\n"
+                        "Ricevi questa mail perché hai salvato dei posti nella versione di Radar Porcini dentro Claude. Per non riceverla più, "
+                        "elimina i posti o chiedi a Claude di togliere l'avviso." % ((stato or {}).get("pioggia_al") or "", app))
+    scrivi(out, uscita)
+    return "%d posti, %d giorni buoni o ottimi, %d nuovi%s" % (len(risultati), len(out["segnalati"]), len(nuovi), ": mail da inviare" if nuovi else "")
+
+
+def main():
+    args = sys.argv[1:]
+    if args and args[0] == "valida":
+        print(json.dumps({"validi": valida(args[1] if len(args) > 1 else None)}, ensure_ascii=False))
+        return
+    if args and args[0] == "avvisi":
+        t0 = time.time()
+        try:
+            r = avvisi(args[1], args[2], args[3] if len(args) > 3 else None)
+        except Exception as e:
+            r = "errore: %s" % breve(e)
+        try:
+            registro = json.load(open("esito.json", encoding="utf-8"))
+        except Exception:
+            registro = {}
+        registro["avvisi"] = {"quando": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "secondi": round(time.time() - t0), "esito": r}
+        scrivi(registro, "esito.json")
+        print(json.dumps({"avvisi": r}, ensure_ascii=False))
+        return
+    parti = ("misure", "previsioni", "archivio", "radar")
+    scelte = [args.pop(0)] if args and args[0] in parti else list(parti)
+    if len(scelte) == 1:
+        prec_storico = args[0] if args and scelte[0] == "archivio" else None
+        prec_radar = args[0] if args and scelte[0] == "radar" else None
+    else:
+        prec_storico = args[0] if len(args) > 0 else None
+        prec_radar = args[1] if len(args) > 1 else None
+    esito, tempi = {}, {}
+    t = time.time()
+    if "misure" in scelte:
+        try:
+            esito["misure"] = leggi_cfr(".")
+        except Exception as e:
+            esito["misure"] = {"data": "errore: %s" % breve(e)}
+        tempi["misure"], t = round(time.time() - t), time.time()
+    dati = "data.json" if os.path.exists("data.json") else ""
+    if "previsioni" in scelte:
+        try:
+            esito["previsioni"] = previsioni(dati, "previsioni.json")
+        except BaseException as e:
+            esito["previsioni"] = "errore: %s" % breve(e)
+        tempi["previsioni"], t = round(time.time() - t), time.time()
+    if "archivio" in scelte:
+        if dati:
+            try:
+                esito["archivio"] = aggiorna_storico(dati, prec_storico, "storico.json")
+            except Exception as e:
+                esito["archivio"] = "errore: %s" % breve(e)
+        else:
+            esito["archivio"] = "non aggiornato: mancano le misure di oggi (data.json)"
+        tempi["archivio"], t = round(time.time() - t), time.time()
+    if "radar" in scelte:
+        try:
+            esito["radar"] = aggiorna_radar(prec_radar, "radar.json")
+        except Exception as e:
+            esito["radar"] = "errore: %s" % breve(e)
+        tempi["radar"] = round(time.time() - t)
+    # esito.json raccoglie l'esito di ogni parte lanciata da questa cartella: si pubblica per capire cosa non va
+    try:
+        registro = json.load(open("esito.json", encoding="utf-8"))
+    except Exception:
+        registro = {}
+    quando = dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for k in esito:
+        registro[k] = {"quando": quando, "secondi": tempi.get(k), "esito": esito[k]}
+    try:
+        scrivi(registro, "esito.json")
+    except Exception:
+        pass
+    print(json.dumps(esito, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

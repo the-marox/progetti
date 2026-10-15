@@ -969,9 +969,17 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
 #installa { justify-self: start; }
 .calc form > *, .calc label { min-width: 0; }
 .calc label select { width: 100%; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
+/* schermi larghi: due colonne, a sinistra giorni, mappa e punto; a destra posti, zone, stazioni e il resto */
+.col { display: grid; gap: 28px; align-content: start; min-width: 0; }
+.col > * { min-width: 0; }
+@media (min-width: 1100px) {
+  .wrap { max-width: 1480px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); column-gap: 44px; align-items: start; }
+  #mappa { height: clamp(440px, 70vh, 780px); }
+}
 </style>
 
 <div class="wrap">
+ <div class="col col-a">
   <header class="top">
     <div class="eyebrow">Toscana · stazioni CFR, radar e previsioni a 10 giorni</div>
     <h1>Radar Porcini</h1>
@@ -1048,7 +1056,9 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
       <ol class="zone" id="vicine-list"></ol>
     </div>
   </section>
+ </div>
 
+ <div class="col col-b">
   <section aria-labelledby="h-posti" id="sez-posti">
     <h2 id="h-posti">I miei posti</h2>
     <p class="muted" id="posti-intro">Salva i boschi dove vai, dalla scheda del punto: qui vedi per ognuno il punteggio dei prossimi giorni. Li vedi solo tu.</p>
@@ -1193,6 +1203,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <p id="foot-data"></p>
     <p>Stima indicativa, non validata sul campo. Dati: Centro Funzionale e Servizio Idrologico della Regione Toscana. Pioggia da radar e pluviometri: Dipartimento della Protezione Civile, licenza CC BY-SA 4.0, ricampionata (anche l'archivio derivato è CC BY-SA 4.0). Previsioni: Deutscher Wetterdienst (DWD), modello ICON-EU, ed European Centre for Medium-Range Weather Forecasts (ECMWF), modello IFS, licenza CC BY 4.0, rielaborate. Tipi di bosco: Regione Toscana, Carta della vegetazione forestale, licenza CC BY-SA 4.0, ricampionata e aggiornata con Copernicus High Resolution Layer Forest Type 2018 (© Unione europea, Copernicus Land Monitoring Service, Agenzia europea dell'ambiente). Suolo: SoilGrids 2.0, ISRIC, licenza CC BY 4.0. Aree protette: Regione Toscana, licenza CC BY-SA 4.0, semplificate. Sentieri: Rete escursionistica toscana, catasto INFOMONT del Club Alpino Italiano, map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, © <a href="https://infomont.cai.it" target="_blank" rel="noopener">Club Alpino Italiano</a>, licenza ODbL (anche il file semplificato dei sentieri è ODbL). Mappa topografica: © OpenStreetMap contributors, SRTM, stile © OpenTopoMap (CC BY-SA). Probabilità di pioggia: insieme di previsioni ECMWF, licenza CC BY 4.0. Confini comunali: ISTAT, via openpolis. Rilievo: Terrain Tiles di Mapzen su AWS (SRTM; EU-DEM prodotto con dati Copernicus finanziati dall'Unione europea).</p>
   </footer>
+ </div>
 </div>
 
 <script>/* @preserve

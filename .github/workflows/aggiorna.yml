@@ -52,7 +52,7 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Avvisi gia' segnalati
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ runner.temp }}/stato
           key: avvisi-${{ github.run_id }}
@@ -159,7 +159,7 @@ jobs:
 
       - name: Ricorda gli avvisi
         if: steps.mail.outcome == 'success'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/stato
           key: avvisi-${{ github.run_id }}-${{ github.run_attempt }}

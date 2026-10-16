@@ -2646,7 +2646,7 @@ if (typeof module !== "undefined") module.exports = RP;
   function setPressed(groupSel, val) { [].forEach.call(document.querySelectorAll(groupSel + " button"), function (x) { x.setAttribute("aria-pressed", String(x.dataset.v === String(val))); }); }
   function sigla(dir) { return dir == null ? "" : ["N", "NE", "E", "SE", "S", "SO", "O", "NO"][Math.round(dir / 45) % 8]; }
 
-  var state = { data: null, aria: null, prev: null, storico: null, anag: null, st: [], ref: 0, start: 0, t: 0, versante: "", specie: "porcini", sfondo: "rilievo", aree: false, radarN: 7, prov: "", zona: "", quota: "all", sort: "score", q: "", shown: PAGINA, open: {}, allZones: false, pos: null, punto: null, raggio: 30, index: [], pioggiaPrev: [], oriz: -1, best: 0 };
+  var state = { data: null, aria: null, prev: null, storico: null, anag: null, st: [], ref: 0, start: 0, t: 0, versante: "", specie: "porcini", sfondo: "rilievo", aree: false, radarN: 7, prov: "", zona: "", quota: "all", sort: "score", q: "", shown: PAGINA, open: {}, allZones: false, pos: null, punto: null, raggio: 30, index: [], pioggiaPrev: [], oriz: -1, best: 0, tScelto: false };
   function opt() { return { versante: state.versante || null, specie: state.specie }; }
   function stima(s, t) { return RP.stima(s, t == null ? state.t : t, opt()); }
   function idsSpecie() { return RP.GRUPPI[state.specie] || [state.specie]; }
@@ -2662,6 +2662,8 @@ if (typeof module !== "undefined") module.exports = RP;
   // ---------- caricamento ----------
   function load(data, aria, prev, storico) {
     posti.epoca++;
+    // il giorno scelto da te resta la stessa data anche se i dati nuovi partono da un altro giorno (state.t conta da state.ref)
+    var msScelto = state._caricato && state.tScelto ? state.ref + state.t * DAY : null;
     state.data = data; state.aria = aria; state.prev = prev || null; state.storico = storico || null;
     state.st = RP.prepara(data, state.anag, aria, state.prev, state.storico);
     assegnaHabitat();
@@ -2670,8 +2672,9 @@ if (typeof module !== "undefined") module.exports = RP;
     state.start = Math.max(0, Math.round((today - state.ref) / DAY));
     aggiornaDistanze();
     calcolaIndice();
-    var keepT = state.t >= state.start && state.t < state.start + GIORNI && state._caricato;
-    if (!keepT) state.t = state.best;
+    var tScelto = msScelto == null ? null : Math.round((msScelto - state.ref) / DAY);
+    if (tScelto != null && tScelto >= state.start && tScelto < state.start + GIORNI) state.t = tScelto;
+    else { state.t = state.best; state.tScelto = false; } // senza una tua scelta vale il giorno migliore dei dati nuovi
     state._caricato = true;
     initFiltri();
     renderFonte();
@@ -2808,13 +2811,13 @@ if (typeof module !== "undefined") module.exports = RP;
       b.appendChild(el("span", "dn num", String(new Date(ms).getUTCDate())));
       var bar = el("span", "bar"); var i = el("i"); i.style.height = Math.max(6, state.index[k] / max * 100) + "%"; bar.appendChild(i); b.appendChild(bar);
       b.appendChild(el("span", "pr", pr != null && pr >= 0.5 ? (pr < 1 ? "<1" : nf(pr)) + " mm" : ""));
-      b.addEventListener("click", function () { state.t = +this.dataset.t; updateStrip(); renderScheda(); renderAll(); });
+      b.addEventListener("click", function () { state.t = +this.dataset.t; state.tScelto = true; updateStrip(); renderScheda(); renderAll(); });
       strip.appendChild(b);
     }
     var bt = document.getElementById("best-tag"); bt.innerHTML = "";
     bt.appendChild(document.createTextNode("Giorno migliore stimato: "));
     var go = el("button", null, fmtShort.format(state.ref + state.best * DAY)); go.type = "button";
-    go.addEventListener("click", function () { state.t = state.best; updateStrip(); renderScheda(); renderAll(); });
+    go.addEventListener("click", function () { state.t = state.best; state.tScelto = false; updateStrip(); renderScheda(); renderAll(); });
     bt.appendChild(go);
     var nota = "L'altezza della barra indica quanto sono buone, quel giorno, le cinque zone migliori per " + nomeSpecie() + ". ";
     if (state.oriz >= 1) nota += "Sotto, in blu, la pioggia prevista in media sulla Toscana dalle 9 di quel giorno alle 9 del giorno dopo (modelli ICON-EU ed ECMWF) fino " + pd("al", state.ref + state.oriz * DAY) + ": oltre i 4–5 giorni la previsione è più incerta e pesa meno; dopo, la stima suppone che non piova (barre più chiare).";
@@ -4677,10 +4680,8 @@ if (typeof module !== "undefined") module.exports = RP;
       var nd = d && d.misure && piuNuovo(d, seed, "letti_il"), na = a && a.umidita && piuNuovo(a, ariaSeed, "letti_il"), np = p && p.giorni && piuNuovo(p, prevSeed, "creato"), nh = h && h.pioggia && piuNuovo(h, storicoSeed, "aggiornato");
       if ((nd || na || np || nh) && state.anag) {
         if (nd) seed = d; if (na) ariaSeed = a; if (np) prevSeed = p; if (nh) storicoSeed = h;
-        var tPrima = state.t;
         load(seed, ariaSeed, prevSeed, storicoSeed);
         ricollegaMarcatori();
-        if (tPrima >= state.start && tPrima < state.start + GIORNI) { state.t = tPrima; updateStrip(); renderScheda(); }
         if (state.pos) impostaPos(state.pos, true); else renderAll();
       }
       pronto.dati = true;

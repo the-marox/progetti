@@ -1,17 +1,24 @@
-# Radar Porcini - aggiornamento automatico dei dati della versione su GitHub Pages.
+# Radar Porcini - aggiornamento automatico dei dati della versione su GitHub Pages, con avvisi via mail.
 # Va messo nel repository the-marox/progetti (ramo master) in: .github/workflows/aggiorna.yml
 # I dati si leggono e si salvano nel ramo gh-pages, cartella radar-porcini.
 # Gli orari di GitHub sono in UTC (ora solare italiana = UTC+1, ora legale = UTC+2).
+#
+# Avvisi via mail (facoltativi): servono tre segreti del repository (Settings > Secrets and variables > Actions):
+#   POSTI               il testo di «Copia i miei dati» dell'app (i posti restano privati: non finiscono sul sito)
+#   GMAIL_USER          l'indirizzo Gmail che invia e riceve la mail
+#   GMAIL_APP_PASSWORD  una password per le app di Google (16 lettere)
+# Gli avvisi si calcolano solo nel giro completo del mattino: una mail al massimo al giorno,
+# e solo se un posto diventa buono o ottimo in un giorno che non era gia' stato segnalato.
 name: Aggiorna Radar Porcini
 
 on:
   schedule:
-    - cron: "20 8 * * *"         # giro completo dopo la lettura delle 9 (ora solare)
+    - cron: "20 8 * * *"         # giro completo dopo la lettura delle 9 (ora solare), con gli avvisi
     - cron: "20 11,14,17 * * *"  # in giornata: solo misure e previsioni
   workflow_dispatch:              # pulsante "Run workflow" per lanciarlo a mano
     inputs:
       completo:
-        description: "Aggiorna anche archivio e radar"
+        description: "Aggiorna anche archivio e radar e controlla gli avvisi"
         type: boolean
         default: true
 
@@ -24,11 +31,12 @@ concurrency:
 
 env:
   APP: radar-porcini   # cartella del sito (ramo gh-pages) con aggiorna.py e i file JSON
+  SITO_URL: https://the-marox.github.io/progetti/radar-porcini/
 
 jobs:
   aggiorna:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v5
         with:
@@ -43,7 +51,17 @@ jobs:
           pip install -q numpy pillow pygrib playwright
           python -m playwright install --with-deps chromium
 
+      - name: Avvisi gia' segnalati
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/stato
+          key: avvisi-${{ github.run_id }}
+          restore-keys: avvisi-
+
       - name: Scarica e calcola
+        id: calcola
+        env:
+          POSTI: ${{ secrets.POSTI }}
         run: |
           set +e
           SITO="$GITHUB_WORKSPACE/$APP"
@@ -71,6 +89,20 @@ jobs:
             timeout 900 python3 -I aggiorna.py radar $R
           fi
 
+          # avvisi per i posti salvati: calcolati nella pagina vera dell'app, con i dati appena scaricati
+          if [ "$COMPLETO" = si ] && [ -n "$POSTI" ]; then
+            P="$RUNNER_TEMP/posti"; mkdir -p "$P"
+            printf '%s' "$POSTI" > "$P/posti.json"
+            for f in data.json aria.json previsioni.json storico.json radar.json sentieri.json; do
+              [ -f "$f" ] || { [ -f "$SITO/$f" ] && cp "$SITO/$f" .; }
+            done
+            PREC=""; [ -f "$RUNNER_TEMP/stato/avvisi.json" ] && PREC="$RUNNER_TEMP/stato/avvisi.json"
+            timeout 400 python3 -I aggiorna.py avvisi "$P/posti.json" "$SITO/index.html" $PREC
+            rm -rf "$P"
+            # avvisi.json contiene i nomi dei posti: resta qui e non va sul sito
+            [ -f avvisi.json ] && mv avvisi.json "$RUNNER_TEMP/avvisi.json" && echo "avvisi=si" >> "$GITHUB_OUTPUT"
+          fi
+
           # solo i file validi sostituiscono quelli pubblicati
           python3 -I aggiorna.py valida "$W/pubblica"
           cp "$W"/pubblica/*.json "$SITO"/ 2>/dev/null
@@ -87,3 +119,47 @@ jobs:
             git commit -m "Radar Porcini: dati del $(date -u +'%Y-%m-%d %H:%M') UTC"
             git pull --rebase -q origin gh-pages && git push origin HEAD:gh-pages
           fi
+
+      - name: Mail
+        id: mail
+        if: steps.calcola.outputs.avvisi == 'si'
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          python3 -I - <<'PY'
+          import json, os, re, smtplib, sys
+          from email.message import EmailMessage
+          tmp = os.environ["RUNNER_TEMP"]
+          a = json.load(open(os.path.join(tmp, "avvisi.json"), encoding="utf-8"))
+          print("posti controllati: %d, giorni buoni o ottimi: %d, nuovi: %d" % (len(a.get("posti") or []), len(a.get("segnalati") or {}), len(a.get("nuovi") or [])))
+          if a.get("invia"):
+              sito = os.environ["SITO_URL"]
+              testo = re.sub(r"Apri l'app: .*\nVersione da installare sul telefono: .*", "Apri l'app: " + sito, a["testo"])
+              testo = re.sub(r"Ricevi questa mail perch.*$",
+                             "Ricevi questa mail dal flusso «Aggiorna Radar Porcini» del repository the-marox/progetti. "
+                             "Per non riceverla più, cancella il segreto POSTI del repository o disattiva il flusso.", testo, flags=re.S)
+              utente, chiave = os.environ.get("GMAIL_USER", ""), os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "")
+              if not utente or not chiave:
+                  sys.exit("Mancano i segreti GMAIL_USER o GMAIL_APP_PASSWORD: mail non inviata")
+              m = EmailMessage()
+              m["From"], m["To"], m["Subject"] = utente, utente, a["oggetto"]
+              m.set_content(testo)
+              with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=60) as s:
+                  s.login(utente, chiave)
+                  s.send_message(m)
+              print("mail inviata: " + a["oggetto"])
+          else:
+              print("nessun giorno nuovo da segnalare: nessuna mail")
+          # si ricordano solo i giorni gia' segnalati (numeri dei posti e date, niente nomi):
+          # se la mail non parte non si arriva qui, e domani l'avviso viene riproposto
+          os.makedirs(os.path.join(tmp, "stato"), exist_ok=True)
+          json.dump({"segnalati": a.get("segnalati") or {}}, open(os.path.join(tmp, "stato", "avvisi.json"), "w"))
+          PY
+
+      - name: Ricorda gli avvisi
+        if: steps.mail.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/stato
+          key: avvisi-${{ github.run_id }}-${{ github.run_attempt }}

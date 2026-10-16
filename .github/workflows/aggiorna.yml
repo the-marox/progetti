@@ -1,0 +1,86 @@
+# Radar Porcini - aggiornamento automatico dei dati della versione su GitHub Pages.
+# Va messo nel repository the-marox.github.io in: .github/workflows/aggiorna.yml
+# Gli orari di GitHub sono in UTC (ora solare italiana = UTC+1, ora legale = UTC+2).
+name: Aggiorna Radar Porcini
+
+on:
+  schedule:
+    - cron: "20 8 * * *"         # giro completo dopo la lettura delle 9 (ora solare)
+    - cron: "20 11,14,17 * * *"  # in giornata: solo misure e previsioni
+  workflow_dispatch:              # pulsante "Run workflow" per lanciarlo a mano
+    inputs:
+      completo:
+        description: "Aggiorna anche archivio e radar"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: radar-porcini
+  cancel-in-progress: false
+
+env:
+  APP: progetti/radar-porcini   # cartella del sito con aggiorna.py e i file JSON
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Strumenti
+        run: |
+          pip install -q numpy pillow pygrib playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Scarica e calcola
+        run: |
+          set +e
+          SITO="$GITHUB_WORKSPACE/$APP"
+          W="$RUNNER_TEMP/lavoro"; mkdir -p "$W"; cd "$W"
+          cp "$SITO/aggiorna.py" .
+          # esito.json si aggiorna voce per voce: si parte da quello pubblicato
+          [ -f "$SITO/esito.json" ] && cp "$SITO/esito.json" .
+
+          COMPLETO=no
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            [ "${{ inputs.completo }}" = "true" ] && COMPLETO=si
+          elif [ "${{ github.event.schedule }}" = "20 8 * * *" ]; then
+            COMPLETO=si
+          fi
+
+          r=$(timeout 600 python3 -I aggiorna.py misure); echo "$r"
+          if echo "$r" | grep -q '"data": *"errore'; then
+            sleep 120; timeout 600 python3 -I aggiorna.py misure
+          fi
+          timeout 600 python3 -I aggiorna.py previsioni
+          if [ "$COMPLETO" = si ]; then
+            S=""; [ -f "$SITO/storico.json" ] && S="$SITO/storico.json"
+            R=""; [ -f "$SITO/radar.json" ] && R="$SITO/radar.json"
+            timeout 600 python3 -I aggiorna.py archivio $S
+            timeout 900 python3 -I aggiorna.py radar $R
+          fi
+
+          # solo i file validi sostituiscono quelli pubblicati
+          python3 -I aggiorna.py valida "$W/pubblica"
+          cp "$W"/pubblica/*.json "$SITO"/ 2>/dev/null
+          exit 0
+
+      - name: Pubblica
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          git add "$APP"/*.json
+          if git diff --cached --quiet; then
+            echo "Nessun dato nuovo"
+          else
+            git commit -m "Radar Porcini: dati del $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git pull --rebase -q && git push
+          fi

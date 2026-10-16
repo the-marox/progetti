@@ -1,5 +1,6 @@
 # Radar Porcini - aggiornamento automatico dei dati della versione su GitHub Pages.
-# Va messo nel repository the-marox.github.io in: .github/workflows/aggiorna.yml
+# Va messo nel repository the-marox/progetti (ramo master) in: .github/workflows/aggiorna.yml
+# I dati si leggono e si salvano nel ramo gh-pages, cartella radar-porcini.
 # Gli orari di GitHub sono in UTC (ora solare italiana = UTC+1, ora legale = UTC+2).
 name: Aggiorna Radar Porcini
 
@@ -22,16 +23,18 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP: progetti/radar-porcini   # cartella del sito con aggiorna.py e i file JSON
+  APP: radar-porcini   # cartella del sito (ramo gh-pages) con aggiorna.py e i file JSON
 
 jobs:
   aggiorna:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          ref: gh-pages
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -77,10 +80,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
-          git add "$APP"/*.json
+          git add -A -- "$APP"
           if git diff --cached --quiet; then
             echo "Nessun dato nuovo"
           else
             git commit -m "Radar Porcini: dati del $(date -u +'%Y-%m-%d %H:%M') UTC"
-            git pull --rebase -q && git push
+            git pull --rebase -q origin gh-pages && git push origin HEAD:gh-pages
           fi

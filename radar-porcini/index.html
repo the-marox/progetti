@@ -1079,6 +1079,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <button type="button" data-v="boschi" aria-pressed="false">Boschi</button>
         <button type="button" data-v="pioggia" aria-pressed="false">Pioggia</button>
         <button type="button" data-v="suolo" aria-pressed="false">Suolo</button>
+        <button type="button" data-v="versanti" aria-pressed="false">Versanti</button>
       </div>
       <button type="button" class="tog" id="f-aree" aria-pressed="false">Parchi e riserve</button>
       <button type="button" class="tog" id="f-sentieri" aria-pressed="false">Sentieri</button>
@@ -1264,7 +1265,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Specie.</b> Ogni specie ha stagione, quote, temperature, boschi e tempi propri, presi da schede regionali (Regione Piemonte, progetto Amycoforest; Parco delle Foreste Casentinesi; Regioni Emilia-Romagna e Lombardia) e, dove esistono, da studi sul campo (Amiata per il porcino comune, pinete spagnole per il sanguinello). Per molte specie mancano misure dei tempi di nascita: sono stime ragionate. Con «Porcini, tutte e quattro» ogni stazione prende la specie con la stima migliore.</li>
         <li><b>Bosco.</b> Il tipo di bosco viene dalla Carta della vegetazione forestale della Regione Toscana: 18 tipi su celle di 250 m, rilevati a fine anni '90. Quella carta ha bosco su meno di un quarto della Toscana, mentre la copertura Copernicus del 2018 ne trova circa metà: dove Copernicus vede bosco e la carta no, conta come latifoglie o conifere senza tipo; dove la carta ha bosco e nel 2018 non c'è più, non conta. Per ogni stazione conta quanta parte dei 5 km attorno è un bosco adatto alla specie; per il tuo punto conta la cella del punto e i 500 m attorno, e puoi correggere il tipo di bosco se lo conosci. Senza bosco adatto il punteggio scende fino a un quarto.</li>
         <li><b>Suolo.</b> Il pH del suolo (media dei primi 15 cm) viene da SoilGrids, una carta mondiale stimata a 250 m. Porcino nero, porcino dei pini e gallinaccio preferiscono terreni acidi, porcino comune, ovolo, colombina e verdone un poco; prugnolo e spugnola terreni calcarei; le altre specie non hanno preferenze. Il peso è leggero (fino a un quarto in meno), perché la carta è solo una stima.</li>
-        <li><b>Versante.</b> Il solatio è trattato come 1,5 °C più caldo e si asciuga circa il 40% più in fretta; il bacìo come 1,5 °C più fresco e più umido. Così col caldo vince il bacìo, col fresco il solatio.</li>
+        <li><b>Versante.</b> Il solatio è trattato come 1,5 °C più caldo e si asciuga circa il 40% più in fretta; il bacìo come 1,5 °C più fresco e più umido. Così col caldo vince il bacìo, col fresco il solatio. L'esposizione del punto viene dal modello del terreno (media su circa 650 m): solatio se il versante guarda verso sud, bacìo se guarda verso nord, intermedio se guarda a est o a ovest o è quasi in piano. Lo sfondo «Versanti» della mappa la mostra ovunque.</li>
         <li><b>Umidità, vento e nebbie.</b> Per oggi si usa la stazione più vicina e a quota simile, per i giorni coperti dalle previsioni i valori previsti. Umidità media sotto il 55–60% e vento forte abbassano il punteggio, tanto più quanti più giorni sono passati dalla pioggia. Tramontana, grecale e maestrale sono secchi e asciugano già da 10 km/h; libeccio e scirocco portano aria umida. Notti con umidità massima sopra il 97–98% (nebbia o rugiada forte) rallentano l'asciugatura. In tutto il vento pesa poco, perché sotto la chioma è molto più debole.</li>
         <li><b>Quota e temperatura.</b> Ogni specie ha una fascia di quota e di temperatura media ideale; gelo e caldo eccessivo abbassano il punteggio. Le temperature previste sono riportate alla quota della stazione (0,65 °C ogni 100 m) e le minime corrette con quelle misurate, perché nei fondovalle il modello le dà spesso troppo alte.</li>
         <li><b>Il tuo punto.</b> La pioggia passata viene dal radar; se manca, è la media pesata delle 2–4 stazioni più vicine entro 25 km. La temperatura viene dai termometri vicini riportata alla quota del punto, le previsioni sono quelle della cella del modello. Quota, pendenza ed esposizione vengono da un modello del terreno con pixel di circa 220 m (Terrain Tiles, da SRTM ed EU-DEM). Il tasto «Dove sono» usa la posizione del telefono: dentro Claude il browser può non permetterlo, nella versione installata funziona.</li>
@@ -3817,10 +3818,10 @@ if (typeof module !== "undefined") module.exports = RP;
   }
   function disegnaSfondo() {
     if (!mappa) return;
-    var conStrato = (state.sfondo === "boschi" && BOSCO) || (state.sfondo === "suolo" && SUOLO) || (state.sfondo === "pioggia" && RADAR);
+    var conStrato = (state.sfondo === "boschi" && BOSCO) || (state.sfondo === "suolo" && SUOLO) || (state.sfondo === "pioggia" && RADAR) || (state.sfondo === "versanti" && DEM);
     mappa.getContainer().classList.toggle("boschi-on", !!conStrato);
     if (!conStrato) { if (boschiLayer) { mappa.removeLayer(boschiLayer); boschiLayer = null; } return; }
-    if (state.sfondo === "boschi") disegnaBoschi(); else if (state.sfondo === "suolo") disegnaSuolo(); else disegnaPioggia();
+    if (state.sfondo === "boschi") disegnaBoschi(); else if (state.sfondo === "suolo") disegnaSuolo(); else if (state.sfondo === "versanti") disegnaVersanti(); else disegnaPioggia();
   }
   function disegnaBoschi() {
     if (!mappa || state.sfondo !== "boschi" || !BOSCO) { disegnaSfondo0(); return; }
@@ -3851,6 +3852,45 @@ if (typeof module !== "undefined") module.exports = RP;
     for (var i = 0, o = 0; i < V.length; i++, o += 4) { if (!V[i]) continue; var L3 = lut[V[i]]; out[o] = L3[0]; out[o + 1] = L3[1]; out[o + 2] = L3[2]; out[o + 3] = 145; }
     ctx.putImageData(im, 0, 0);
     sovrapponi(c, "boschi", boschiLayer, boschiURL, "img-boschi", function (layer, url) { boschiLayer = layer; boschiURL = url; }, confini(m));
+  }
+  // esposizione dei versanti dal modello del terreno, con lo stesso calcolo della scheda del punto: gradiente di Horn mediato
+  // su 3 x 3 pixel e soleggiamento da -100 (nord ripido) a +100 (sud ripido); 0 dove è quasi in piano
+  var ESPOSIZIONE = null, COL_SOLATIO = [232, 118, 36], COL_BACIO = [46, 108, 204];
+  function esposizione() {
+    if (ESPOSIZIONE || !DEM) return ESPOSIZIONE;
+    var m = DEM.m, w = m.w, h = m.h, E = DEM.E, GX = new Float32Array(w * h), GY = new Float32Array(w * h), S = new Int8Array(w * h), x, y, i;
+    for (y = 1; y < h - 1; y++) {
+      var cell8 = 8 * 40075016.7 * Math.cos(y2lat(m.y0 + y + 0.5) * Math.PI / 180) / NPX;
+      for (x = 1; x < w - 1; x++) {
+        i = y * w + x;
+        GX[i] = ((E[i - w + 1] + 2 * E[i + 1] + E[i + w + 1]) - (E[i - w - 1] + 2 * E[i - 1] + E[i + w - 1])) / cell8;
+        GY[i] = ((E[i + w - 1] + 2 * E[i + w] + E[i + w + 1]) - (E[i - w - 1] + 2 * E[i - w] + E[i - w + 1])) / cell8;
+      }
+    }
+    for (y = 2; y < h - 2; y++) for (x = 2; x < w - 2; x++) {
+      i = y * w + x;
+      if (DEM.v[i] === 0) continue;
+      var gx = 0, gy = 0;
+      for (var dy = -w; dy <= w; dy += w) for (var dx = -1; dx <= 1; dx++) { gx += GX[i + dy + dx]; gy += GY[i + dy + dx]; }
+      var dzde = gx / 9, dzdn = -gy / 9, pend = Math.atan(Math.sqrt(dzde * dzde + dzdn * dzdn)) * 180 / Math.PI;
+      if (pend < 4) continue;
+      var sol = -Math.cos(Math.atan2(-dzde, -dzdn)) * Math.min(1, pend / 15) * 100; // soglie come in versanteDaTerreno: oltre 30 solatio, sotto -30 bacìo
+      S[i] = sol > 30 ? Math.max(31, Math.round(sol)) : sol < -30 ? Math.min(-31, Math.round(sol)) : clamp(Math.round(sol), -30, 30);
+    }
+    return (ESPOSIZIONE = S);
+  }
+  // solatio arancio, bacìo blu, più intensi dove il versante è più ripido e guarda più dritto a sud o a nord
+  function disegnaVersanti() {
+    var S = esposizione(), m = DEM.m, c = document.createElement("canvas"); c.width = m.w; c.height = m.h;
+    var ctx = c.getContext && c.getContext("2d"); if (!ctx || !S) return;
+    var im = ctx.createImageData(m.w, m.h), out = im.data;
+    for (var i = 0, o = 0; i < S.length; i++, o += 4) {
+      var v = S[i]; if (v > -31 && v < 31) continue;
+      var col = v > 0 ? COL_SOLATIO : COL_BACIO;
+      out[o] = col[0]; out[o + 1] = col[1]; out[o + 2] = col[2]; out[o + 3] = Math.round(80 + 110 * Math.min(1, (Math.abs(v) - 30) / 50));
+    }
+    ctx.putImageData(im, 0, 0);
+    sovrapponi(c, "boschi", boschiLayer, boschiURL, "img-versanti", function (layer, url) { boschiLayer = layer; boschiURL = url; });
   }
   // pioggia degli ultimi giorni dal radar, ridisegnata in proiezione di Mercatore riga per riga
   var PIOGGIA_STOP = [[1, [198, 219, 239]], [5, [158, 202, 225]], [15, [107, 174, 214]], [30, [66, 146, 198]], [60, [33, 113, 181]], [100, [8, 81, 156]], [200, [8, 48, 107]]];
@@ -3901,6 +3941,12 @@ if (typeof module !== "undefined") module.exports = RP;
         var sp = el("span"), i = el("i"), c3 = colorePH(x[0]); i.style.background = "rgb(" + c3.join(",") + ")"; sp.appendChild(i); sp.appendChild(document.createTextNode(x[1])); box.appendChild(sp);
       });
       box.appendChild(el("span", "nota", "pH del suolo stimato da SoilGrids (ISRIC), media dei primi 15 cm, pixel di circa 450 m: indicativo, il suolo cambia anche in pochi metri. " + cap(nomeSpecie()) + ": " + (function () { var s0 = RP.SP[idsSpecie()[0]].suolo; return s0 === "acido" ? "preferisce terreni acidi." : s0 === "subacido" ? "preferisce un poco i terreni acidi." : s0 === "calcareo" ? "preferisce terreni calcarei." : "nessuna preferenza."; })()));
+    } else if (state.sfondo === "versanti") {
+      if (!DEM) { box.appendChild(el("span", "nota", "Modello del terreno non ancora caricato.")); return; }
+      [[COL_SOLATIO, "Solatio: guarda a sud, più caldo e asciutto"], [COL_BACIO, "Bacìo: guarda a nord, più fresco e umido"]].forEach(function (x) {
+        var sp = el("span"), i = el("i"); i.style.background = "rgb(" + x[0].join(",") + ")"; sp.appendChild(i); sp.appendChild(document.createTextNode(x[1])); box.appendChild(sp);
+      });
+      box.appendChild(el("span", "nota", "Senza colore: versanti che guardano a est o a ovest, o quasi in piano. Colore pieno dove il versante è ripido e guarda dritto a sud o a nord. Esposizione dal modello del terreno, media su circa 650 m, la stessa della scheda del punto: un versante piccolo, come una valletta, può non vedersi. Tocca un punto per leggerla nella scheda."));
     } else {
       if (!RADAR) { box.appendChild(el("span", "nota", "Dati radar non disponibili.")); return; }
       var seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Giorni di pioggia sulla mappa");
@@ -4875,7 +4921,7 @@ if (typeof module !== "undefined") module.exports = RP;
   var gaz = leggi("geo-luoghi");
   try { var v0 = localStorage.getItem(LS_VERS); if (v0 === "solatio" || v0 === "bacio") { state.versante = v0; setPressed("#f-vers", v0); } } catch (e) {}
   try { var s0 = localStorage.getItem(LS_SPECIE); if (s0 && (s0 === "porcini" || RP.SP[s0])) state.specie = s0; } catch (e) {}
-  try { var f0 = localStorage.getItem(LS_SFONDO); if (f0 === "boschi" || f0 === "suolo" || f0 === "pioggia") { state.sfondo = f0; setPressed("#f-sfondo", f0); } } catch (e) {}
+  try { var f0 = localStorage.getItem(LS_SFONDO); if (f0 === "boschi" || f0 === "suolo" || f0 === "pioggia" || f0 === "versanti") { state.sfondo = f0; setPressed("#f-sfondo", f0); } } catch (e) {}
   try { if (localStorage.getItem(LS_AREE) === "1") { state.aree = true; document.getElementById("f-aree").setAttribute("aria-pressed", "true"); } } catch (e) {}
   try { if (localStorage.getItem(LS_SENT) === "1") { state.sentieri = true; document.getElementById("f-sentieri").setAttribute("aria-pressed", "true"); } } catch (e) {}
   try { if (localStorage.getItem(LS_TOPO) === "1") { state.topo = true; document.getElementById("f-topo").setAttribute("aria-pressed", "true"); } } catch (e) {}

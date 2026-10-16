@@ -965,6 +965,17 @@ section > *, .filtri > * { min-width: 0; }
 .mini i { display: block; flex: 1; height: 7px; border-radius: 2px; }
 .mini i.sel { outline: 2px solid var(--cap); outline-offset: 1px; }
 .posti-altri { justify-self: start; }
+/* sezioni che si aprono e si chiudono; chiuse diventano una riga come «Regole» e «Come funziona» */
+.sez-testa { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
+.sez-testa h2 { flex: 1 1 auto; min-width: 0; }
+.sez-tog { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 99px; padding: 6px 12px; min-height: 36px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.sez-tog::after { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(2px) rotate(-135deg); }
+.sez-tog[aria-expanded="false"]::after { transform: translateY(-2px) rotate(45deg); }
+.sez-corpo { display: grid; gap: 12px; }
+.sez-corpo > * { min-width: 0; }
+section.chiusa .sez-testa { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px 8px 16px; }
+section.chiusa .sez-testa h2 { font-size: 1.1rem; }
+.col > .chiusa + .chiusa, .col > .chiusa + .metodo, .col > .metodo + .metodo { margin-top: -16px; }
 .posto-form input[type="text"] { flex: 1 1 200px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-height: 42px; color: var(--ink); min-width: 0; }
 .regole-giorno { display: grid; gap: 6px; }
 details.sposta { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 2px 14px; }
@@ -1086,7 +1097,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
  </div>
 
  <div class="col col-b">
-  <section aria-labelledby="h-posti" id="sez-posti">
+  <section aria-labelledby="h-posti" id="sez-posti" data-chiudibile>
     <h2 id="h-posti">I miei posti</h2>
     <p class="muted" id="posti-intro">Salva i boschi dove vai, dalla scheda del punto: qui vedi per ognuno il punteggio dei prossimi giorni. Li vedi solo tu.</p>
     <p class="note" id="posti-stato">I posti si stanno caricando…</p>
@@ -1110,14 +1121,14 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     </details>
   </section>
 
-  <section class="verdetto" aria-labelledby="h-verdetto">
+  <section class="verdetto" aria-labelledby="h-verdetto" id="sez-zone" data-chiudibile>
     <h2 id="h-verdetto">–</h2>
     <p class="frase" id="frase"></p>
     <ol class="zone" id="zone"></ol>
     <button class="linkbtn" id="zone-more" type="button" hidden>Mostra tutte le zone</button>
   </section>
 
-  <section aria-labelledby="h-stazioni" id="sez-stazioni">
+  <section aria-labelledby="h-stazioni" id="sez-stazioni" data-chiudibile>
     <h2 id="h-stazioni">Stazioni</h2>
     <div class="filtri">
       <div class="row-f">
@@ -1144,7 +1155,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <button class="linkbtn" id="more" type="button" hidden>Mostra altre stazioni</button>
   </section>
 
-  <section aria-labelledby="h-diario" id="sez-diario">
+  <section aria-labelledby="h-diario" id="sez-diario" data-chiudibile>
     <h2 id="h-diario">Diario delle uscite</h2>
     <p class="muted" id="diario-intro">Segna dove sei andato e cosa hai trovato: dalla decima uscita l'app calcola quanto spesso, a ogni punteggio, hai trovato funghi. Le uscite le vedi solo tu, anche se condividi l'app.</p>
     <div class="calc diario">
@@ -1179,7 +1190,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     </div>
   </section>
 
-  <section aria-labelledby="h-calc">
+  <section aria-labelledby="h-calc" id="sez-calc" data-chiudibile>
     <h2 id="h-calc">Calcola con i tuoi dati</h2>
     <p class="muted" id="calc-intro">Dopo una pioggia nuova, o con un pluviometro tuo: inserisci i millimetri e il giorno.</p>
     <div class="calc">
@@ -1215,7 +1226,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
   <details class="metodo">
     <summary>Come funziona la stima</summary>
     <div class="body">
-      <p>Dati usati: le stazioni del Centro Funzionale della Regione Toscana (pioggia da 376 pluviometri, temperature minime e massime, umidità da circa 200 stazioni, vento da circa 145; dati in tempo reale, non validati) e il loro archivio, la pioggia stimata dal radar della Protezione Civile, le previsioni dei modelli ICON-EU del servizio meteorologico tedesco (DWD) ed ECMWF del Centro europeo per 10 giorni, la carta dei boschi della Regione Toscana aggiornata con Copernicus, la carta del suolo SoilGrids e un modello digitale del terreno. L'aggiornamento parte ogni giorno alle 9:16 ora solare (10:16 con l'ora legale), subito dopo la lettura delle 9 del CFR.</p>
+      <p>Dati usati: le stazioni del Centro Funzionale della Regione Toscana (pioggia da 376 pluviometri, temperature minime e massime, umidità da circa 200 stazioni, vento da circa 145; dati in tempo reale, non validati) e il loro archivio, la pioggia stimata dal radar della Protezione Civile, le previsioni dei modelli ICON-EU del servizio meteorologico tedesco (DWD) ed ECMWF del Centro europeo per 10 giorni, la carta dei boschi della Regione Toscana aggiornata con Copernicus, la carta del suolo SoilGrids e un modello digitale del terreno. L'aggiornamento completo parte ogni giorno alle 9:20 ora solare (10:20 con l'ora legale), subito dopo la lettura delle 9 del CFR; misure e previsioni si aggiornano anche alle 12:20, 15:20 e 18:20.</p>
       <ul>
         <li><b>Pioggia caduta e prevista.</b> Si cercano gli eventi di pioggia degli ultimi 15 giorni e quelli previsti; per ogni giorno conta l'evento che dà la stima migliore. Sotto una soglia (10–15 mm secondo la specie) un evento non conta; poi il peso cresce con rendimento decrescente. La pioggia prevista pesa per intero fino a domani, poi sempre meno (90% dopodomani, poi 80, 70, 60%, fino al 35% al decimo giorno), perché più è lontana più è incerta. Una pioggia prevista rimette anche a zero i giorni senza pioggia.</li>
         <li><b>Previsioni.</b> Per i primi 4 giorni il modello ICON-EU (celle di circa 5×7 km), poi fino al decimo giorno il modello IFS del Centro europeo ECMWF (celle di circa 20×28 km), meno dettagliato. Oltre il decimo giorno la stima suppone che non piova. Nella tabella delle previsioni c'è anche la probabilità di superare 10 e 20 mm: quante delle 51 previsioni dell'insieme ECMWF li superano, su 24 ore dalle 13 alle 13. Quando la previsione singola dice pioggia e la probabilità è bassa, è meglio non contarci.</li>
@@ -1233,7 +1244,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Parchi e riserve.</b> I confini di parchi nazionali, regionali e provinciali e delle riserve naturali regionali vengono dalla Regione Toscana, semplificati a circa 60 m: vicino al confine controlla sulla cartografia del parco.</li>
         <li><b>Regole del giorno.</b> Per il giorno scelto la scheda del punto dà l'orario di raccolta (da un'ora prima dell'alba a un'ora dopo il tramonto, calcolati per il punto), i limiti del comune presi dall'elenco della Regione e i giorni di caccia al cinghiale in braccata del calendario venatorio regionale.</li>
         <li><b>Sentieri e mappa.</b> I sentieri sono quelli della Rete escursionistica toscana nel catasto del Club Alpino Italiano (dati OpenStreetMap), semplificati a circa 12 m: tocca un sentiero per numero, difficoltà e percorribilità. Dove il browser lo permette c'è anche la mappa topografica con strade e curve di livello (OpenTopoMap); dentro Claude può non caricarsi.</li>
-        <li><b>I miei posti e avvisi.</b> I posti salvati nella versione dentro Claude restano nel database privato dell'app; quelli della versione installata restano nel telefono. Ogni mattina l'aggiornamento calcola il punteggio dei posti salvati dentro Claude per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
+        <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono; quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
         <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
@@ -2602,7 +2613,36 @@ if (typeof module !== "undefined") module.exports = RP;
   function livello(score) { return score >= 65 ? 4 : score >= 45 ? 3 : score >= 25 ? 2 : score >= 10 ? 1 : 0; }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function reduceMotion() { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return true; } }
-  function vaiA(id) { var n = document.getElementById(id); if (n && n.scrollIntoView) n.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" }); }
+  function vaiA(id) {
+    var n = document.getElementById(id), sez = n && n.closest && n.closest("section[data-chiudibile]");
+    if (sez && sez.classList.contains("chiusa")) mostraSezione(sez, true, false);
+    if (n && n.scrollIntoView) n.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
+  }
+  // sezioni apribili: si ricorda quali hai chiuso; stazioni, diario e calcolatore partono chiuse
+  var LS_SEZ = "radar-porcini-sezioni", SEZ_CHIUSE = { "sez-stazioni": 1, "sez-diario": 1, "sez-calc": 1 };
+  function statoSezioni() { try { return JSON.parse(localStorage.getItem(LS_SEZ) || "null") || {}; } catch (e) { return {}; } }
+  function mostraSezione(sez, aperta, ricorda) {
+    var b = sez.querySelector(".sez-tog"), c = sez.querySelector(".sez-corpo");
+    if (!b || !c) return;
+    c.hidden = !aperta; sez.classList.toggle("chiusa", !aperta);
+    b.setAttribute("aria-expanded", String(aperta)); b.textContent = aperta ? "Nascondi" : "Mostra";
+    if (ricorda) { var st = statoSezioni(); st[sez.id] = aperta ? 1 : 0; try { localStorage.setItem(LS_SEZ, JSON.stringify(st)); } catch (e) {} }
+  }
+  (function preparaSezioni() {
+    var salvato = statoSezioni();
+    [].forEach.call(document.querySelectorAll("section[data-chiudibile]"), function (sez) {
+      var h = sez.querySelector("h2"); if (!h) return;
+      var testa = document.createElement("div"), corpo = document.createElement("div"), b = document.createElement("button");
+      testa.className = "sez-testa"; corpo.className = "sez-corpo"; corpo.id = sez.id + "-corpo";
+      sez.insertBefore(testa, h); testa.appendChild(h);
+      while (testa.nextSibling) corpo.appendChild(testa.nextSibling);
+      sez.appendChild(corpo);
+      b.type = "button"; b.className = "sez-tog"; b.setAttribute("aria-controls", corpo.id); b.setAttribute("aria-describedby", h.id);
+      testa.appendChild(b);
+      testa.addEventListener("click", function () { mostraSezione(sez, corpo.hidden, true); });
+      mostraSezione(sez, sez.id in salvato ? !!salvato[sez.id] : !SEZ_CHIUSE[sez.id], false);
+    });
+  })();
   function setPressed(groupSel, val) { [].forEach.call(document.querySelectorAll(groupSel + " button"), function (x) { x.setAttribute("aria-pressed", String(x.dataset.v === String(val))); }); }
   function sigla(dir) { return dir == null ? "" : ["N", "NE", "E", "SE", "S", "SO", "O", "NO"][Math.round(dir / 45) % 8]; }
 

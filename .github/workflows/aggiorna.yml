@@ -7,14 +7,15 @@
 #   POSTI               il testo di «Copia i miei dati» dell'app (i posti restano privati: non finiscono sul sito)
 #   GMAIL_USER          l'indirizzo Gmail che invia e riceve la mail
 #   GMAIL_APP_PASSWORD  una password per le app di Google (16 lettere)
-# Gli avvisi si calcolano solo nel giro completo del mattino: una mail al massimo al giorno,
-# e solo se un posto diventa buono o ottimo in un giorno che non era gia' stato segnalato.
+# Gli avvisi si calcolano solo nel giro completo del mattino (se GitHub lo salta, lo recupera il giro dopo):
+# una mail al massimo al giorno, e solo se un posto diventa buono o ottimo in un giorno che non era gia' stato segnalato.
+# Il registro delle esecuzioni di un repository pubblico lo vede chiunque: non vi si scrivono mai nomi o coordinate dei posti.
 name: Aggiorna Radar Porcini
 
 on:
   schedule:
     - cron: "20 8 * * *"         # giro completo dopo la lettura delle 9 (ora solare), con gli avvisi
-    - cron: "20 11,14,17 * * *"  # in giornata: solo misure e previsioni
+    - cron: "20 11,14,17 * * *"  # in giornata: solo misure e previsioni (completo se quello del mattino e' saltato)
   workflow_dispatch:              # pulsante "Run workflow" per lanciarlo a mano
     inputs:
       completo:
@@ -75,6 +76,13 @@ jobs:
             [ "${{ inputs.completo }}" = "true" ] && COMPLETO=si
           elif [ "${{ github.event.schedule }}" = "20 8 * * *" ]; then
             COMPLETO=si
+          else
+            # GitHub a volte ritarda o salta gli orari programmati: se oggi il giro completo non c'e' stato, lo fa questo
+            ULTIMO=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["archivio"]["quando"][:10])' "$SITO/esito.json" 2>/dev/null)
+            if [ "$ULTIMO" != "$(date -u +%F)" ]; then
+              COMPLETO=si
+              echo "Oggi il giro completo non c'e' stato (ultimo: ${ULTIMO:-mai}): lo faccio adesso"
+            fi
           fi
 
           r=$(timeout 600 python3 -I aggiorna.py misure); echo "$r"
@@ -254,7 +262,8 @@ jobs:
               with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=60) as s:
                   s.login(utente, chiave)
                   s.send_message(m)
-              print("mail inviata: " + a["oggetto"])
+              # niente oggetto nel registro: in un repository pubblico lo legge chiunque, e contiene il nome di un posto
+              print("mail inviata")
           else:
               print("nessun giorno nuovo da segnalare: nessuna mail")
           # si ricordano solo i giorni gia' segnalati (numeri dei posti e date, niente nomi):

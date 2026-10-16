@@ -703,7 +703,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
-.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; display: grid; gap: 28px; }
+.wrap { margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; display: grid; gap: 28px; }
 .wrap > * { min-width: 0; }
 h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
 h1 { font-size: clamp(2.1rem, 7vw, 3rem); font-weight: 800; line-height: 1; }
@@ -727,7 +727,7 @@ header.top { display: grid; gap: 10px; }
 /* scelta del giorno e del versante */
 .giorni-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .strip { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 8px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
-.chip-day { flex: 0 0 auto; width: 54px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 6px 0 8px; display: grid; justify-items: center; gap: 2px; cursor: pointer; scroll-snap-align: start; }
+.chip-day { flex: 1 0 46px; max-width: 96px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 6px 0 8px; display: grid; justify-items: center; gap: 2px; cursor: pointer; scroll-snap-align: start; }
 .chip-day .wd { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .chip-day .dn { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; line-height: 1.1; }
 .chip-day .bar { width: 22px; height: 30px; display: flex; align-items: flex-end; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
@@ -743,8 +743,8 @@ header.top { display: grid; gap: 10px; }
 .versante { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .versante .lab { font-weight: 700; }
 
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); max-width: 100%; }
-.seg button { border: 0; background: none; padding: 8px 12px; cursor: pointer; min-height: 40px; white-space: nowrap; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); max-width: 100%; }
+.seg button { flex: 1 1 auto; border: 0; background: none; padding: 8px clamp(6px, 1.6vw, 12px); cursor: pointer; min-height: 40px; white-space: nowrap; } /* sul telefono i pulsanti stringono e, se non stanno in una riga, vanno a capo riempiendo la riga */
 .seg button[aria-pressed="true"] { background: var(--moss); color: var(--moss-ink); font-weight: 700; }
 .row-f { display: flex; gap: 8px; flex-wrap: wrap; }
 .row-f > * { min-width: 0; }
@@ -882,6 +882,8 @@ footer { font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
 .prev-tab td { padding: 4px 6px 4px 0; border-top: 1px solid var(--line); white-space: nowrap; }
 .prev-tab td:first-child { white-space: normal; }
 .prev-wrap { overflow-x: auto; }
+.prev-tab th .u { text-transform: none; letter-spacing: 0; font-weight: 400; } /* le unità stanno nell'intestazione: la tabella entra anche nello schermo del telefono */
+@media (max-width: 480px) { .prev-tab { font-size: 0.82rem; } .prev-tab th { font-size: 0.66rem; letter-spacing: 0.03em; } .prev-tab th, .prev-tab td { padding-right: 4px; } }
 .det > *, .lista > * { min-width: 0; } /* la tabella delle previsioni scorre nel suo riquadro invece di allargare la pagina */
 
 /* boschi sulla mappa */
@@ -1001,11 +1003,11 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
 #installa { justify-self: start; }
 .calc form > *, .calc label { min-width: 0; }
 .calc label select { width: 100%; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
-/* schermi larghi: due colonne, a sinistra giorni, mappa e punto; a destra posti, zone, stazioni e il resto */
+/* la pagina usa tutta la larghezza dello schermo; da 960 px due colonne: a sinistra giorni, mappa e punto; a destra posti, zone, stazioni e il resto */
 .col { display: grid; gap: 28px; align-content: start; min-width: 0; }
 .col > * { min-width: 0; }
-@media (min-width: 1100px) {
-  .wrap { max-width: 1480px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); column-gap: 44px; align-items: start; }
+@media (min-width: 960px) {
+  .wrap { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); column-gap: clamp(28px, 3vw, 64px); align-items: start; padding-left: max(clamp(16px, 2vw, 40px), env(safe-area-inset-left, 0px)); padding-right: max(clamp(16px, 2vw, 40px), env(safe-area-inset-right, 0px)); }
   #mappa { height: clamp(440px, 70vh, 780px); }
 }
 /* foto del diario */
@@ -4118,7 +4120,9 @@ if (typeof module !== "undefined") module.exports = RP;
     if (!giorni.length) return null;
     var tb = el("table", "prev-tab"), th = el("thead"), tr = el("tr");
     var conProb = giorni.some(function (d) { return d.p10 != null; });
-    ["Giorno", "Pioggia 9–9"].concat(conProb ? ["Prob. ≥10 / ≥20 mm"] : [], ["Temperatura", "Umidità", "Vento"]).forEach(function (h) { tr.appendChild(el("th", null, h)); });
+    [["Giorno"], ["Pioggia 9–9", "mm"]].concat(conProb ? [["Prob. ≥10 / ≥20", "mm, %"]] : [], [["Temp.", "°C"], ["Umidità", "%"], ["Vento", "km/h"]]).forEach(function (h) {
+      var c = el("th", null, h[0]); if (h[1]) { c.appendChild(document.createTextNode(" ")); c.appendChild(el("span", "u", h[1])); } tr.appendChild(c);
+    });
     th.appendChild(tr); tb.appendChild(th);
     var body = el("tbody");
     var ecVisto = false;
@@ -4131,11 +4135,11 @@ if (typeof module !== "undefined") module.exports = RP;
       }
       var r = el("tr", d.modello === "ECMWF" ? "ec" : null);
       r.appendChild(el("td", null, d.t === 0 && state.start === 0 ? (d.resto ? "oggi, dopo la lettura" : "oggi") : fmtWd.format(ms).replace(".", "") + " " + new Date(ms).getUTCDate()));
-      r.appendChild(el("td", "num", d.mm < 0.2 ? "–" : nf(d.mm, d.mm < 10 ? 1 : 0) + " mm"));
-      if (conProb) r.appendChild(el("td", "num" + (d.p10 != null && d.p10 >= 50 ? " probalta" : ""), d.p10 == null ? "–" : nf(d.p10) + "% / " + nf(d.p20) + "%"));
-      r.appendChild(el("td", "num", d.tmin == null ? "–" : nf(d.tmin) + "–" + nf(d.tmax) + " °C"));
-      r.appendChild(el("td", "num", d.urMin == null ? "–" : nf(d.urMin) + "–" + nf(d.urMax) + "%"));
-      r.appendChild(el("td", "num", d.vento == null ? "–" : nf(d.vento) + " km/h " + sigla(d.dir)));
+      r.appendChild(el("td", "num", d.mm < 0.2 ? "–" : nf(d.mm, d.mm < 10 ? 1 : 0)));
+      if (conProb) r.appendChild(el("td", "num" + (d.p10 != null && d.p10 >= 50 ? " probalta" : ""), d.p10 == null ? "–" : nf(d.p10) + " / " + nf(d.p20)));
+      r.appendChild(el("td", "num", d.tmin == null ? "–" : nf(d.tmin) + "–" + nf(d.tmax)));
+      r.appendChild(el("td", "num", d.urMin == null ? "–" : nf(d.urMin) + "–" + nf(d.urMax)));
+      r.appendChild(el("td", "num", d.vento == null ? "–" : nf(d.vento) + " " + sigla(d.dir)));
       body.appendChild(r);
     });
     tb.appendChild(body);

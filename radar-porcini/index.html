@@ -985,6 +985,14 @@ details.sposta summary { cursor: pointer; padding: 10px 0; font-weight: 700; col
 path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke-width: 3; cursor: pointer; }
 .legenda .kq { background: var(--surface); border: 3px solid var(--cap); box-sizing: border-box; }
 .legenda .ks { width: 18px; height: 0; border-radius: 0; border: 0; border-top: 2.5px dashed var(--trail); vertical-align: middle; }
+/* possibili fungaie */
+.fung-ctl { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.fung-ctl .lab { font-weight: 700; }
+.fungaie .fw { grid-column: 2 / 4; font-size: 0.84rem; color: var(--warn-ink); background: var(--warn-bg); border-radius: 8px; padding: 3px 8px; justify-self: start; }
+.m-fung { display: grid; place-items: center; }
+.m-fung span { display: grid; place-items: center; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 2.5px solid var(--cap); font-family: var(--font-display); font-weight: 800; font-size: 0; line-height: 1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); cursor: pointer; }
+.z-vicino .m-fung span { width: 26px; height: 26px; font-size: 12px; } /* il numero si legge da vicino: da lontano i punti si sovrappongono */
+.legenda .kf { background: var(--s3); border: 2.5px solid var(--cap); box-sizing: border-box; }
 #mappa.topo-on .leaflet-rilievo-pane { display: none; }
 #mappa.topo-on path.m-comune { fill-opacity: 0; stroke-opacity: 0.35; }
 #mappa.topo-on .m-lab { display: none !important; }
@@ -1077,7 +1085,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     </div>
     <div id="mappa" role="application" aria-label="Mappa della Toscana con le stazioni CFR"></div>
     <div class="legenda" aria-hidden="true">
-      <span><i class="k4"></i>Ottimo</span><span><i class="k3"></i>Buono</span><span><i class="k2"></i>Discreto</span><span><i class="k1"></i>Scarso</span><span><i class="k0"></i>Quasi nullo</span><span><i class="kp"></i>Il tuo punto</span><span><i class="ka"></i>Parchi e riserve</span><span><i class="ks"></i>Sentieri CAI</span><span><i class="kq"></i>I miei posti</span>
+      <span><i class="k4"></i>Ottimo</span><span><i class="k3"></i>Buono</span><span><i class="k2"></i>Discreto</span><span><i class="k1"></i>Scarso</span><span><i class="k0"></i>Quasi nullo</span><span><i class="kp"></i>Il tuo punto</span><span><i class="ka"></i>Parchi e riserve</span><span><i class="ks"></i>Sentieri CAI</span><span><i class="kq"></i>I miei posti</span><span><i class="kf"></i>Possibili fungaie</span>
     </div>
     <p class="note" id="sentieri-msg" hidden></p>
     <div class="leg-boschi" id="leg-boschi" hidden></div>
@@ -1119,6 +1127,24 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <p class="note" id="sposta-msg" role="status"></p>
       </div>
     </details>
+  </section>
+
+  <section aria-labelledby="h-fungaie" id="sez-fungaie" data-chiudibile>
+    <h2 id="h-fungaie">Possibili fungaie</h2>
+    <p class="muted">Boschi adatti alla specie a meno di 400 m da un sentiero CAI, attorno al tuo punto. Contano il tipo di bosco, la quota, il suolo, l'esposizione e il tempo del giorno scelto. Sono boschi adatti, non fungaie note: servono a scegliere dove guardare.</p>
+    <div class="fung-ctl">
+      <span class="lab" id="lab-fung">Entro</span>
+      <div class="seg" role="group" aria-labelledby="lab-fung" id="f-fung-raggio">
+        <button type="button" data-v="5" aria-pressed="false">5 km</button>
+        <button type="button" data-v="10" aria-pressed="true">10 km</button>
+        <button type="button" data-v="20" aria-pressed="false">20 km</button>
+      </div>
+    </div>
+    <p class="note" id="fung-stato" role="status"></p>
+    <p class="warn" id="fung-aree" hidden></p>
+    <ol class="zone fungaie" id="fung-lista"></ol>
+    <button class="linkbtn" type="button" id="fung-altre" hidden></button>
+    <p class="note" id="fung-posti" hidden></p>
   </section>
 
   <section class="verdetto" aria-labelledby="h-verdetto" id="sez-zone" data-chiudibile>
@@ -1244,6 +1270,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Parchi e riserve.</b> I confini di parchi nazionali, regionali e provinciali e delle riserve naturali regionali vengono dalla Regione Toscana, semplificati a circa 60 m: vicino al confine controlla sulla cartografia del parco.</li>
         <li><b>Regole del giorno.</b> Per il giorno scelto la scheda del punto dà l'orario di raccolta (da un'ora prima dell'alba a un'ora dopo il tramonto, calcolati per il punto), i limiti del comune presi dall'elenco della Regione e i giorni di caccia al cinghiale in braccata del calendario venatorio regionale.</li>
         <li><b>Sentieri e mappa.</b> I sentieri sono quelli della Rete escursionistica toscana nel catasto del Club Alpino Italiano (dati OpenStreetMap), semplificati a circa 12 m: tocca un sentiero per numero, difficoltà e percorribilità. Dove il browser lo permette c'è anche la mappa topografica con strade e curve di livello (OpenTopoMap); dentro Claude può non caricarsi.</li>
+        <li><b>Possibili fungaie.</b> Nel raggio scelto attorno al tuo punto si guardano tutte le celle di circa 220 m della carta dei boschi. Restano quelle con un bosco adatto alla specie (il tipo della cella e quelli nei 500 m attorno, la quota e il suolo, come nella scheda del punto), con pendenza fino a 35° e a meno di 400 m da un sentiero CAI (esclusi quelli segnati come non percorribili); i boschi di tipo non noto restano fuori. L'area si divide in riquadri (circa 20 per lato) e per ognuno si tiene la cella più adatta. Per queste si calcola il punteggio del giorno scelto, lo stesso della scheda del punto, e si mostrano le migliori distanti almeno 1 km l'una dall'altra. La carta dei boschi ha celle di 250 m ed è di fine anni '90: una fungaia vera può essere più piccola, e il bosco può essere cambiato.</li>
         <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono; quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
         <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
@@ -1964,6 +1991,8 @@ var RP = (function () {
     return 1;
   }
   function nomePH(ph) { if (ph == null) return null; var p = ph / 10; return p < 5.5 ? "acido" : p < 6.5 ? "subacido" : p < 7.3 ? "neutro" : "calcareo (alcalino)"; }
+  // quanto un punto è adatto alla specie per bosco, quota e suolo, senza il tempo: serve a cercare le possibili fungaie
+  function adatto(h, quota, sp) { return fattoreBosco({ habitat: h }, sp) * fattoreQuota(quota, sp) * fattorePH(h && h.ph, sp); }
 
   function fattoreSecco(mmEff, giorniSecchi, molt) {
     if (giorniSecchi <= 12) return 1;
@@ -2482,7 +2511,7 @@ var RP = (function () {
     prepara: prepara, punto: punto, svuota: svuota, distanzaKm: distanzaKm, stima: stima, finestra: finestra, idoneita: idoneita,
     stimaManuale: stimaManuale, finestraManuale: finestraManuale, etichettaPeriodo: etichettaPeriodo, velocita: velocita, fiducia: fiducia,
     fattoreStagione: fattoreStagione, fattoreSuolo: fattoreSuolo, fattoreSuoloW: fattoreSuoloW, fattorePH: fattorePH, nomePH: nomePH, storiaUtile: storiaUtile,
-    bilancio: bilancio, NP: NP, NCL: NCL };
+    bilancio: bilancio, adatto: adatto, NP: NP, NCL: NCL };
 })();
 if (typeof module !== "undefined") module.exports = RP;
 
@@ -2577,6 +2606,14 @@ if (typeof module !== "undefined") module.exports = RP;
     }
     return out;
   }
+  // divieto di raccolta nel comune il giorno ms: "tutti", "nr" (per chi non vi risiede) o null
+  function divietoComune(comune, ms) {
+    var nome = comune ? comune.replace(/ \([A-Z]{2}\)$/, "") : null, L = nome && LIMITI_COMUNI[nome];
+    if (!L) return null;
+    var iso = isoOf(ms), wd = new Date(ms).getUTCDay();
+    var oggi = L.filter(function (x) { return x.dal <= iso && iso <= x.al && x.g.indexOf(wd) >= 0; });
+    return oggi.some(function (x) { return x.tipo === "tutti"; }) ? "tutti" : oggi.length ? "nr" : null;
+  }
   var LS_POS = "radar-porcini-punto", LS_VERS = "radar-porcini-versante", LS_SPECIE = "radar-porcini-specie", LS_SFONDO = "radar-porcini-sfondo", LS_AREE = "radar-porcini-aree";
   // gruppi di tipi di bosco per la mappa (codici della Carta della vegetazione forestale)
   var GRUPPI_BOSCO = [
@@ -2627,6 +2664,7 @@ if (typeof module !== "undefined") module.exports = RP;
     c.hidden = !aperta; sez.classList.toggle("chiusa", !aperta);
     b.setAttribute("aria-expanded", String(aperta)); b.textContent = aperta ? "Nascondi" : "Mostra";
     if (ricorda) { var st = statoSezioni(); st[sez.id] = aperta ? 1 : 0; try { localStorage.setItem(LS_SEZ, JSON.stringify(st)); } catch (e) {} }
+    if (sez.id === "sez-fungaie" && fung) renderFungaie(); // le fungaie si cercano solo a sezione aperta
   }
   (function preparaSezioni() {
     var salvato = statoSezioni();
@@ -2830,6 +2868,7 @@ if (typeof module !== "undefined") module.exports = RP;
     renderVerdetto();
     renderPunto();
     renderVicine();
+    renderFungaie();
     renderPosti();
     renderLista();
     renderCalc();
@@ -3132,6 +3171,7 @@ if (typeof module !== "undefined") module.exports = RP;
       state.pos = null;
       if (state.sort === "dist") { state.sort = "score"; setPressed("#f-sort", "score"); }
     }
+    if (!silenzioso && !fung.daLista) fung.centro = null; // le possibili fungaie seguono il punto nuovo
     document.querySelector('#f-sort button[data-v="dist"]').hidden = !state.pos;
     salvaPos();
     aggiornaDistanze();
@@ -3392,7 +3432,7 @@ if (typeof module !== "undefined") module.exports = RP;
       L.marker([g[2], g[3]], { icon: L.divIcon({ className: "m-lab", html: "<span>" + g[0].replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</span>", iconSize: [0, 0] }), interactive: false, keyboard: false }).addTo(mappa);
     });
     mappa.fitBounds([[42.35, 9.7], [44.47, 12.37]]);
-    function zoomCls() { box.classList.toggle("z-hi", mappa.getZoom() >= 10); }
+    function zoomCls() { box.classList.toggle("z-hi", mappa.getZoom() >= 10); box.classList.toggle("z-vicino", mappa.getZoom() >= 12); }
     mappa.on("zoomend", zoomCls); zoomCls();
     mappa.on("click", function (e) { impostaPos({ nome: "Punto scelto sulla mappa", lat: +e.latlng.lat.toFixed(5), lon: +e.latlng.lng.toFixed(5) }, false); });
     state.st.forEach(function (s) {
@@ -3420,7 +3460,7 @@ if (typeof module !== "undefined") module.exports = RP;
   var DIFF_CAI = { T: "turistico", E: "escursionistico", EE: "per escursionisti esperti", "EEA:F": "per esperti con attrezzatura, facile", "EEA:PD": "per esperti con attrezzatura" };
   function popupSentiero(s) {
     var d = el("div");
-    d.appendChild(el("b", null, s[0] ? "Sentiero " + s[0] : "Sentiero senza numero"));
+    d.appendChild(el("b", null, s[0] === "SI" ? "Sentiero Italia" : s[0] ? "Sentiero " + s[0] : "Sentiero senza numero"));
     var tratto = s[3] && s[4] ? "da " + s[3] + " a " + s[4] : (s[3] || s[4] || "");
     d.appendChild(el("div", null, [DIFF_CAI[s[1]] ? cap(DIFF_CAI[s[1]]) : "", tratto].filter(Boolean).join(" · ")));
     d.appendChild(el("div", "note", ["Percorribile", "Percorribile in parte", "Non percorribile", "Percorribilità non nota"][s[2]] || ""));
@@ -3447,17 +3487,29 @@ if (typeof module !== "undefined") module.exports = RP;
     if (mappa.getZoom() >= 10) { if (!mappa.hasLayer(sentieriLayer)) sentieriLayer.addTo(mappa); msg.hidden = true; }
     else { if (mappa.hasLayer(sentieriLayer)) mappa.removeLayer(sentieriLayer); msg.hidden = false; msg.textContent = "Avvicina la mappa per vedere i sentieri."; }
   }
+  // i sentieri si caricano una volta sola, per la mappa o per le possibili fungaie
+  var sentieriAttesa = null;
+  function caricaSentieri() {
+    if (SENTIERI) return Promise.resolve(SENTIERI);
+    if (!sentieriAttesa) {
+      var dentro = leggi("geo-sentieri");
+      sentieriAttesa = (dentro ? Promise.resolve(dentro) : prendi("sentieri.json")).then(function (j) {
+        if (j && j.sentieri) SENTIERI = j; else sentieriAttesa = null;
+        return SENTIERI;
+      });
+    }
+    return sentieriAttesa;
+  }
   function disegnaSentieri() {
     if (!mappa) return;
     var msg = document.getElementById("sentieri-msg");
-    if (state.sentieri && !SENTIERI) {
+    if (state.sentieri && !sentieriLayer) {
       if (sentieriInCarico) return;
       sentieriInCarico = true; msg.hidden = false; msg.textContent = "Carico i sentieri…";
-      var dentro = leggi("geo-sentieri");
-      (dentro ? Promise.resolve(dentro) : prendi("sentieri.json")).then(function (j) {
+      caricaSentieri().then(function (j) {
         sentieriInCarico = false;
-        if (!j || !j.sentieri) { msg.hidden = false; msg.textContent = "I sentieri non si sono caricati: riprova più tardi."; return; }
-        SENTIERI = j; costruisciSentieri(); aggiornaSentieri();
+        if (!j) { msg.hidden = false; msg.textContent = "I sentieri non si sono caricati: riprova più tardi."; return; }
+        costruisciSentieri(); aggiornaSentieri();
       });
       return;
     }
@@ -3498,6 +3550,214 @@ if (typeof module !== "undefined") module.exports = RP;
       postiLayer.addLayer(m);
     });
     postiLayer.addTo(mappa);
+  }
+
+  // ---------- possibili fungaie: boschi adatti vicino ai sentieri CAI ----------
+  // Nel raggio scelto attorno al punto si guardano le celle della carta dei boschi (circa 220 m): bosco adatto alla specie
+  // (la cella e i 500 m attorno, quota e suolo, come nella scheda del punto), pendenza fino a 35° e un sentiero CAI entro
+  // 400 m. L'area si divide in riquadri (circa 20 per lato) e per ognuno si tiene la cella più adatta; per queste si calcola
+  // il punteggio del giorno scelto, lo stesso della scheda del punto, e si mostrano le migliori distanti almeno 1 km.
+  var FUNG = { sentiero: 400, pendenza: 35, soglia: 0.6, riquadri: 20, distanza: 1000, prime: 8, max: 20 }, LS_FUNG = "radar-porcini-fungaie";
+  var fung = { raggio: 10, centro: null, daLista: false, chiave: null, ric: null, epoca: -1, tutte: false, layer: null, dist: null };
+  // distanza di ogni cella dal sentiero più vicino (in terzi di cella: trasformata a due passate con pesi 3 e 4) e quale sentiero
+  function distanzeSentieri() {
+    if (fung.dist || !SENTIERI || !BOSCO) return fung.dist;
+    var m = BOSCO.m, w = m.w, h = m.h, D = new Uint16Array(w * h), K = new Int32Array(w * h), x, y, i;
+    D.fill(65535); K.fill(-1);
+    SENTIERI.sentieri.forEach(function (s, k) {
+      if (s[2] === 2) return; // non percorribile
+      s[6].forEach(function (str) {
+        var px = null, py = null;
+        decodificaLinea(str).forEach(function (q) {
+          var qx = lon2x(q[1]) - m.x0, qy = lat2y(q[0]) - m.y0, n = px == null ? 0 : Math.ceil(2 * Math.max(Math.abs(qx - px), Math.abs(qy - py)));
+          for (var j = 0; j <= n; j++) {
+            var cx = Math.floor(n ? px + (qx - px) * j / n : qx), cy = Math.floor(n ? py + (qy - py) * j / n : qy);
+            if (cx >= 0 && cy >= 0 && cx < w && cy < h) { D[cy * w + cx] = 0; K[cy * w + cx] = k; }
+          }
+          px = qx; py = qy;
+        });
+      });
+    });
+    function prova(a, b, c) { if (D[b] + c < D[a]) { D[a] = D[b] + c; K[a] = K[b]; } }
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      i = y * w + x;
+      if (x > 0) prova(i, i - 1, 3);
+      if (y > 0) { prova(i, i - w, 3); if (x > 0) prova(i, i - w - 1, 4); if (x < w - 1) prova(i, i - w + 1, 4); }
+    }
+    for (y = h - 1; y >= 0; y--) for (x = w - 1; x >= 0; x--) {
+      i = y * w + x;
+      if (x < w - 1) prova(i, i + 1, 3);
+      if (y < h - 1) { prova(i, i + w, 3); if (x < w - 1) prova(i, i + w + 1, 4); if (x > 0) prova(i, i + w - 1, 4); }
+    }
+    return (fung.dist = { D: D, K: K });
+  }
+  // la cella x, y per le specie scelte: null se non è bosco, è in mare o è troppo ripida; altrimenti quanto è adatta (a, da 0 a 1)
+  function valutaCella(x, y, specie, aff) {
+    var m = BOSCO.m, i = y * m.w + x, cl = BOSCO.v[i];
+    if (!cl || cl >= 19 || aff[cl] < 0.5 || (DEM && DEM.v[i] === 0)) return null; // 19 e 20: boschi di tipo non noto
+    var lat = y2lat(m.y0 + y + 0.5), lon = x2lon(m.x0 + x + 0.5), ter = terrenoDEM(lat, lon);
+    if (!ter || ter.mare || ter.pendenza > FUNG.pendenza) return null;
+    var hab = { punto: true, centro: cl, comp: composizione(lat, lon, 500), ph: phIn(lat, lon, 500) };
+    var a = Math.max.apply(null, specie.map(function (sp) { return RP.adatto(hab, ter.quota, sp); }));
+    return { lat: lat, lon: lon, cl: cl, ter: ter, hab: hab, a: a, i: i };
+  }
+  function specieFungaie() { return { specie: idsSpecie().map(function (id) { return RP.SP[id]; }), aff: affinitaSpecie() }; }
+  // celle candidate attorno al centro c: per ogni riquadro la più adatta e, a parità, la più vicina a un sentiero
+  function cercaFungaie(c) {
+    var dist = distanzeSentieri();
+    if (!dist || !DEM) return null;
+    var m = BOSCO.m, cella = 40075016.7 * Math.cos(c.lat * Math.PI / 180) / NPX, sf = specieFungaie();
+    var r = fung.raggio * 1000 / cella, r2 = r * r, fx = lon2x(c.lon) - m.x0, fy = lat2y(c.lat) - m.y0;
+    var lato = 2 * r / FUNG.riquadri, maxD = 3 * FUNG.sentiero / cella, migliori = {}, n = 0;
+    for (var y = Math.max(2, Math.floor(fy - r)); y <= Math.min(m.h - 4, Math.ceil(fy + r)); y++) {
+      for (var x = Math.max(2, Math.floor(fx - r)); x <= Math.min(m.w - 4, Math.ceil(fx + r)); x++) {
+        var dx = x + 0.5 - fx, dy = y + 0.5 - fy;
+        if (dx * dx + dy * dy > r2 || dist.D[y * m.w + x] > maxD) continue;
+        var v = valutaCella(x, y, sf.specie, sf.aff);
+        if (!v || v.a < FUNG.soglia) continue;
+        n++;
+        v.ds = dist.D[v.i]; v.sent = dist.K[v.i];
+        var k = Math.floor((dx + r) / lato) + "," + Math.floor((dy + r) / lato), b = migliori[k];
+        if (!b || v.a > b.a + 1e-9 || (v.a > b.a - 1e-9 && v.ds < b.ds)) migliori[k] = v;
+      }
+    }
+    return { n: n, ettari: n * cella * cella / 10000, celle: Object.keys(migliori).map(function (k) { return migliori[k]; }) };
+  }
+  // distanza in metri dal sentiero k (il più vicino sulla griglia), misurata sulla sua linea
+  function distanzaSentiero(lat, lon, k) {
+    var s = SENTIERI && SENTIERI.sentieri[k], kx = 111320 * Math.cos(lat * Math.PI / 180), ky = 110574, best = Infinity;
+    if (!s) return null;
+    s[6].forEach(function (str) {
+      var pts = decodificaLinea(str), ax = null, ay = null;
+      pts.forEach(function (q) {
+        var bx = (q[1] - lon) * kx, by = (q[0] - lat) * ky, d;
+        if (ax == null) d = Math.sqrt(bx * bx + by * by);
+        else {
+          var ex = bx - ax, ey = by - ay, l2 = ex * ex + ey * ey, t = l2 ? clamp(-(ax * ex + ay * ey) / l2, 0, 1) : 0;
+          d = Math.sqrt(Math.pow(ax + t * ex, 2) + Math.pow(ay + t * ey, 2));
+        }
+        if (d < best) best = d;
+        ax = bx; ay = by;
+      });
+    });
+    return best;
+  }
+  // "sul sentiero 14", "dal Sentiero Italia", "da un sentiero senza numero"
+  function delSentiero(prep, s) {
+    var n = s && s[0];
+    if (!n) return (prep === "su" ? "su" : "da") + " un sentiero senza numero";
+    return (prep === "su" ? "sul " : "dal ") + (n === "SI" ? "Sentiero Italia" : "sentiero " + n);
+  }
+  // i tuoi posti: quanti sono in boschi che la ricerca considera adatti e quanti vicino a un sentiero
+  function testoPostiFungaie() {
+    var L = posti.lista, m = BOSCO.m, dist = fung.dist, sf = specieFungaie(), adatti = 0, vicini = 0;
+    L.forEach(function (x) {
+      var cx = Math.floor(lon2x(x.lon) - m.x0), cy = Math.floor(lat2y(x.lat) - m.y0);
+      if (cx < 2 || cy < 2 || cx > m.w - 4 || cy > m.h - 4) return;
+      var v = valutaCella(cx, cy, sf.specie, sf.aff), cella = 40075016.7 * Math.cos(x.lat * Math.PI / 180) / NPX;
+      if (v && v.a >= FUNG.soglia) adatti++;
+      if (dist.D[cy * m.w + cx] <= 3 * FUNG.sentiero / cella) vicini++;
+    });
+    var sp = nomeSpecie(), lim = FUNG.sentiero + " m da un sentiero CAI";
+    if (L.length === 1) return "Il tuo posto " + (adatti ? "è" : "non è") + " in un bosco che questa ricerca considera adatto a " + sp + (vicini ? ", ed è" : ", e non è") + " a meno di " + lim + ".";
+    return "Dei tuoi " + L.length + " posti, " + adatti + " " + (adatti === 1 ? "è" : "sono") + " in boschi che questa ricerca considera adatti a " + sp + " e " + vicini + " a meno di " + lim + ".";
+  }
+  function renderFungaie() {
+    var sez = document.getElementById("sez-fungaie");
+    if (!fung || !sez || !state.st.length) return;
+    var ul = document.getElementById("fung-lista"), stato = document.getElementById("fung-stato");
+    var altre = document.getElementById("fung-altre"), np = document.getElementById("fung-posti"), na = document.getElementById("fung-aree");
+    var c = fung.centro || (state.pos ? { lat: state.pos.lat, lon: state.pos.lon } : null);
+    function vuota(testo) { ul.innerHTML = ""; altre.hidden = true; np.hidden = true; na.hidden = true; stato.hidden = false; stato.textContent = testo; marcatoriFungaie([]); }
+    if (!c) { vuota("Scegli un punto sulla mappa, scrivi un comune o usa «Dove sono»: qui compaiono i boschi adatti vicino ai sentieri nel raggio scelto."); return; }
+    if (sez.classList.contains("chiusa")) { marcatoriFungaie([]); return; }
+    if (!BOSCO || !DEM) { vuota("Carico le carte dei boschi e del terreno…"); return; }
+    if (!SENTIERI) {
+      vuota("Carico i sentieri…");
+      caricaSentieri().then(function (j) { if (j) renderFungaie(); else vuota("I sentieri non si sono caricati: riprova più tardi."); });
+      return;
+    }
+    var chiave = [c.lat.toFixed(5), c.lon.toFixed(5), fung.raggio, state.specie].join("|");
+    if (fung.chiave !== chiave) { fung.ric = cercaFungaie(c); fung.chiave = chiave; fung.epoca = -1; }
+    var ric = fung.ric;
+    if (!ric) { vuota("Le carte dei boschi e del terreno non sono disponibili."); return; }
+    // il punteggio del giorno è quello della scheda del punto: stessa quota, bosco, suolo, versante e pioggia dal radar
+    if (fung.epoca !== posti.epoca) { ric.celle.forEach(function (f) { f.p = null; }); fung.epoca = posti.epoca; }
+    ric.celle.forEach(function (f) {
+      if (!f.p) { f.p = RP.punto(state.st, f.lat, f.lon, f.ter.quota, radarSerie(f.lat, f.lon)); f.p.habitat = f.hab; }
+      f.r = RP.stima(f.p, state.t, { versante: state.versante || f.ter.versante || null, specie: state.specie });
+      f.km = RP.distanzaKm(c.lat, c.lon, f.lat, f.lon);
+    });
+    var ord = ric.celle.slice().sort(function (a, b) { return b.r.score - a.r.score || b.a - a.a || a.km - b.km; }), lista = [];
+    ord.forEach(function (f) {
+      if (lista.length < FUNG.max && lista.every(function (g) { return RP.distanzaKm(g.lat, g.lon, f.lat, f.lon) * 1000 >= FUNG.distanza; })) lista.push(f);
+    });
+    var ms = state.ref + state.t * DAY;
+    if (!lista.length) { vuota("Entro " + fung.raggio + " km dal punto non ci sono boschi adatti a " + nomeSpecie() + " vicino ai sentieri CAI: prova un raggio più ampio o un altro punto."); np.hidden = !posti.lista.length; np.textContent = posti.lista.length ? testoPostiFungaie() : ""; return; }
+    stato.hidden = false;
+    stato.textContent = "Entro " + fung.raggio + " km " + (fung.centro ? "dal punto di partenza (" + fung.centro.nome + ")" : "dal punto") + ": circa " + nf(Math.round(ric.ettari / 10) * 10) + " ettari di bosco adatto a " + nomeSpecie() + " vicino ai sentieri. I punti più promettenti per " + fmtLong.format(ms) + ":";
+    var mostra = lista.slice(0, fung.tutte ? FUNG.max : FUNG.prime), aree = {};
+    ul.innerHTML = "";
+    mostra.forEach(function (f, i) {
+      var li = el("li"), b = el("button", "zona"); b.type = "button";
+      if (f.comune === undefined) f.comune = comuneDi(f.lat, f.lon);
+      if (f.dsent === undefined) f.dsent = distanzaSentiero(f.lat, f.lon, f.sent);
+      var s = SENTIERI.sentieri[f.sent], parti = [];
+      b.appendChild(el("span", "rk num", String(i + 1)));
+      b.appendChild(el("span", "zn", cap(RP.BOSCHI[f.cl]) + ", " + nf(f.ter.quota) + " m"));
+      b.appendChild(el("span", "pill lv" + f.r.livello.id, f.r.score + " · " + f.r.livello.nome));
+      if (f.comune) parti.push(f.comune.replace(/ \([A-Z]{2}\)$/, ""));
+      if (f.ter.versante && f.ter.versante.nome !== "intermedio") parti.push("versante " + f.ter.versante.nome);
+      parti.push(f.dsent != null && f.dsent < 60 ? delSentiero("su", s)
+        : "a " + nf(Math.max(50, Math.round((f.dsent == null ? f.ds / 3 * 220 : f.dsent) / 50) * 50)) + " m " + delSentiero("da", s));
+      parti.push(nf(f.km, f.km < 10 ? 1 : 0) + (fung.centro ? " km dalla partenza" : " km dal punto"));
+      var mio = posti.lista.filter(function (x) { return RP.distanzaKm(x.lat, x.lon, f.lat, f.lon) < 0.3; })[0];
+      if (mio) parti.push("vicino al tuo posto «" + mio.nome + "»");
+      b.appendChild(el("span", "zd", parti.join(" · ")));
+      var ar = areeDi(f.lat, f.lon).filter(function (a) { return !a.c; }), dv = divietoComune(f.comune, ms), avv = [];
+      if (ar.length) { avv.push("in area protetta: controlla le regole"); ar.forEach(function (a) { aree[a.n] = a; }); }
+      if (dv) avv.push(dv === "tutti" ? "quel giorno la raccolta è vietata nel comune" : "quel giorno è vietata a chi non risiede nel comune");
+      if (avv.length) b.appendChild(el("span", "fw", cap(avv.join("; ")) + "."));
+      b.setAttribute("aria-label", "Fungaia " + (i + 1) + ": " + RP.BOSCHI[f.cl] + " a " + nf(f.ter.quota) + " m, punteggio " + f.r.score + ", " + f.r.livello.nome.toLowerCase() + ". " + parti.join(", ") + ". " + (avv.length ? cap(avv.join("; ")) + ". " : "") + "Apri nella scheda del punto.");
+      b.addEventListener("click", function () { apriFungaia(f, i + 1); });
+      li.appendChild(b); ul.appendChild(li);
+    });
+    // le aree protette si nominano una volta sola, sopra l'elenco
+    var nomiAree = Object.keys(aree).map(function (k) { return nelArea(aree[k]); });
+    na.hidden = !nomiAree.length;
+    na.textContent = nomiAree.length ? "I punti segnati «in area protetta» sono " + nomiAree.join(" o ") + ": nei parchi e nelle riserve la raccolta segue il regolamento dell'ente gestore, spesso è vietata o riservata. Controlla prima di andare." : "";
+    altre.hidden = lista.length <= FUNG.prime;
+    altre.textContent = fung.tutte ? "Mostra solo i primi " + FUNG.prime : "Mostra altri " + (lista.length - FUNG.prime) + " punti";
+    np.hidden = !posti.lista.length;
+    np.textContent = posti.lista.length ? testoPostiFungaie() : "";
+    marcatoriFungaie(mostra);
+  }
+  function marcatoriFungaie(lista) {
+    if (!mappa) return;
+    if (fung.layer) { mappa.removeLayer(fung.layer); fung.layer = null; }
+    if (!lista.length) return;
+    fung.layer = L.layerGroup();
+    lista.forEach(function (f, i) {
+      var mk = L.marker([f.lat, f.lon], { icon: L.divIcon({ className: "m-fung", html: '<span class="lv' + f.r.livello.id + '">' + (i + 1) + "</span>", iconSize: [26, 26] }), keyboard: false });
+      mk.bindTooltip("Fungaia " + (i + 1) + ": " + RP.BOSCHI[f.cl] + ", " + nf(f.ter.quota) + " m · " + f.r.score, { direction: "top", offset: [0, -12] });
+      mk.on("click", function () { apriFungaia(f, i + 1); });
+      fung.layer.addLayer(mk);
+    });
+    fung.layer.addTo(mappa);
+  }
+  // apre la fungaia nella scheda del punto; l'elenco resta centrato dov'era e sulla mappa si accendono i sentieri
+  function apriFungaia(f, n) {
+    if (!fung.centro && state.pos) fung.centro = { lat: state.pos.lat, lon: state.pos.lon, nome: state.pos.nome };
+    fung.daLista = true;
+    impostaPos({ nome: "Possibile fungaia " + n + ": " + RP.BOSCHI[f.cl] + ", " + nf(f.ter.quota) + " m", lat: +f.lat.toFixed(5), lon: +f.lon.toFixed(5) }, false);
+    fung.daLista = false;
+    if (!state.sentieri) {
+      state.sentieri = true; document.getElementById("f-sentieri").setAttribute("aria-pressed", "true");
+      try { localStorage.setItem(LS_SENT, "1"); } catch (e) {}
+      disegnaSentieri();
+    }
+    if (mappa) mappa.setView([f.lat, f.lon], Math.max(mappa.getZoom(), 13));
+    vaiA("h-punto");
   }
 
   // dopo un nuovo caricamento dei dati i marcatori puntano alle stazioni nuove con lo stesso codice
@@ -4404,7 +4664,7 @@ if (typeof module !== "undefined") module.exports = RP;
       }, function (err) { stato.hidden = false; stato.textContent = "Il diario non si è caricato (" + (err && err.code || "errore") + "). Ricarica la pagina."; });
       pa.ascolta(function (L) {
         posti.lista = L; posti.cache = {};
-        renderPosti(); disegnaPosti();
+        renderPosti(); disegnaPosti(); renderFungaie();
         if (state.pos && !document.getElementById("posto-form")) renderPunto();
       }, function (err) { ps.hidden = false; ps.textContent = "I posti non si sono caricati (" + (err && err.code || "errore") + "). Ricarica la pagina."; });
     });
@@ -4533,6 +4793,13 @@ if (typeof module !== "undefined") module.exports = RP;
     try { localStorage.setItem(LS_TOPO, state.topo ? "1" : ""); } catch (e) {}
     disegnaTopo();
   });
+  document.getElementById("f-fung-raggio").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    fung.raggio = +b.dataset.v; fung.tutte = false; setPressed("#f-fung-raggio", fung.raggio);
+    try { localStorage.setItem(LS_FUNG, String(fung.raggio)); } catch (er) {}
+    renderFungaie();
+  });
+  document.getElementById("fung-altre").addEventListener("click", function () { fung.tutte = !fung.tutte; renderFungaie(); });
   // posizione dal telefono: nel riquadro di Claude il browser può non concederla
   document.getElementById("pos-gps").addEventListener("click", function () {
     var msg = document.getElementById("pos-msg"), btn = this;
@@ -4611,6 +4878,7 @@ if (typeof module !== "undefined") module.exports = RP;
   try { if (localStorage.getItem(LS_AREE) === "1") { state.aree = true; document.getElementById("f-aree").setAttribute("aria-pressed", "true"); } } catch (e) {}
   try { if (localStorage.getItem(LS_SENT) === "1") { state.sentieri = true; document.getElementById("f-sentieri").setAttribute("aria-pressed", "true"); } } catch (e) {}
   try { if (localStorage.getItem(LS_TOPO) === "1") { state.topo = true; document.getElementById("f-topo").setAttribute("aria-pressed", "true"); } } catch (e) {}
+  try { var r0 = +localStorage.getItem(LS_FUNG); if (r0 === 5 || r0 === 10 || r0 === 20) { fung.raggio = r0; setPressed("#f-fung-raggio", r0); } } catch (e) {}
   if (PWA) document.getElementById("link-pwa").hidden = true;
   caricaAree(leggi("geo-aree"));
   var radarSeed = leggi("radar-dpc");
@@ -4673,7 +4941,7 @@ if (typeof module !== "undefined") module.exports = RP;
         if (!ok) return;
         radarSeed = rr; renderFonte(); posti.epoca++;
         if (state.pos) { calcolaPunto(); renderPunto(); }
-        renderPosti();
+        renderPosti(); renderFungaie();
         if (state.sfondo === "pioggia") { disegnaSfondo(); renderLegenda(); }
       });
       else pronto.radar = true;

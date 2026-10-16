@@ -128,23 +128,129 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: |
           python3 -I - <<'PY'
-          import json, os, re, smtplib, sys
+          import datetime as dt, html, os
+
+          GG = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"]
+          GIORNI = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
+          MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
+          LIV = ["quasi nullo", "scarso", "discreto", "buono", "ottimo"]
+          COL = [("#D3D8CE", "#3E473A"), ("#C3D6B4", "#23331D"), ("#93BC7F", "#16260F"), ("#55904A", "#FFFFFF"), ("#2B6428", "#FFFFFF")]
+
+
+          def corto(iso):
+              d = dt.date.fromisoformat(iso)
+              return "%s %d" % (GG[d.weekday()], d.day)
+
+
+          def lungo(iso):
+              d = dt.date.fromisoformat(iso)
+              return "%s %d %s" % (GIORNI[d.weekday()], d.day, MESI[d.month - 1])
+
+
+          def intervalli(giorni, livello):
+              """Giorni consecutivi con quel livello, scritti come «dom 18 – gio 22»."""
+              pezzi, inizio, prima = [], None, None
+              for g in giorni + [None]:
+                  ok = g is not None and g["livello"] == livello
+                  if ok and inizio is not None and dt.date.fromisoformat(g["data"]) - dt.date.fromisoformat(prima["data"]) == dt.timedelta(days=1):
+                      prima = g
+                      continue
+                  if inizio is not None:
+                      pezzi.append(corto(inizio["data"]) + ("" if inizio is prima else " – " + corto(prima["data"])))
+                      inizio = prima = None
+                  if ok:
+                      inizio = prima = g
+              return ", ".join(pezzi)
+
+
+          def componi(a, sito, oggi=None):
+              """Testo semplice e HTML della mail, dai punteggi dei posti calcolati nella pagina."""
+              oggi = oggi or dt.datetime.now(dt.timezone.utc).date().isoformat()
+              posti = []
+              for r in a.get("posti") or []:
+                  g = [x for x in r["giorni"] if x["data"] >= oggi]
+                  if not g:
+                      continue
+                  best = max(g, key=lambda x: x["score"])
+                  posti.append((r, g, best))
+              posti.sort(key=lambda t: -t[2]["score"])
+              buoni = [t for t in posti if t[2]["livello"] >= 3]
+              altri = [t for t in posti if t[2]["livello"] < 3]
+              pioggia = ((a.get("dati") or {}).get("pioggia_al") or "").replace(" (ora solare)", "")
+
+              righe = ["I tuoi posti in Radar Porcini, giorno per giorno.", ""]
+              for r, g, best in buoni:
+                  sotto = " · ".join(x for x in [r.get("comune") or "", r.get("nomeSpecie") or ""] if x)
+                  righe += ["■ " + r["nome"], "  " + sotto,
+                            "  Giorno migliore: %s, %d (%s)" % (lungo(best["data"]), best["score"], LIV[best["livello"]])]
+                  for liv in (4, 3):
+                      s = intervalli(g, liv)
+                      if s:
+                          righe.append("  %-8s%s" % (LIV[liv].capitalize() + ":", s))
+                  righe.append("")
+              if altri:
+                  righe += ["Sotto «buono» nei prossimi giorni: " + "; ".join("%s (al massimo %d %s)" % (r["nome"], b["score"], corto(b["data"])) for r, g, b in altri) + ".", ""]
+              righe += ["Apri l'app: " + sito, "",
+                        "Punteggio da 0 a 100: buono da 45, ottimo da 65. È una stima: guarda la scheda del punto prima di andare." +
+                        (" Pioggia misurata fino al " + pioggia + "." if pioggia else ""), "",
+                        "Ricevi questa mail dal flusso «Aggiorna Radar Porcini» del repository the-marox/progetti. "
+                        "Per non riceverla più, cancella il segreto POSTI del repository o disattiva il flusso."]
+              testo = "\n".join(righe)
+
+              e = html.escape
+              F = "font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"
+              h = ['<div style="%sbackground:#EDF0E8;padding:16px 10px;color:#192017;">' % F,
+                   '<div style="max-width:560px;margin:0 auto;">',
+                   '<div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#566151;font-weight:700;margin:0 4px 4px;">Radar Porcini</div>',
+                   '<div style="font-size:20px;font-weight:800;margin:0 4px 14px;">I tuoi posti nei prossimi giorni</div>']
+              for r, g, best in buoni:
+                  sotto = " · ".join(x for x in [r.get("comune") or "", r.get("nomeSpecie") or ""] if x)
+                  h.append('<div style="background:#F9FAF6;border:1px solid #CED6C7;border-radius:14px;padding:12px 12px 10px;margin-bottom:12px;">')
+                  h.append('<table role="presentation" width="100%%" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;">'
+                           '<div style="font-size:17px;font-weight:700;">%s</div><div style="font-size:13px;color:#566151;">%s</div></td>'
+                           '<td style="vertical-align:top;text-align:right;white-space:nowrap;"><span style="display:inline-block;background:%s;color:%s;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700;">%d · %s</span>'
+                           '<div style="font-size:12px;color:#566151;margin-top:3px;">%s</div></td></tr></table>'
+                           % (e(r["nome"]), e(sotto), COL[best["livello"]][0], COL[best["livello"]][1], best["score"], LIV[best["livello"]].capitalize(), e(lungo(best["data"]))))
+                  h.append('<div style="margin-top:10px;line-height:0;">')
+                  for x in g:
+                      bg, fg = COL[x["livello"]]
+                      bordo = "outline:2px solid #7A4A21;outline-offset:1px;" if x is best else ""
+                      d = dt.date.fromisoformat(x["data"])
+                      h.append('<span style="display:inline-block;width:42px;margin:0 3px 6px 0;padding:4px 0 5px;border-radius:7px;background:%s;color:%s;text-align:center;line-height:1.15;%s">'
+                               '<span style="display:block;font-size:10px;text-transform:uppercase;opacity:.85;">%s</span>'
+                               '<span style="display:block;font-size:14px;font-weight:700;">%d</span>'
+                               '<span style="display:block;font-size:11px;">%d</span></span>' % (bg, fg, bordo, GG[d.weekday()], d.day, x["score"]))
+                  h.append('</div>')
+                  for liv in (4, 3):
+                      s = intervalli(g, liv)
+                      if s:
+                          h.append('<div style="font-size:14px;margin-top:2px;"><b>%s:</b> %s</div>' % (LIV[liv].capitalize(), e(s)))
+                  h.append('</div>')
+              if altri:
+                  h.append('<div style="font-size:14px;color:#566151;margin:0 4px 14px;">Sotto «buono» nei prossimi giorni: %s.</div>'
+                           % "; ".join("%s (al massimo %d %s)" % (e(r["nome"]), b["score"], corto(b["data"])) for r, g, b in altri))
+              h.append('<div style="margin:4px 4px 16px;"><a href="%s" style="display:inline-block;background:#39663A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:99px;padding:10px 18px;">Apri Radar Porcini</a></div>' % e(sito))
+              h.append('<div style="font-size:12px;color:#566151;margin:0 4px;line-height:1.45;">Punteggio da 0 a 100: buono da 45, ottimo da 65. È una stima: guarda la scheda del punto prima di andare.%s<br><br>'
+                       'Ricevi questa mail dal flusso «Aggiorna Radar Porcini» del repository the-marox/progetti. Per non riceverla più, cancella il segreto POSTI del repository o disattiva il flusso.</div>'
+                       % (e(" Pioggia misurata fino al " + pioggia + ".") if pioggia else ""))
+              h.append('</div></div>')
+              return testo, "".join(h)
+
+
+          import json, os, smtplib, sys
           from email.message import EmailMessage
           tmp = os.environ["RUNNER_TEMP"]
           a = json.load(open(os.path.join(tmp, "avvisi.json"), encoding="utf-8"))
           print("posti controllati: %d, giorni buoni o ottimi: %d, nuovi: %d" % (len(a.get("posti") or []), len(a.get("segnalati") or {}), len(a.get("nuovi") or [])))
           if a.get("invia"):
-              sito = os.environ["SITO_URL"]
-              testo = re.sub(r"Apri l'app: .*\nVersione da installare sul telefono: .*", "Apri l'app: " + sito, a["testo"])
-              testo = re.sub(r"Ricevi questa mail perch.*$",
-                             "Ricevi questa mail dal flusso «Aggiorna Radar Porcini» del repository the-marox/progetti. "
-                             "Per non riceverla più, cancella il segreto POSTI del repository o disattiva il flusso.", testo, flags=re.S)
-              utente, chiave = os.environ.get("GMAIL_USER", ""), os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "")
+              testo, pagina = componi(a, os.environ["SITO_URL"])
+              utente, chiave = os.environ.get("GMAIL_USER", "").strip(), os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "")
               if not utente or not chiave:
                   sys.exit("Mancano i segreti GMAIL_USER o GMAIL_APP_PASSWORD: mail non inviata")
               m = EmailMessage()
-              m["From"], m["To"], m["Subject"] = utente, utente, a["oggetto"]
+              m["From"], m["To"], m["Subject"] = "Radar Porcini <%s>" % utente, utente, a["oggetto"]
               m.set_content(testo)
+              m.add_alternative(pagina, subtype="html")
               with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=60) as s:
                   s.login(utente, chiave)
                   s.send_message(m)

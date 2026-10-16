@@ -15,7 +15,8 @@ name: Aggiorna Radar Porcini
 on:
   schedule:
     - cron: "20 8 * * *"         # giro completo dopo la lettura delle 9 (ora solare), con gli avvisi
-    - cron: "20 11,14,17 * * *"  # in giornata: solo misure e previsioni (completo se quello del mattino e' saltato)
+    - cron: "20 9-18 * * *"      # ogni ora in giornata: solo misure e previsioni (completo se quello del mattino e' saltato)
+                                  # tanti giri perche' GitHub ne ritarda o ne salta alcuni: se uno manca, c'e' quello dopo
   workflow_dispatch:              # pulsante "Run workflow" per lanciarlo a mano
     inputs:
       completo:

@@ -23,5 +23,13 @@ dall'esterno: un servizio come cron-job.org chiama ogni ora, dalle 8:20 alle 18:
 con un token GitHub «fine-grained» limitato a questo repository e al solo permesso Actions (lettura e scrittura).
 Con `completo` a `false` il primo giro della giornata fa comunque quello completo, gli altri solo misure e previsioni.
 
+Nel giro completo partono anche le mail, composte da `aggiorna.py` (comandi `mail` e `newsletter`):
+
+- la mail dei posti del segreto `POSTI`, all'indirizzo `GMAIL_USER`;
+- la newsletter: chi ha un account nell'app e mette la spunta «Ricevi la newsletter» riceve la stessa mail sui posti
+  salvati nel suo account, quando uno diventa buono o ottimo in un giorno nuovo. Serve il segreto
+  `FIREBASE_SERVICE_ACCOUNT` (chiave JSON di un account di servizio del progetto Firebase `radar-porcini`); l'indirizzo
+  si prende dall'account e solo se è confermato. Nel registro delle esecuzioni, che è pubblico, solo numeri.
+
 L'esito dell'ultimo aggiornamento è in https://the-marox.github.io/progetti/radar-porcini/esito.json.
 Il vecchio flusso `radar-porcini.yml` è disattivato.

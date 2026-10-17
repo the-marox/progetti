@@ -14,6 +14,10 @@ Parti (ognuna scrive i suoi file nella cartella corrente solo se riesce e stampa
   python3 aggiorna.py valida <cartella>            -> copia nella cartella i soli file validi (e li elenca)
   python3 aggiorna.py avvisi <posti> <pagina.html> [avvisi.json di ieri] -> avvisi.json: punteggi dei posti salvati e
                                                       testo della mail se un posto diventa buono o ottimo in un giorno nuovo
+  python3 aggiorna.py mail <avvisi.json> <cartella stato> [indirizzo dell'app] -> manda la mail dei posti (segreti
+                                                      GMAIL_USER e GMAIL_APP_PASSWORD) e ricorda i giorni segnalati
+  python3 aggiorna.py newsletter <pagina.html> <cartella stato> [indirizzo dell'app] -> mail agli account iscritti alla
+                                                      newsletter, sui loro posti (segreto FIREBASE_SERVICE_ACCOUNT, firebase-admin)
 Ogni lancio aggiunge il proprio esito, con l'ora e la durata, a esito.json nella stessa cartella.
 Va lanciato poco dopo le 9 ora solare (8:16 UTC): con la lettura delle 9 la pioggia del giorno prima e' esatta.
 Richiede: Playwright con Chromium, numpy, Pillow, pygrib (pip install pygrib), curl"""
@@ -878,6 +882,22 @@ def valida(dest=None):
     return ok
 
 
+def posto_da(x, nome_file):
+    """Un posto salvato (documento dell'app, anche nella forma {"data": {...}}), oppure None se non ha coordinate in Toscana."""
+    if not isinstance(x, dict):
+        return None
+    campi = x.get("data") if isinstance(x.get("data"), dict) and "lat" in x["data"] else x
+    try:
+        lat, lon = float(campi["lat"]), float(campi["lon"])
+    except Exception:
+        return None
+    if not (41.3 <= lat <= 45.2 and 8.5 <= lon <= 13.5):
+        return None
+    return {"id": str(x.get("id") or x.get("doc_id") or nome_file), "nome": str(campi.get("nome") or "Posto")[:60], "lat": lat, "lon": lon,
+            "quota": campi.get("quota"), "bosco": campi.get("bosco"), "comune": str(campi.get("comune") or "")[:60],
+            "specie": str(campi.get("specie") or "porcini")}
+
+
 def leggi_posti(origine):
     """Un file JSON con l'elenco dei posti, oppure una cartella di file JSON (uno per posto, anche annidati)."""
     docs = []
@@ -892,21 +912,7 @@ def leggi_posti(origine):
         x = json.load(open(origine, encoding="utf-8"))
         for i, y in enumerate(x if isinstance(x, list) else x.get("documents") or x.get("docs") or x.get("posti") or []):
             docs.append((str(i), y))
-    posti = []
-    for nome_file, x in docs:
-        if not isinstance(x, dict):
-            continue
-        campi = x.get("data") if isinstance(x.get("data"), dict) and "lat" in x["data"] else x
-        try:
-            lat, lon = float(campi["lat"]), float(campi["lon"])
-        except Exception:
-            continue
-        if not (41.3 <= lat <= 45.2 and 8.5 <= lon <= 13.5):
-            continue
-        posti.append({"id": str(x.get("id") or x.get("doc_id") or nome_file), "nome": str(campi.get("nome") or "Posto")[:60], "lat": lat, "lon": lon,
-                      "quota": campi.get("quota"), "bosco": campi.get("bosco"), "comune": str(campi.get("comune") or "")[:60],
-                      "specie": str(campi.get("specie") or "porcini")})
-    return posti
+    return [p for p in (posto_da(x, n) for n, x in docs) if p]
 
 
 GIORNI_IT = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
@@ -918,21 +924,9 @@ def giorno_it(iso):
     return "%s %d %s" % (GIORNI_IT[d.weekday()], d.day, MESI_IT[d.month - 1])
 
 
-def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://claude.ai/artifact/QHRhL7qEY1tL79RvNu1wsQ"):
-    """Calcola nella pagina vera (Chromium senza schermo) il punteggio dei posti salvati per oggi e i 10 giorni dopo, con i dati
-    della cartella corrente. Prepara la mail se un posto arriva a «Buono» o «Ottimo» in un giorno che ieri non lo era."""
-    posti = leggi_posti(origine)
-    oggi = dt.datetime.now(UTC).date().isoformat()
-    prima = {}
-    if precedente and os.path.exists(precedente):
-        try:
-            prima = json.load(open(precedente, encoding="utf-8")).get("segnalati") or {}
-        except Exception:
-            prima = {}
-    out = {"quando": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "posti": [], "segnalati": {}, "nuovi": [], "invia": False, "oggetto": "", "testo": ""}
-    if not posti:
-        scrivi(out, uscita)
-        return "nessun posto salvato"
+def punteggi_pagina(pagina, liste):
+    """Punteggi dei posti per oggi e i 10 giorni dopo, calcolati nella pagina vera (Chromium senza schermo) con i dati della
+    cartella corrente: lo stato dei dati e, per ogni lista di posti, la lista dei risultati."""
     sito = tempfile.mkdtemp(prefix="radarsito_")
     shutil.copyfile(pagina, os.path.join(sito, "index.html"))
     for f in ("data.json", "aria.json", "previsioni.json", "storico.json", "radar.json", "sentieri.json"):
@@ -956,28 +950,62 @@ def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://
         pg.goto("http://radar.locale/index.html", wait_until="domcontentloaded", timeout=90000)
         pg.wait_for_function("() => window.RadarPorcini && window.RadarPorcini.pronto()", timeout=150000)
         stato = pg.evaluate("RadarPorcini.stato()")
-        risultati = pg.evaluate("(l) => RadarPorcini.punteggi(l)", posti)
+        risultati = [pg.evaluate("(l) => RadarPorcini.punteggi(l)", l) for l in liste]
         b.close()
+    shutil.rmtree(sito, ignore_errors=True)
+    return stato, risultati
+
+
+def valuta(risultati, prima, oggi):
+    """Giorni buoni o ottimi di ogni posto da oggi in poi; nuovi quelli che l'ultima volta non lo erano (o lo erano meno)."""
+    segnalati, nuovi = {}, []
+    for r in risultati:
+        for g in r["giorni"]:
+            if g["data"] >= oggi and g["livello"] >= 3:
+                k = "%s|%s" % (r["id"] or r["nome"], g["data"])
+                segnalati[k] = g["livello"]
+                if prima.get(k, 0) < g["livello"]:
+                    nuovi.append((r, g))
+    return segnalati, nuovi
+
+
+def oggetto_mail(nuovi):
+    r0, g0 = max(nuovi, key=lambda x: x[1]["score"])
+    altri = len({x[0]["nome"] for x in nuovi}) - 1
+    return "Radar Porcini: %s %s %s%s" % (r0["nome"], g0["nome"].lower(), giorno_it(g0["data"]),
+                                         (" e un altro posto" if altri == 1 else " e altri %d posti" % altri) if altri > 0 else "")
+
+
+def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://claude.ai/artifact/QHRhL7qEY1tL79RvNu1wsQ"):
+    """Calcola nella pagina vera il punteggio dei posti salvati per oggi e i 10 giorni dopo, con i dati della cartella
+    corrente. Prepara la mail se un posto arriva a «Buono» o «Ottimo» in un giorno che ieri non lo era."""
+    posti = leggi_posti(origine)
+    oggi = dt.datetime.now(UTC).date().isoformat()
+    prima = {}
+    if precedente and os.path.exists(precedente):
+        try:
+            prima = json.load(open(precedente, encoding="utf-8")).get("segnalati") or {}
+        except Exception:
+            prima = {}
+    out = {"quando": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "posti": [], "segnalati": {}, "nuovi": [], "invia": False, "oggetto": "", "testo": ""}
+    if not posti:
+        scrivi(out, uscita)
+        return "nessun posto salvato"
+    stato, (risultati,) = punteggi_pagina(pagina, [posti])
     out["dati"] = stato
     out["posti"] = risultati
-    righe, nuovi = [], []
+    out["segnalati"], nuovi = valuta(risultati, prima, oggi)
+    righe = []
     for r in risultati:
         buoni = [g for g in r["giorni"] if g["data"] >= oggi and g["livello"] >= 3]
-        for g in buoni:
-            k = "%s|%s" % (r["id"] or r["nome"], g["data"])
-            out["segnalati"][k] = g["livello"]
-            if prima.get(k, 0) < g["livello"]:
-                nuovi.append((r, g))
         if buoni:
             righe.append("%s (%s%s m, %s): %s." % (r["nome"], (r["comune"].replace(" (", ", ").rstrip(")") + ", ") if r["comune"] else "",
                                                    int(round(r["quota"] or 0)), r["nomeSpecie"],
                                                    "; ".join("%s %s (%d)" % (g["nome"].lower(), giorno_it(g["data"]), g["score"]) for g in buoni)))
     out["nuovi"] = ["%s %s %s" % (r["nome"], g["data"], g["nome"]) for r, g in nuovi]
     if nuovi:
-        r0, g0 = max(nuovi, key=lambda x: x[1]["score"])
-        altri = len({x[0]["nome"] for x in nuovi}) - 1
         out["invia"] = True
-        out["oggetto"] = "Radar Porcini: %s %s %s%s" % (r0["nome"], g0["nome"].lower(), giorno_it(g0["data"]), (" e un altro posto" if altri == 1 else " e altri %d posti" % altri) if altri > 0 else "")
+        out["oggetto"] = oggetto_mail(nuovi)
         out["testo"] = ("Buone notizie dai tuoi posti salvati in Radar Porcini.\n\n" + "\n".join(righe) +
                         "\n\nPunteggio da 0 a 100: buono da 45, ottimo da 65. Dati CFR %s; stima indicativa, controlla la scheda del punto prima di andare.\n\n"
                         "Apri l'app: %s\nVersione da installare sul telefono: https://the-marox.github.io/progetti/radar-porcini/\n\n"
@@ -987,10 +1015,282 @@ def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://
     return "%d posti, %d giorni buoni o ottimi, %d nuovi%s" % (len(risultati), len(out["segnalati"]), len(nuovi), ": mail da inviare" if nuovi else "")
 
 
+# ---------- la mail ----------
+GG_IT = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"]
+LIV_IT = ["quasi nullo", "scarso", "discreto", "buono", "ottimo"]
+COL_LIV = [("#D3D8CE", "#3E473A"), ("#C3D6B4", "#23331D"), ("#93BC7F", "#16260F"), ("#55904A", "#FFFFFF"), ("#2B6428", "#FFFFFF")]
+PIEDE_POSTI = ("Ricevi questa mail dal flusso «Aggiorna Radar Porcini» del repository the-marox/progetti. "
+               "Per non riceverla più, cancella il segreto POSTI del repository o disattiva il flusso.")
+PIEDE_NEWSLETTER = ("Ricevi questa mail perché nel tuo account di Radar Porcini hai scelto la newsletter. "
+                    "Per non riceverla più apri l'app, nella sezione «Il tuo account» togli la spunta a «Ricevi la newsletter».")
+
+
+def giorno_corto(iso):
+    d = dt.date.fromisoformat(iso)
+    return "%s %d" % (GG_IT[d.weekday()], d.day)
+
+
+def intervalli(giorni, livello):
+    """Giorni consecutivi con quel livello, scritti come «dom 18 – gio 22»."""
+    pezzi, inizio, prima = [], None, None
+    for g in giorni + [None]:
+        ok = g is not None and g["livello"] == livello
+        if ok and inizio is not None and dt.date.fromisoformat(g["data"]) - dt.date.fromisoformat(prima["data"]) == GIORNO:
+            prima = g
+            continue
+        if inizio is not None:
+            pezzi.append(giorno_corto(inizio["data"]) + ("" if inizio is prima else " – " + giorno_corto(prima["data"])))
+            inizio = prima = None
+        if ok:
+            inizio = prima = g
+    return ", ".join(pezzi)
+
+
+def elenco_it(a):
+    return a[0] if len(a) == 1 else ", ".join(a[:-1]) + " e " + a[-1]
+
+
+def frase_posto(r, g):
+    """Il posto in una frase: dove, a che quota, in che bosco e quali specie hanno buone possibilità nei giorni buoni.
+    «A «Poggio» (Reggello, FI), a 980 m in faggeta: ottime possibilità per porcino comune e porcino nero.»"""
+    best = max(g, key=lambda x: x["score"])
+    sp = {}
+    for x in g:
+        if x["livello"] >= 3:
+            for s in x.get("specie") or []:
+                if s["score"] >= 45:
+                    sp[s["nome"]] = max(sp.get(s["nome"], 0), s["score"])
+    nomi = sorted(sp, key=lambda n: -sp[n]) or [r.get("nomeSpecie") or "funghi"]
+    luogo = "«%s»" % r["nome"]
+    if r.get("comune"):
+        luogo += " (%s)" % r["comune"].replace(" (", ", ").rstrip(")")
+    dove = " ".join(x for x in ["a %d m" % round(r["quota"]) if r.get("quota") is not None else "", r.get("bosco") or ""] if x)
+    return "A %s%s: %s possibilità per %s." % (luogo, ", " + dove if dove else "", "ottime" if best["livello"] >= 4 else "buone", elenco_it(nomi))
+
+
+def componi(a, sito, oggi=None, piede=PIEDE_POSTI):
+    """Testo semplice e HTML della mail, dai punteggi dei posti calcolati nella pagina."""
+    import html
+    oggi = oggi or dt.datetime.now(UTC).date().isoformat()
+    posti = []
+    for r in a.get("posti") or []:
+        g = [x for x in r["giorni"] if x["data"] >= oggi]
+        if not g:
+            continue
+        best = max(g, key=lambda x: x["score"])
+        posti.append((r, g, best))
+    posti.sort(key=lambda t: -t[2]["score"])
+    buoni = [t for t in posti if t[2]["livello"] >= 3]
+    altri = [t for t in posti if t[2]["livello"] < 3]
+    pioggia = ((a.get("dati") or {}).get("pioggia_al") or "").replace(" (ora solare)", "")
+
+    righe = ["I tuoi posti in Radar Porcini, giorno per giorno.", ""]
+    for r, g, best in buoni:
+        righe += ["■ " + r["nome"], "  " + frase_posto(r, g),
+                  "  Giorno migliore: %s, %d (%s)" % (giorno_it(best["data"]), best["score"], LIV_IT[best["livello"]])]
+        for liv in (4, 3):
+            s = intervalli(g, liv)
+            if s:
+                righe.append("  %-8s%s" % (LIV_IT[liv].capitalize() + ":", s))
+        righe.append("")
+    if altri:
+        righe += ["Sotto «buono» nei prossimi giorni: " + "; ".join("%s (al massimo %d %s)" % (r["nome"], b["score"], giorno_corto(b["data"])) for r, g, b in altri) + ".", ""]
+    righe += ["Apri l'app: " + sito, "",
+              "Punteggio da 0 a 100: buono da 45, ottimo da 65. È una stima: guarda la scheda del punto prima di andare." +
+              (" Pioggia misurata fino al " + pioggia + "." if pioggia else ""), "", piede]
+    testo = "\n".join(righe)
+
+    e = html.escape
+    F = "font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"
+    h = ['<div style="%sbackground:#EDF0E8;padding:16px 10px;color:#192017;">' % F,
+         '<div style="max-width:560px;margin:0 auto;">',
+         '<div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#566151;font-weight:700;margin:0 4px 4px;">Radar Porcini</div>',
+         '<div style="font-size:20px;font-weight:800;margin:0 4px 14px;">I tuoi posti nei prossimi giorni</div>']
+    for r, g, best in buoni:
+        h.append('<div style="background:#F9FAF6;border:1px solid #CED6C7;border-radius:14px;padding:12px 12px 10px;margin-bottom:12px;">')
+        h.append('<table role="presentation" width="100%%" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;">'
+                 '<div style="font-size:17px;font-weight:700;">%s</div></td>'
+                 '<td style="vertical-align:top;text-align:right;white-space:nowrap;"><span style="display:inline-block;background:%s;color:%s;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700;">%d · %s</span>'
+                 '<div style="font-size:12px;color:#566151;margin-top:3px;">%s</div></td></tr></table>'
+                 % (e(r["nome"]), COL_LIV[best["livello"]][0], COL_LIV[best["livello"]][1], best["score"], LIV_IT[best["livello"]].capitalize(), e(giorno_it(best["data"]))))
+        h.append('<div style="font-size:14px;line-height:1.4;margin-top:6px;">%s</div>' % e(frase_posto(r, g)))
+        h.append('<div style="margin-top:10px;line-height:0;">')
+        for x in g:
+            bg, fg = COL_LIV[x["livello"]]
+            bordo = "outline:2px solid #7A4A21;outline-offset:1px;" if x is best else ""
+            d = dt.date.fromisoformat(x["data"])
+            h.append('<span style="display:inline-block;width:42px;margin:0 3px 6px 0;padding:4px 0 5px;border-radius:7px;background:%s;color:%s;text-align:center;line-height:1.15;%s">'
+                     '<span style="display:block;font-size:10px;text-transform:uppercase;opacity:.85;">%s</span>'
+                     '<span style="display:block;font-size:14px;font-weight:700;">%d</span>'
+                     '<span style="display:block;font-size:11px;">%d</span></span>' % (bg, fg, bordo, GG_IT[d.weekday()], d.day, x["score"]))
+        h.append('</div>')
+        for liv in (4, 3):
+            s = intervalli(g, liv)
+            if s:
+                h.append('<div style="font-size:14px;margin-top:2px;"><b>%s:</b> %s</div>' % (LIV_IT[liv].capitalize(), e(s)))
+        h.append('</div>')
+    if altri:
+        h.append('<div style="font-size:14px;color:#566151;margin:0 4px 14px;">Sotto «buono» nei prossimi giorni: %s.</div>'
+                 % "; ".join("%s (al massimo %d %s)" % (e(r["nome"]), b["score"], giorno_corto(b["data"])) for r, g, b in altri))
+    h.append('<div style="margin:4px 4px 16px;"><a href="%s" style="display:inline-block;background:#39663A;color:#FFFFFF;text-decoration:none;font-weight:700;border-radius:99px;padding:10px 18px;">Apri Radar Porcini</a></div>' % e(sito))
+    h.append('<div style="font-size:12px;color:#566151;margin:0 4px;line-height:1.45;">Punteggio da 0 a 100: buono da 45, ottimo da 65. È una stima: guarda la scheda del punto prima di andare.%s<br><br>%s</div>'
+             % (e(" Pioggia misurata fino al " + pioggia + ".") if pioggia else "", e(piede)))
+    h.append('</div></div>')
+    return testo, "".join(h)
+
+
+class Posta:
+    """Invio con Gmail (GMAIL_USER e GMAIL_APP_PASSWORD): una connessione per tutte le mail, riaperta se cade."""
+
+    def __init__(self):
+        self.utente = os.environ.get("GMAIL_USER", "").strip()
+        self.chiave = os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "")
+        if not self.utente or not self.chiave:
+            raise RuntimeError("mancano i segreti GMAIL_USER o GMAIL_APP_PASSWORD")
+        self.s = None
+
+    def invia(self, a, oggetto, testo, pagina):
+        import smtplib
+        from email.message import EmailMessage
+        m = EmailMessage()
+        m["From"], m["To"], m["Subject"] = "Radar Porcini <%s>" % self.utente, a, oggetto
+        m.set_content(testo)
+        m.add_alternative(pagina, subtype="html")
+        for prova in (1, 2):
+            try:
+                if self.s is None:
+                    self.s = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=60)
+                    self.s.login(self.utente, self.chiave)
+                self.s.send_message(m)
+                return
+            except (smtplib.SMTPServerDisconnected, OSError):
+                self.s = None
+                if prova == 2:
+                    raise
+
+    def chiudi(self):
+        if self.s is not None:
+            try:
+                self.s.quit()
+            except Exception:
+                pass
+
+
+def mail(origine, cartella_stato, sito):
+    """La mail dei posti del segreto POSTI, all'indirizzo che la invia. Poi ricorda i giorni segnalati (numeri dei posti e
+    date, niente nomi): se la mail non parte non li ricorda, e domani l'avviso viene riproposto."""
+    a = json.load(open(origine, encoding="utf-8"))
+    print("posti controllati: %d, giorni buoni o ottimi: %d, nuovi: %d" % (len(a.get("posti") or []), len(a.get("segnalati") or {}), len(a.get("nuovi") or [])))
+    if a.get("invia"):
+        testo, pagina = componi(a, sito)
+        posta = Posta()
+        posta.invia(posta.utente, a["oggetto"], testo, pagina)
+        posta.chiudi()
+        # niente oggetto nel registro: in un repository pubblico lo legge chiunque, e contiene il nome di un posto
+        print("mail inviata")
+    else:
+        print("nessun giorno nuovo da segnalare: nessuna mail")
+    os.makedirs(cartella_stato, exist_ok=True)
+    scrivi({"segnalati": a.get("segnalati") or {}}, os.path.join(cartella_stato, "avvisi.json"))
+
+
+MAX_NEWSLETTER = 300  # mail al giorno al massimo (Gmail ne permette circa 500): le altre partono il giorno dopo
+
+
+def iscritti_newsletter():
+    """Gli account con la newsletter attiva e l'email confermata, con i loro posti, letti con l'account di servizio di
+    Firebase (segreto FIREBASE_SERVICE_ACCOUNT). L'indirizzo viene dall'account, non da quello che l'utente può scrivere."""
+    import firebase_admin
+    from firebase_admin import auth, credentials, firestore
+    if not firebase_admin._apps:
+        if os.environ.get("FIRESTORE_EMULATOR_HOST"):  # solo per le prove, con gli emulatori di Firebase
+            from google.auth.credentials import AnonymousCredentials
+
+            class Anonima(credentials.Base):
+                def get_credential(self):
+                    return AnonymousCredentials()
+            firebase_admin.initialize_app(Anonima(), {"projectId": os.environ.get("GCLOUD_PROJECT") or "radar-porcini"})
+        else:
+            firebase_admin.initialize_app(credentials.Certificate(json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"])))
+    db = firestore.client()
+    iscritti, in_attesa = [], 0
+    for u in auth.list_users().iterate_all():
+        if u.disabled or not u.email:
+            continue
+        d = db.document("utenti", u.uid, "newsletter", "iscrizione").get()
+        if not d.exists or not (d.to_dict() or {}).get("attiva"):
+            continue
+        if not u.email_verified:
+            in_attesa += 1
+            continue
+        posti = [p for p in (posto_da(dict(x.to_dict() or {}, id=x.id), x.id) for x in db.collection("utenti", u.uid, "posti").stream()) if p]
+        iscritti.append({"uid": u.uid, "email": u.email, "posti": posti})
+    return iscritti, in_attesa
+
+
+def newsletter(pagina, cartella_stato, sito):
+    """Per ogni iscritto, i punteggi dei suoi posti e una mail se uno diventa buono o ottimo in un giorno nuovo.
+    Nel registro (pubblico) solo numeri: mai indirizzi, nomi o coordinate."""
+    iscritti, in_attesa = iscritti_newsletter()
+    file_stato = os.path.join(cartella_stato, "newsletter.json")
+    try:
+        prima = json.load(open(file_stato, encoding="utf-8")).get("utenti") or {}
+    except Exception:
+        prima = {}
+    con_posti = [x for x in iscritti if x["posti"]]
+    stato, risultati = punteggi_pagina(pagina, [x["posti"] for x in con_posti]) if con_posti else (None, [])
+    oggi = dt.datetime.now(UTC).date().isoformat()
+    dopo, inviate, errori, rimandate, posta = {}, 0, 0, 0, None
+    try:
+        for x, ris in zip(con_posti, risultati):
+            vecchi = (prima.get(x["uid"]) or {}).get("segnalati") or {}
+            segnalati, nuovi = valuta(ris, vecchi, oggi)
+            if not nuovi:
+                dopo[x["uid"]] = {"segnalati": segnalati}
+                continue
+            if inviate >= MAX_NEWSLETTER:
+                rimandate += 1
+                dopo[x["uid"]] = {"segnalati": vecchi}
+                continue
+            try:
+                posta = posta or Posta()
+                testo, html_ = componi({"posti": ris, "dati": stato}, sito, oggi, PIEDE_NEWSLETTER)
+                posta.invia(x["email"], oggetto_mail(nuovi), testo, html_)
+                inviate += 1
+                dopo[x["uid"]] = {"segnalati": segnalati}
+            except Exception as e:
+                errori += 1
+                dopo[x["uid"]] = {"segnalati": vecchi}
+                print("una mail non è partita: %s" % type(e).__name__)
+                if isinstance(e, RuntimeError):  # mancano i segreti di Gmail: inutile provare le altre
+                    break
+    finally:
+        if posta:
+            posta.chiudi()
+    # chi non è più iscritto esce dallo stato; chi è iscritto senza posti resta com'era
+    for x in iscritti:
+        if x["uid"] not in dopo and x["uid"] in prima:
+            dopo[x["uid"]] = prima[x["uid"]]
+    os.makedirs(cartella_stato, exist_ok=True)
+    scrivi({"utenti": dopo}, file_stato)
+    r = "%d iscritti con l'email confermata (%d con posti), %d in attesa di conferma, %d mail inviate%s%s" % (
+        len(iscritti), len(con_posti), in_attesa, inviate, ", %d non partite" % errori if errori else "", ", %d rimandate a domani" % rimandate if rimandate else "")
+    print(r)
+    return r, errori
+
+
 def main():
     args = sys.argv[1:]
     if args and args[0] == "valida":
         print(json.dumps({"validi": valida(args[1] if len(args) > 1 else None)}, ensure_ascii=False))
+        return
+    if args and args[0] == "mail":
+        mail(args[1], args[2], args[3] if len(args) > 3 else os.environ.get("SITO_URL") or "https://the-marox.github.io/progetti/radar-porcini/")
+        return
+    if args and args[0] == "newsletter":
+        r, errori = newsletter(args[1], args[2], args[3] if len(args) > 3 else os.environ.get("SITO_URL") or "https://the-marox.github.io/progetti/radar-porcini/")
+        if errori:
+            sys.exit(1)
         return
     if args and args[0] == "avvisi":
         t0 = time.time()

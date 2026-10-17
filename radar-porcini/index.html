@@ -999,6 +999,8 @@ details.sposta summary { cursor: pointer; padding: 10px 0; font-weight: 700; col
 .acc-form .row-f, .acc-form .note { grid-column: 1 / -1; }
 .acc-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 10px; }
 .acc-box p { margin: 0; }
+.acc-check { display: flex; gap: 10px; align-items: flex-start; font-weight: 700; cursor: pointer; }
+.acc-check input { width: 22px; height: 22px; margin: 1px 0 0; flex: 0 0 auto; accent-color: var(--moss); }
 .linkbtn.piano { border-color: transparent; background: none; padding: 0; color: var(--moss); font-weight: 700; font-size: inherit; }
 .linkbtn.conf { border-color: var(--cap); color: var(--cap); }
 path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke-width: 3; cursor: pointer; }
@@ -1137,6 +1139,12 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
       <p class="note">Per un account nuovo scrivi la tua email, scegli una password di almeno 6 caratteri e premi «Crea l'account». <button class="linkbtn piano" type="button" id="acc-dimenticata">Password dimenticata?</button></p>
     </form>
     <div class="row-f" id="acc-dentro" hidden><button class="linkbtn" type="button" id="acc-esci">Esci</button></div>
+    <div class="acc-box" id="acc-news" hidden>
+      <label class="acc-check"><input type="checkbox" id="acc-news-si"> Ricevi la newsletter</label>
+      <p class="note">Una mail al mattino quando uno dei tuoi posti diventa buono o ottimo in un giorno nuovo, con le specie, la quota e il bosco. La tua email resta privata e puoi togliere la spunta quando vuoi.</p>
+      <p class="note" id="acc-news-nota" hidden></p>
+      <div class="row-f" id="acc-news-verifica-box" hidden><button class="linkbtn" type="button" id="acc-news-verifica">Mandami il link di conferma</button></div>
+    </div>
     <div class="acc-box" id="acc-importa" hidden>
       <p id="acc-importa-testo"></p>
       <div class="row-f"><button class="linkbtn" type="button" id="acc-importa-si">Copiali nell'account</button><button class="linkbtn" type="button" id="acc-importa-no">No, grazie</button></div>
@@ -4708,8 +4716,18 @@ if (typeof module !== "undefined") module.exports = RP;
     p.habitat = habitatPunto({ lat: x.lat, lon: x.lon, bosco: x.bosco });
     var o = { versante: state.versante ? state.versante : (ter && ter.versante ? ter.versante : null), specie: specie || state.specie };
     var g = [];
-    for (var k = 0; k <= 10; k++) { var t = state.start + k, r = RP.stima(p, t, o); g.push({ t: t, score: r.score, liv: r.livello.id }); }
+    for (var k = 0; k <= 10; k++) { var t = state.start + k, r = RP.stima(p, t, o); g.push({ t: t, score: r.score, liv: r.livello.id, specie: r.perSpecie || [{ id: r.specie, score: r.score }] }); }
     return { p: p, giorni: g };
+  }
+  // il bosco di un posto in poche parole, per la mail: «in faggeta», «fuori dai boschi della carta, con castagneto entro 500 m»
+  function boscoBreve(c) { var n = RP.BOSCHI[c].replace(/ di tipo non noto$/, ""); return /^misto /.test(n) ? "bosco " + n : n; }
+  function testoBosco(h) {
+    if (!h) return "";
+    if (h.scelto != null) return h.scelto === 0 ? "fuori dal bosco" : "in " + boscoBreve(h.scelto);
+    if (h.centro) return "in " + boscoBreve(h.centro);
+    var m = 0;
+    if (h.comp) for (var c = 1; c < h.comp.length; c++) if (h.comp[c] >= 0.05 && (!m || h.comp[c] > h.comp[m])) m = c;
+    return "fuori dai boschi della carta" + (m ? ", con " + boscoBreve(m) + " entro 500 m" : "");
   }
   function nomeCorto(x) { return x.comune ? x.comune.replace(/ \([A-Z]{2}\)$/, "") : ""; }
   function renderPosti() {
@@ -4994,6 +5012,27 @@ if (typeof module !== "undefined") module.exports = RP;
     document.getElementById("acc-dentro").hidden = !dentro;
     document.getElementById("acc-elimina").hidden = !u;
     if (u) document.getElementById("acc-elimina-pw-box").hidden = !conPassword(u);
+    document.getElementById("acc-news").hidden = !u;
+    if (u) leggiNewsletter(u);
+  }
+  // newsletter: utenti/<uid>/newsletter/iscrizione con «attiva». L'indirizzo non si salva qui: chi invia lo prende
+  // dall'account, e solo se è confermato (chi entra con Google lo è già, con email e password serve il link di conferma)
+  function docNewsletter(fb, u) { return fb.F.doc(fb.db, "utenti", u.uid, "newsletter", "iscrizione"); }
+  function notaNewsletter(u, attiva) {
+    var nota = document.getElementById("acc-news-nota"), da = !u.emailVerified && attiva;
+    nota.hidden = !da; document.getElementById("acc-news-verifica-box").hidden = !da;
+    if (da) nota.textContent = "Per riceverla conferma la tua email (" + u.email + "): premi qui sotto e apri il link che ti arriva, poi ricarica la pagina.";
+  }
+  function leggiNewsletter(u) {
+    var fb = conto.pronto, cb = document.getElementById("acc-news-si");
+    if (!fb) return;
+    // la spunta si tocca dopo aver letto l'iscrizione, altrimenti la lettura che arriva dopo cancellerebbe la scelta
+    cb.disabled = true;
+    fb.F.getDoc(docNewsletter(fb, u)).then(function (d) {
+      cb.checked = !!(d.exists() && d.data().attiva); notaNewsletter(u, cb.checked);
+    }, function () {}).then(function () { cb.disabled = false; });
+    // dopo il link di conferma l'account va riletto per saperlo
+    if (!u.emailVerified) u.reload().then(function () { if (conto.utente === u) notaNewsletter(u, cb.checked); }, function () {});
   }
   function apriConto(cb, locale) {
     msgConto("Apro il tuo account…");
@@ -5150,6 +5189,21 @@ if (typeof module !== "undefined") module.exports = RP;
       return fb.U.signOut(fb.auth).then(function () { return fb.F.terminate(fb.db); }).then(function () { return fb.F.clearIndexedDbPersistence(fb.db); }).catch(function () {}).then(fuori);
     });
   });
+  document.getElementById("acc-news-si").addEventListener("change", function () {
+    var fb = conto.pronto, u = conto.utente, si = this.checked;
+    if (!fb || !u) return;
+    fb.F.setDoc(docNewsletter(fb, u), { attiva: si, aggiornato: fb.F.serverTimestamp() }).catch(erroreConto);
+    notaNewsletter(u, si);
+    msgConto(si ? (u.emailVerified ? "Iscritto alla newsletter: la mail arriva a " + u.email + " quando un tuo posto diventa buono o ottimo." : "Iscrizione salvata: la newsletter parte quando avrai confermato l'email.")
+      : "Non riceverai più la newsletter.");
+  });
+  document.getElementById("acc-news-verifica").addEventListener("click", function () {
+    var fb = conto.pronto, u = conto.utente, btn = this;
+    if (!fb || !u) return;
+    btn.disabled = true;
+    fb.U.sendEmailVerification(u).then(function () { msgConto("Ti ho mandato il link di conferma a " + u.email + ": aprilo, poi torna qui e ricarica la pagina."); },
+      function (err) { btn.disabled = false; erroreAccesso(err); });
+  });
   document.getElementById("acc-elimina-btn").addEventListener("click", function () {
     var fb = conto.pronto, u = conto.utente, btn = this;
     if (!fb || !u) return;
@@ -5159,7 +5213,7 @@ if (typeof module !== "undefined") module.exports = RP;
     btn.disabled = true; msgConto("Elimino l'account…");
     (conPassword(u) ? U.reauthenticateWithCredential(u, U.EmailAuthProvider.credential(u.email, pw)) : U.reauthenticateWithPopup(u, new U.GoogleAuthProvider())).then(function () {
       conto.utente = null; // niente più impostazioni da salvare
-      return Promise.all(["posti", "uscite"].map(function (nome) {
+      return Promise.all(["posti", "uscite", "newsletter"].map(function (nome) {
         return Fs.getDocs(Fs.collection(db, "utenti", u.uid, nome)).then(function (snap) {
           var lotti = [];
           for (var i = 0; i < snap.docs.length; i += 400) {
@@ -5326,7 +5380,11 @@ if (typeof module !== "undefined") module.exports = RP;
       return (lista || []).filter(postoValido).map(function (x) {
         var sp = specieValida(x.specie) ? x.specie : "porcini", v = punteggiLuogo(x, sp);
         return { id: x.id || null, nome: String(x.nome), specie: sp, nomeSpecie: nomeSpecie(sp), quota: v.p.quota, comune: x.comune || comuneDi(x.lat, x.lon) || "",
-          giorni: v.giorni.map(function (d) { return { data: isoOf(state.ref + d.t * DAY), score: d.score, livello: d.liv, nome: LIV[d.liv] }; }) };
+          bosco: testoBosco(v.p.habitat),
+          giorni: v.giorni.map(function (d) {
+            return { data: isoOf(state.ref + d.t * DAY), score: d.score, livello: d.liv, nome: LIV[d.liv],
+              specie: d.specie.map(function (y) { return { nome: RP.SP[y.id].nome.toLowerCase(), score: y.score }; }) };
+          }) };
       });
     }
   };

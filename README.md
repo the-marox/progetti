@@ -9,8 +9,8 @@ Toscana, le previsioni ICON-EU ed ECMWF e il radar della Protezione Civile, e pu
 accanto alla pagina:
 
 - alle 8:20 UTC il giro completo (misure, previsioni, archivio, radar e avvisi via mail per i posti salvati);
-- alle 11:20, 14:20 e 17:20 UTC solo misure e previsioni; se quel giorno il giro del mattino è saltato, il primo
-  di questi lo fa completo.
+- ogni ora dalle 9:20 alle 18:20 UTC solo misure e previsioni; se quel giorno il giro del mattino è saltato, il primo
+  di questi lo fa completo. I giri sono tanti perché GitHub a volte ritarda o salta gli orari programmati.
 
 L'esito dell'ultimo aggiornamento è in https://the-marox.github.io/progetti/radar-porcini/esito.json.
 Il vecchio flusso `radar-porcini.yml` è disattivato.

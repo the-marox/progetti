@@ -1,6 +1,7 @@
 /* Radar Porcini: lavoro senza rete. La pagina e i dati si prendono prima dalla rete (sempre i più recenti) e, senza
-   campo, dalla copia salvata; le tessere della mappa topografica restano salvate dopo la prima volta. */
-var VERSIONE = "rp-82a7bf7582", DATI = "rp-dati", TESSERE = "rp-tessere", FONT = "rp-font";
+   campo, dalla copia salvata; le tessere della mappa topografica restano salvate dopo la prima volta, come la libreria
+   dell'account (Firebase), così l'account si apre anche senza rete. */
+var VERSIONE = "rp-5c19e2d0a4", DATI = "rp-dati", TESSERE = "rp-tessere", FONT = "rp-font", LIBRERIE = "rp-librerie";
 var GUSCIO = ["./", "./index.html", "./manifest.webmanifest", "./icona-192.png", "./icona-512.png", "./icona-maskable-512.png"];
 
 self.addEventListener("install", function (e) {
@@ -8,7 +9,7 @@ self.addEventListener("install", function (e) {
 });
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (ks) {
-    return Promise.all(ks.filter(function (k) { return k !== VERSIONE && k !== DATI && k !== TESSERE && k !== FONT; }).map(function (k) { return caches.delete(k); }));
+    return Promise.all(ks.filter(function (k) { return k !== VERSIONE && k !== DATI && k !== TESSERE && k !== FONT && k !== LIBRERIE; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 
@@ -50,6 +51,7 @@ self.addEventListener("fetch", function (e) {
   var u = new URL(req.url);
   if (/\.tile\.opentopomap\.org$/.test(u.hostname)) { e.respondWith(tessera(req)); return; }
   if (u.hostname === "fonts.googleapis.com" || u.hostname === "fonts.gstatic.com") { e.respondWith(primaCache(req, FONT)); return; }
+  if (u.hostname === "www.gstatic.com" && u.pathname.indexOf("/firebasejs/") === 0) { e.respondWith(primaCache(req, LIBRERIE)); return; }
   if (u.origin !== self.location.origin) return;
   if (/\.json$/.test(u.pathname)) { e.respondWith(primaRete(req, DATI)); return; }
   e.respondWith(primaRete(req, VERSIONE));

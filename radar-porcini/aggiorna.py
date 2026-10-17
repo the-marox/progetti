@@ -32,9 +32,17 @@ TMP = tempfile.mkdtemp(prefix="radarporcini_")
 
 
 def scrivi(obj, percorso):
-    """Scrive il JSON in modo atomico: un file interrotto a meta' non sostituisce mai quello buono."""
-    with open(percorso + ".tmp", "w", encoding="utf-8") as f:
-        json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
+    """Scrive il JSON in modo atomico: un file interrotto a meta' non sostituisce mai quello buono. Un numero non valido
+    (NaN, infinito) e' un errore: nel file non sarebbe JSON valido e la pagina non lo leggerebbe."""
+    try:
+        with open(percorso + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(obj, f, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    except BaseException:
+        try:
+            os.remove(percorso + ".tmp")
+        except OSError:
+            pass
+        raise
     os.replace(percorso + ".tmp", percorso)
 
 
@@ -867,10 +875,13 @@ def valida(dest=None):
     if p and len(p.get("giorni") or []) >= 4:
         ok.append("previsioni.json")
     h = carica("storico.json")
-    if h and h.get("al") and h.get("pioggia"):
+    v = ((h or {}).get("pioggia") or {}).get("valori") if isinstance(h, dict) else None
+    # l'archivio: quasi tutte le stazioni (come per data.json), ognuna coi suoi 90 giorni di pioggia
+    if h and h.get("al") and isinstance(v, dict) and len(v) >= 300 and all(isinstance(x, list) and len(x) == NP for x in v.values()):
         ok.append("storico.json")
     r = carica("radar.json")
-    if r and r.get("al") and r.get("png"):
+    # il radar: 90 giorni in un'immagine PNG, e almeno un giorno con i dati
+    if r and r.get("al") and str(r.get("png") or "").startswith("data:image/png;base64,") and r.get("giorni") == NP and len(r.get("mancanti") or []) < NP:
         ok.append("radar.json")
     if carica("esito.json") is not None:
         ok.append("esito.json")
@@ -1156,7 +1167,7 @@ def componi(a, sito, oggi=None, piede=PIEDE_POSTI):
 
 
 class Posta:
-    """Invio con Gmail (GMAIL_USER e GMAIL_APP_PASSWORD): una connessione per tutte le mail, riaperta se cade."""
+    """Invio con Gmail (GMAIL_USER e GMAIL_APP_PASSWORD): una connessione per tutte le mail, riaperta se Gmail l'ha chiusa."""
 
     def __init__(self):
         self.utente = os.environ.get("GMAIL_USER", "").strip()
@@ -1172,24 +1183,42 @@ class Posta:
         m["From"], m["To"], m["Subject"] = "Radar Porcini <%s>" % self.utente, a, oggetto
         m.set_content(testo)
         m.add_alternative(pagina, subtype="html")
-        for prova in (1, 2):
+        # una connessione rimasta aperta tra una mail e l'altra Gmail puo' averla chiusa: si prova prima di usarla
+        if self.s is not None:
             try:
-                if self.s is None:
-                    self.s = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=60)
-                    self.s.login(self.utente, self.chiave)
-                self.s.send_message(m)
-                return
-            except (smtplib.SMTPServerDisconnected, OSError):
-                self.s = None
+                if self.s.noop()[0] != 250:
+                    raise smtplib.SMTPServerDisconnected("connessione chiusa")
+            except (smtplib.SMTPException, OSError):
+                self.chiudi()
+        # aprire la connessione si puo' riprovare, perche' nessuna mail e' ancora partita
+        for prova in (1, 2):
+            if self.s is not None:
+                break
+            try:
+                self.s = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=60)
+                self.s.login(self.utente, self.chiave)
+            except (smtplib.SMTPServerDisconnected, smtplib.SMTPConnectError, OSError):
+                self.chiudi()
                 if prova == 2:
                     raise
+        # la mail invece una volta sola: se la connessione cade a meta' Gmail potrebbe averla gia' accettata, e
+        # riprovare la manderebbe due volte. Una mail non partita non si segna, e si ripropone al giro completo dopo.
+        try:
+            self.s.send_message(m)
+        except (smtplib.SMTPServerDisconnected, OSError):
+            self.chiudi()
+            raise
 
     def chiudi(self):
         if self.s is not None:
             try:
                 self.s.quit()
             except Exception:
-                pass
+                try:
+                    self.s.close()
+                except Exception:
+                    pass
+            self.s = None
 
 
 def mail(origine, cartella_stato, sito):
@@ -1258,6 +1287,14 @@ def newsletter(pagina, cartella_stato, sito):
     stato, risultati = punteggi_pagina(pagina, [x["posti"] for x in con_posti]) if con_posti else (None, [])
     oggi = dt.datetime.now(UTC).date().isoformat()
     dopo, inviate, errori, rimandate, posta = {}, 0, 0, 0, None
+    attivi = {x["uid"] for x in iscritti}
+    os.makedirs(cartella_stato, exist_ok=True)
+
+    def salva():
+        # chi non e' piu' iscritto esce dallo stato; chi non e' ancora stato guardato (o e' iscritto senza posti) resta com'era
+        tutti = {u: v for u, v in prima.items() if u in attivi}
+        tutti.update(dopo)
+        scrivi({"utenti": tutti}, file_stato)
     try:
         for x, ris in zip(con_posti, risultati):
             vecchi = (prima.get(x["uid"]) or {}).get("segnalati") or {}
@@ -1280,6 +1317,7 @@ def newsletter(pagina, cartella_stato, sito):
                 posta.invia(x["email"], oggetto_mail(nuovi), testo, html_)
                 inviate += 1
                 dopo[x["uid"]] = {"segnalati": segnalati}
+                salva()
             except Exception as e:
                 errori += 1
                 dopo[x["uid"]] = {"segnalati": vecchi}
@@ -1290,12 +1328,7 @@ def newsletter(pagina, cartella_stato, sito):
     finally:
         if posta:
             posta.chiudi()
-    # chi non è più iscritto esce dallo stato; chi è iscritto senza posti resta com'era
-    for x in iscritti:
-        if x["uid"] not in dopo and x["uid"] in prima:
-            dopo[x["uid"]] = prima[x["uid"]]
-    os.makedirs(cartella_stato, exist_ok=True)
-    scrivi({"utenti": dopo}, file_stato)
+    salva()
     r = "%d iscritti con l'email confermata (%d con posti), %d in attesa di conferma, %d mail inviate%s%s" % (
         len(iscritti), len(con_posti), in_attesa, inviate, ", %d non partite" % errori if errori else "", ", %d rimandate a domani" % rimandate if rimandate else "")
     print(r)

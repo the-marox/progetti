@@ -4720,7 +4720,7 @@ if (typeof module !== "undefined") module.exports = RP;
     return { p: p, giorni: g };
   }
   // il bosco di un posto in poche parole, per la mail: «in faggeta», «fuori dai boschi della carta, con castagneto entro 500 m»
-  function boscoBreve(c) { var n = RP.BOSCHI[c].replace(/ di tipo non noto$/, ""); return /^misto /.test(n) ? "bosco " + n : n; }
+  function boscoBreve(c) { var n = (RP.BOSCHI[c] || "bosco").replace(/ di tipo non noto$/, ""); return /^misto /.test(n) ? "bosco " + n : n; }
   function testoBosco(h) {
     if (!h) return "";
     if (h.scelto != null) return h.scelto === 0 ? "fuori dal bosco" : "in " + boscoBreve(h.scelto);

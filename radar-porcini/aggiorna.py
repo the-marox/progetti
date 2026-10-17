@@ -893,8 +893,17 @@ def posto_da(x, nome_file):
         return None
     if not (41.3 <= lat <= 45.2 and 8.5 <= lon <= 13.5):
         return None
+    # quota e tipo di bosco solo se validi: un valore scritto a mano non deve rompere il calcolo degli altri posti
+    try:
+        quota = float(campi["quota"]) if campi.get("quota") is not None and -10 <= float(campi["quota"]) <= 4000 else None
+    except (TypeError, ValueError):
+        quota = None
+    try:
+        bosco = int(campi["bosco"]) if campi.get("bosco") not in (None, "") and 0 <= int(campi["bosco"]) <= 20 else None
+    except (TypeError, ValueError):
+        bosco = None
     return {"id": str(x.get("id") or x.get("doc_id") or nome_file), "nome": str(campi.get("nome") or "Posto")[:60], "lat": lat, "lon": lon,
-            "quota": campi.get("quota"), "bosco": campi.get("bosco"), "comune": str(campi.get("comune") or "")[:60],
+            "quota": quota, "bosco": bosco, "comune": str(campi.get("comune") or "")[:60],
             "specie": str(campi.get("specie") or "porcini")}
 
 
@@ -926,7 +935,7 @@ def giorno_it(iso):
 
 def punteggi_pagina(pagina, liste):
     """Punteggi dei posti per oggi e i 10 giorni dopo, calcolati nella pagina vera (Chromium senza schermo) con i dati della
-    cartella corrente: lo stato dei dati e, per ogni lista di posti, la lista dei risultati."""
+    cartella corrente: lo stato dei dati e, per ogni lista di posti, la lista dei risultati (None se quella lista non si calcola)."""
     sito = tempfile.mkdtemp(prefix="radarsito_")
     shutil.copyfile(pagina, os.path.join(sito, "index.html"))
     for f in ("data.json", "aria.json", "previsioni.json", "storico.json", "radar.json", "sentieri.json"):
@@ -950,7 +959,12 @@ def punteggi_pagina(pagina, liste):
         pg.goto("http://radar.locale/index.html", wait_until="domcontentloaded", timeout=90000)
         pg.wait_for_function("() => window.RadarPorcini && window.RadarPorcini.pronto()", timeout=150000)
         stato = pg.evaluate("RadarPorcini.stato()")
-        risultati = [pg.evaluate("(l) => RadarPorcini.punteggi(l)", l) for l in liste]
+        risultati = []
+        for l in liste:
+            try:
+                risultati.append(pg.evaluate("(l) => RadarPorcini.punteggi(l)", l))
+            except Exception:
+                risultati.append(None)
         b.close()
     shutil.rmtree(sito, ignore_errors=True)
     return stato, risultati
@@ -992,6 +1006,8 @@ def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://
         scrivi(out, uscita)
         return "nessun posto salvato"
     stato, (risultati,) = punteggi_pagina(pagina, [posti])
+    if risultati is None:
+        raise RuntimeError("la pagina non ha calcolato i punteggi dei posti")
     out["dati"] = stato
     out["posti"] = risultati
     out["segnalati"], nuovi = valuta(risultati, prima, oggi)
@@ -1231,6 +1247,7 @@ def iscritti_newsletter():
 def newsletter(pagina, cartella_stato, sito):
     """Per ogni iscritto, i punteggi dei suoi posti e una mail se uno diventa buono o ottimo in un giorno nuovo.
     Nel registro (pubblico) solo numeri: mai indirizzi, nomi o coordinate."""
+    import smtplib
     iscritti, in_attesa = iscritti_newsletter()
     file_stato = os.path.join(cartella_stato, "newsletter.json")
     try:
@@ -1244,6 +1261,11 @@ def newsletter(pagina, cartella_stato, sito):
     try:
         for x, ris in zip(con_posti, risultati):
             vecchi = (prima.get(x["uid"]) or {}).get("segnalati") or {}
+            if ris is None:
+                errori += 1
+                dopo[x["uid"]] = {"segnalati": vecchi}
+                print("i posti di un iscritto non si sono calcolati")
+                continue
             segnalati, nuovi = valuta(ris, vecchi, oggi)
             if not nuovi:
                 dopo[x["uid"]] = {"segnalati": segnalati}
@@ -1262,7 +1284,8 @@ def newsletter(pagina, cartella_stato, sito):
                 errori += 1
                 dopo[x["uid"]] = {"segnalati": vecchi}
                 print("una mail non è partita: %s" % type(e).__name__)
-                if isinstance(e, RuntimeError):  # mancano i segreti di Gmail: inutile provare le altre
+                # mancano i segreti di Gmail, o Gmail non accetta la password: inutile (e rischioso) provare le altre
+                if isinstance(e, (RuntimeError, smtplib.SMTPAuthenticationError)):
                     break
     finally:
         if posta:

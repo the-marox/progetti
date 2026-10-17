@@ -1307,12 +1307,14 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
   <details class="metodo">
     <summary>Come funziona la stima</summary>
     <div class="body">
-      <p>Dati usati: le stazioni del Centro Funzionale della Regione Toscana (pioggia da 376 pluviometri, temperature minime e massime, umidità da circa 200 stazioni, vento da circa 145; dati in tempo reale, non validati) e il loro archivio, la pioggia stimata dal radar della Protezione Civile, le previsioni dei modelli ICON-EU del servizio meteorologico tedesco (DWD) ed ECMWF del Centro europeo per 10 giorni, la carta dei boschi della Regione Toscana aggiornata con Copernicus, la carta del suolo SoilGrids e un modello digitale del terreno. L'aggiornamento completo parte ogni giorno alle 9:20 ora solare (10:20 con l'ora legale), subito dopo la lettura delle 9 del CFR; misure e previsioni si aggiornano anche alle 12:20, 15:20 e 18:20.</p>
+      <p>Dati usati: le stazioni del Centro Funzionale della Regione Toscana (pioggia da 376 pluviometri, temperature minime e massime, umidità da circa 200 stazioni, vento da circa 145; dati in tempo reale, non validati) e il loro archivio, la pioggia stimata dal radar della Protezione Civile, le previsioni dei modelli ICON-EU del servizio meteorologico tedesco (DWD) ed ECMWF del Centro europeo per 10 giorni, la carta dei boschi della Regione Toscana aggiornata con Copernicus, la carta del suolo SoilGrids e un modello digitale del terreno. L'aggiornamento completo parte ogni giorno alle 9:20 ora solare (10:20 con l'ora legale), subito dopo la lettura delle 9 del CFR; misure e previsioni si aggiornano poi ogni ora fino alle 20:20.</p>
       <ul>
         <li><b>Pioggia caduta e prevista.</b> Si cercano gli eventi di pioggia degli ultimi 15 giorni e quelli previsti; per ogni giorno conta l'evento che dà la stima migliore. Sotto una soglia (10–15 mm secondo la specie) un evento non conta; poi il peso cresce con rendimento decrescente. La pioggia prevista pesa per intero fino a domani, poi sempre meno (90% dopodomani, poi 80, 70, 60%, fino al 35% al decimo giorno), perché più è lontana più è incerta. Una pioggia prevista rimette anche a zero i giorni senza pioggia.</li>
         <li><b>Previsioni.</b> Per i primi 4 giorni il modello ICON-EU (celle di circa 5×7 km), poi fino al decimo giorno il modello IFS del Centro europeo ECMWF (celle di circa 20×28 km), meno dettagliato. Oltre il decimo giorno la stima suppone che non piova. Nella tabella delle previsioni c'è anche la probabilità di superare 10 e 20 mm: quante delle 51 previsioni dell'insieme ECMWF li superano, su 24 ore dalle 13 alle 13. Quando la previsione singola dice pioggia e la probabilità è bassa, è meglio non contarci.</li>
         <li><b>Archivio giornaliero.</b> Il giorno di pioggia va dalle 9 alle 9 del giorno dopo, come nell'archivio del Servizio Idrologico Regionale: con la lettura delle 9 la pioggia del giorno appena chiuso è esatta. Ogni giorno si salvano anche minima e massima di ieri; i giorni mancanti o incerti vengono dall'archivio. Così la stima conosce la pioggia giorno per giorno degli ultimi 90 giorni e le temperature vere degli ultimi 40.</li>
         <li><b>Acqua nel suolo.</b> Giorno per giorno si fa un bilancio: entra la pioggia (meno quella trattenuta da chiome e lettiera), esce l'evaporazione stimata dalle temperature con la formula di Hargreaves, più forte d'estate e col caldo, e più lenta quando il suolo è già asciutto. Ne viene un indice da 0 a 100% d'acqua in uno strato di circa 80 mm, quello del micelio. Prima della pioggia conta quanto era bagnato il suolo: secco, la pioggia rende fino a un terzo in meno; umido, fino al 15% in più. Dopo, se il suolo scende sotto il 30% le nascite rallentano, fino a dimezzarsi. Nel grafico della pioggia del punto è la linea verde.</li>
+        <li><b>Pendenza e ristagno.</b> Sui pendii ripidi una parte delle piogge forti scorre via: fino a circa un terzo sopra i 30° con più di 80 mm in un giorno, niente sotto i 20 mm, che la lettiera assorbe anche in pendio. L'acqua che lo strato del micelio non trattiene se ne va in un giorno sui pendii da 10° in su; sui terreni in piano scende più lentamente (un terzo al giorno), nei fondovalle ancora di più: il modello del terreno li riconosce perché sono più bassi dei dintorni (circa 1,5 km). Se ne resta tanta il suolo è zuppo e il micelio soffre senz'aria: ogni giorno da zuppo dall'inizio della pioggia toglie il 15% alla buttata, fino al 60%. Vale per il tuo punto, i posti e le possibili fungaie; non per le stazioni, che rappresentano i 5 km attorno. Manca una carta della tessitura del suolo: su sabbia, come nelle pinete della costa, l'acqua scende più in fretta di così, su argilla più piano.</li>
+        <li><b>Buttate precedenti.</b> Una buttata consuma le riserve del micelio. Se una pioggia fa nascere funghi entro un mese da una buttata, rende meno: fino al 35% in meno subito dopo una buttata piena, sempre meno col passare dei giorni. Quanto era piena la buttata di prima si stima dal tempo di allora: pioggia, temperatura, stagione e acqua nel suolo. È un'ipotesi ragionata: non ci sono misure che dicano quanto vale.</li>
         <li><b>Radar.</b> Per il tuo punto la pioggia dei 90 giorni passati viene dal prodotto «Merging» della Protezione Civile: il radar corretto coi pluviometri, su celle di circa 2 km. Così si vedono anche i temporali caduti tra una stazione e l'altra. Confrontato coi pluviometri toscani sugli ultimi 90 giorni ha uno scarto medio di 0,3 mm al giorno (1–3 mm nei giorni di pioggia forte).</li>
         <li><b>Tempo dalla pioggia.</b> Il ritardo dipende dalla temperatura media giorno per giorno: quella misurata, poi quella prevista, poi l'ultima prevista. Per il porcino comune, con 12 °C le prime nascite arrivano dopo circa 9 giorni e il pieno tra il 12° e il 17°, come nello studio sull'abetina dell'Amiata (Salerni e colleghi, 2023); col caldo bastano 5–6 giorni, col freddo ne servono 13–20. Le altre specie hanno tempi propri: l'ovolo vuole caldo, il chiodino parte presto col fresco, gallinaccio, sanguinello e steccherino crescono lenti e durano di più.</li>
         <li><b>Specie.</b> Ogni specie ha stagione, quote, temperature, boschi e tempi propri, presi da schede regionali (Regione Piemonte, progetto Amycoforest; Parco delle Foreste Casentinesi; Regioni Emilia-Romagna e Lombardia) e, dove esistono, da studi sul campo (Amiata per il porcino comune, pinete spagnole per il sanguinello). Per molte specie mancano misure dei tempi di nascita: sono stime ragionate. Con «Porcini, tutte e quattro» ogni stazione prende la specie con la stima migliore.</li>
@@ -1910,7 +1912,7 @@ var RP = (function () {
       for (var k = inizio - 60; k < inizio; k++) ant += k < 0 ? (k >= -NP ? (P[k + NP] || 0) : 0) : k === 0 ? (s.oggi9 || 0) : 0;
       out.push({ tipo: f < 0.1 * mm ? "osservata" : o < 0.1 * mm ? "prevista" : "mista", mm: r1(mm), mmOsservati: r1(o),
         mmPrevisti: r1(somma(g, function (c) { return c.prevRaw; })), x: somma(g, function (c) { return c.mm * c.mm * c.j; }) / w,
-        inizio: inizio, fine: g[g.length - 1].j, ant60: r1(ant), storia: true });
+        inizio: inizio, fine: g[g.length - 1].j, ant60: r1(ant), storia: true, scorsa: r1(somma(g, function (c) { return scorrimento(c.mm, s.terreno); })) });
     });
     return out;
   }
@@ -1922,6 +1924,29 @@ var RP = (function () {
   // esce l'evapotraspirazione (Hargreaves-Samani, dalle temperature), che rallenta quando il suolo si asciuga.
   // Indice da 0 (secco) a 1 (pieno), giorno per giorno da 90 giorni prima alla fine delle serie.
   var WMAX = 80, KC = 0.85;
+  // Sui pendii ripidi parte delle piogge forti scorre via in superficie: fino al 35% sopra i 30° e gli 80 mm al giorno,
+  // niente sotto i 20 mm, che la lettiera assorbe anche in pendio
+  var SCORRE = { max: 0.35, pendenza: 30, da: 20, a: 80 };
+  function scorrimento(mm, ter) {
+    if (!ter || ter.pendenza == null || !(mm > SCORRE.da)) return 0;
+    return Math.max(0, 0.85 * mm - 0.8) * SCORRE.max * Math.min(1, ter.pendenza / SCORRE.pendenza) * Math.min(1, (mm - SCORRE.da) / (SCORRE.a - SCORRE.da));
+  }
+  // L'acqua oltre quella che lo strato trattiene se ne va: in un giorno da 10° di pendenza, in piano un terzo al giorno,
+  // meno nei fondovalle (più bassi del terreno attorno: tpi negativo, in metri), di più sui crinali. Senza terreno (le stazioni) in un giorno
+  function drenaggio(ter) {
+    if (!ter || ter.pendenza == null) return 1;
+    return clamp(0.35 + 0.065 * ter.pendenza + 0.003 * clamp(ter.tpi || 0, -60, 60), 0.2, 1);
+  }
+  // Suolo zuppo: da 15 mm d'acqua in più (0) a 40 mm (1, i pori pieni). Ogni giorno da zuppo dall'inizio della pioggia toglie
+  // il 15% alla buttata, fino al 60%: micelio e primordi soffrono senz'aria
+  var ZUPPO = { da: 15, a: 40, giorni: 4, max: 0.6 };
+  function fattoreRistagno(gz) { return 1 - ZUPPO.max * Math.min(1, (gz || 0) / ZUPPO.giorni); }
+  // giorni di suolo zuppo dal primo giorno della pioggia al giorno t (ogni giorno conta da 0 a 1)
+  function giorniZuppo(wb, e, t) {
+    if (!wb || !wb.Z || !e.storia) return 0;
+    var n = wb.Z.length - 1, a = clamp(Math.round(e.inizio) + NP, 0, n), b = clamp(Math.floor(t) + NP + 1, 0, n);
+    return b > a ? wb.Z[b] - wb.Z[a] : 0;
+  }
   function radiazioneExtra(lat, doy) { // mm al giorno equivalenti (FAO 56)
     var phi = lat * Math.PI / 180, dr = 1 + 0.033 * Math.cos(2 * Math.PI * doy / 365), de = 0.409 * Math.sin(2 * Math.PI * doy / 365 - 1.39);
     var ws = Math.acos(clamp(-Math.tan(phi) * Math.tan(de), -1, 1));
@@ -1935,6 +1960,7 @@ var RP = (function () {
     if (!storiaUtile(s) || !s.serie || s.ref == null) return (s._wb = null);
     var lat = s.lat != null ? s.lat : 43.5, P = s.storia.p, S = s.serie, n = NP + H + 1;
     var W = new Float64Array(n), ET = new Float64Array(n), R = new Float64Array(n), w = 0.5 * WMAX;
+    var ter = s.terreno, kd = drenaggio(ter), X = new Float64Array(n), Z = new Float64Array(n + 1), x = 0;
     for (var j = -NP; j <= H; j++) {
       var k = j + NP, doy = doyDi(s.ref + j * GIORNO), d = S.byT[j], pr;
       if (j < 0) pr = P[j + NP] || 0;
@@ -1946,11 +1972,16 @@ var RP = (function () {
       if (tm == null) { tm = tClima(doy, s.quota); tn = tm - 4.5; }
       if (tn == null) tn = tm - 4.5;
       if (tx == null) tx = Math.max(tm, 2 * tm - tn);
-      var e0 = et0(tm, tn, tx, lat, doy), pe = Math.max(0, 0.85 * pr - 0.8);
-      w = clamp(w + pe - e0 * KC * Math.min(1, w / (0.6 * WMAX)), 0, WMAX);
-      W[k] = w / WMAX; ET[k] = e0; R[k] = pr;
+      var e0 = et0(tm, tn, tx, lat, doy), pe = Math.max(0, 0.85 * pr - 0.8) - scorrimento(pr, ter);
+      w += pe - e0 * KC * Math.min(1, w / (0.6 * WMAX));
+      // quello che lo strato non tiene resta come acqua in più (x, in mm): lo rabbocca mentre si asciuga e intanto se ne va col drenaggio
+      if (w > WMAX) { x += w - WMAX; w = WMAX; }
+      else if (x > 0) { var dx = Math.min(x, WMAX - w); w += dx; x -= dx; }
+      w = Math.max(0, w); x *= 1 - kd;
+      W[k] = w / WMAX; ET[k] = e0; R[k] = pr; X[k] = x;
+      Z[k + 1] = Z[k] + clamp((x - ZUPPO.da) / (ZUPPO.a - ZUPPO.da), 0, 1);
     }
-    return (s._wb = { W: W, ET: ET, R: R });
+    return (s._wb = { W: W, ET: ET, R: R, X: X, Z: Z });
   }
   function acquaAl(wb, j) { return wb ? wb.W[clamp(Math.round(j) + NP, 0, wb.W.length - 1)] : null; }
   // suolo prima della pioggia: secco 0,7; nella norma d'autunno (25% d'acqua, dopo l'estate) 1; umido (45% e oltre) 1,15.
@@ -2304,7 +2335,7 @@ var RP = (function () {
     s.mmEff = s.evento.mm;
     s.aria = calcolaAria(s, idx);
     s.serie = serie(s);
-    s._memo = {}; s._ct = {}; s._wb = undefined;
+    s._memo = {}; s._ct = {}; s._bt = {}; s._wb = undefined;
     return s;
   }
 
@@ -2380,7 +2411,7 @@ var RP = (function () {
 
   // Stima in un punto qualsiasi: media pesata (inverso del quadrato della distanza) delle stazioni vicine
   // radar: pioggia di 90 giorni nel punto (stessi giorni dell'archivio), dal prodotto radar-pluviometri della Protezione Civile
-  function punto(st, lat, lon, quota, radar) {
+  function punto(st, lat, lon, quota, radar, ter) {
     var vic = st.map(function (s) { return { s: s, km: distanzaKm(lat, lon, s.lat, s.lon) }; }).sort(function (a, b) { return a.km - b.km; });
     var usate = vic.filter(function (x) { return x.km <= 25; }).slice(0, 4);
     if (usate.length < 2) usate = vic.slice(0, 2);
@@ -2389,6 +2420,8 @@ var RP = (function () {
     var qStima = Math.round(usate.reduce(function (a, x, i) { return a + w[i] * x.s.quota; }, 0) / tot / 10) * 10;
     var q = quota == null || isNaN(quota) ? qStima : quota;
     var p = { stazione: "Punto scelto", virtuale: true, lat: lat, lon: lon, quota: q, quotaStimata: qStima, zona: usate[0].s.zona, prov: usate[0].s.prov, comune: usate[0].s.comune, ref: st._ref };
+    // pendenza e posizione nel rilievo dal modello del terreno: servono per scorrimento e ristagno
+    p.terreno = ter && !ter.mare && ter.pendenza != null ? { pendenza: ter.pendenza, tpi: ter.tpi || 0 } : null;
     ["oggi", "oggi9", "g1", "g2", "g5", "g7", "g10", "g15", "g30", "ggSecchi"].forEach(function (k) {
       var n = 0, d = 0;
       usate.forEach(function (x, i) { if (x.s[k] != null) { n += w[i] * x.s[k]; d += w[i]; } });
@@ -2484,12 +2517,59 @@ var RP = (function () {
     var f = Math.floor(x), k = clamp(f + J0, 0, tt.V.length - 1);
     return tt.CT[k] + (x - f) * tt.V[k];
   }
+  // anche prima dell'inizio delle serie (J0 giorni prima), con la velocità del primo giorno
+  function ctEst(tt, x) { return x >= -J0 ? ctAt(tt, x) : ctAt(tt, -J0) - (-J0 - x) * tt.V[0]; }
 
   function ariaGiorno(s, t) {
     var d = s.serie.byT[t];
     if (!d || d.urMin == null) return s.aria || {};
     if (!d._aria) { d._aria = ariaDa((d.urMin + d.urMax) / 2, d.urMax, d.vento, d.dir); d._aria.prevista = true; }
     return d._aria;
+  }
+
+  // pioggia che conta per un evento: meno quella scorsa via sul pendio, corretta per l'acqua che il suolo aveva prima
+  function pioggiaEff(e, sp, wb) {
+    var w0 = wb && e.storia ? acquaAl(wb, e.inizio - 1) : null, mm = e.mm - (e.scorsa || 0);
+    var mmEff = e.storia ? mm * (w0 != null ? fattoreSuoloW(w0) : fattoreSuolo(e.ant60)) + Math.max(0, sp.ant - 0.15) * (w0 != null ? anticipoW(w0) : Math.min(e.ant60 || 0, 100))
+      : mm + sp.ant * Math.min(e.prec || 0, 30);
+    return { mmEff: mmEff, w0: w0 };
+  }
+
+  // ---------- buttate precedenti ----------
+  // Una buttata consuma le riserve del micelio: se la pioggia dopo fa nascere funghi entro un mese, quella buttata rende meno,
+  // fino al 35% in meno subito dopo una buttata piena, poi sempre meno. È un'ipotesi ragionata, non misurata.
+  // Per ogni evento: quando comincerebbero le nascite (p0), quando sarebbe il pieno (p1) e quanto sarebbe stato forte il pieno
+  // per il tempo (pioggia, temperatura, stagione, suolo), senza bosco, quota e pH, che dicono quanto il posto è adatto
+  var RICARICA = { max: 0.35, giorni: 30 };
+  function buttate(s, sp, V, tt, wb) {
+    var key = sp.id + "|" + (V ? V.dT.toFixed(3) + "/" + V.secco.toFixed(3) : "-");
+    var c = s._bt || (s._bt = {});
+    if (c[key]) return c[key];
+    var K = sp.tempo, S = s.serie, dT = V ? V.dT : 0, molt = (V ? V.secco : 1) * sp.secco;
+    var info = s.eventi.map(function (e) {
+      var base = ctEst(tt, e.x), p0 = null, p1 = null;
+      for (var t = Math.ceil(e.x); t <= H && p1 == null; t++) {
+        var d = ctEst(tt, t) - base;
+        if (p0 == null && d >= K[0]) p0 = t;
+        if (d >= K[1]) p1 = t;
+      }
+      if (p1 == null) return { p0: p0, p1: null, forza: 0 };
+      var k = clamp(p1 + J0, 0, S.T.length - 1), tm = S.T[k] == null ? null : S.T[k] + dT, tmin = S.Tn[k] == null ? null : S.Tn[k] + dT;
+      var wt = acquaAl(wb, p1);
+      var forza = fattorePioggia(pioggiaEff(e, sp, wb).mmEff, sp) * fattoreTemperatura(tm, tmin, sp) * fattoreStagione(s.ref == null ? null : s.ref + p1 * GIORNO, sp) *
+        (wt != null ? fattoreSeccoW(wt, molt) : 1) * fattoreRistagno(giorniZuppo(wb, e, p1));
+      return { p0: p0, p1: p1, forza: forza };
+    });
+    return (c[key] = info.map(function (b, i) {
+      var best = { v: 0 };
+      if (b.p0 == null) return best;
+      info.forEach(function (a, j) {
+        if (j === i || a.p1 == null || a.p1 >= b.p0) return;
+        var v = RICARICA.max * a.forza * clamp(1 - (b.p0 - a.p1) / RICARICA.giorni, 0, 1);
+        if (v > best.v) best = { v: v, giorno: a.p1, forza: a.forza, giorni: b.p0 - a.p1 };
+      });
+      return best;
+    }));
   }
 
   function stima1(s, t, sp, V) {
@@ -2503,26 +2583,27 @@ var RP = (function () {
     var ar = ariaGiorno(s, t), neb = ar.nebbia || 0, m2 = molt * (1 - 0.4 * neb);
     var fa = fattoreAria(ar.f == null ? null : ar.f, gg, m2) * (ar.bonus || 1);
     var tt = tempoTermico(s, sp, dT), ct = ctAt(tt, t);
-    var wb = bilancio(s), wt = acquaAl(wb, t);
+    var wb = bilancio(s), wt = acquaAl(wb, t), bt = buttate(s, sp, V, tt, wb);
     var best = null;
-    s.eventi.forEach(function (e) {
-      var w0 = wb && e.storia ? acquaAl(wb, e.inizio - 1) : null;
-      var mmEff = e.storia ? e.mm * (w0 != null ? fattoreSuoloW(w0) : fattoreSuolo(e.ant60)) + Math.max(0, sp.ant - 0.15) * (w0 != null ? anticipoW(w0) : Math.min(e.ant60 || 0, 100))
-        : e.mm + sp.ant * Math.min(e.prec || 0, 30);
+    s.eventi.forEach(function (e, i) {
+      var pe = pioggiaEff(e, sp, wb), mmEff = pe.mmEff;
       var fp = fattorePioggia(mmEff, sp);
-      var dEff = ct - ctAt(tt, e.x);
+      var dEff = ct - ctEst(tt, e.x);
       var ft = t < e.x ? 0 : fattoreTempo(dEff, sp);
       var fs = wt != null ? fattoreSeccoW(wt, m2) : fattoreSecco(mmEff, gg, m2);
-      var v = fp * ft * fT * fq * fS * fs * fa * fH * fPH;
+      var gz = giorniZuppo(wb, e, t), fr = fattoreRistagno(gz), fb = 1 - bt[i].v;
+      var v = fp * ft * fT * fq * fS * fs * fa * fH * fPH * fr * fb;
       var pot = fp * (t < e.x ? 0.5 : ft + 0.01);
-      if (!best || v > best.v || (v === best.v && pot > best.pot)) best = { v: v, pot: pot, e: e, fp: fp, ft: ft, fs: fs, dEff: dEff, mmEff: mmEff, w0: w0 };
+      if (!best || v > best.v || (v === best.v && pot > best.pot)) best = { v: v, pot: pot, e: e, fp: fp, ft: ft, fs: fs, fr: fr, fb: fb, gz: gz, bt: bt[i], dEff: dEff, mmEff: mmEff, w0: pe.w0 };
     });
     var score = best ? Math.min(100, Math.round(100 * best.v)) : 0;
     var d = best ? t - best.e.x : null;
     return { score: score, _v: best ? best.v : 0, specie: sp.id, evento: best ? best.e : null, mmEff: best ? best.mmEff : 0, acqua: wt, acquaPrima: best ? best.w0 : null,
       d: d, dEff: best ? best.dEff : null, vel: best && d > 0.5 ? best.dEff / d : velocita(tm, sp), tm: tm, tmin: tmin, gg: gg,
       prevista: !!S.byT[t] && S.byT[t].tm != null, aria: ar, idoneita: idoneita(s.habitat, sp),
-      fattori: { pioggia: best ? best.fp : 0, tempo: best ? best.ft : 0, temperatura: fT, quota: fq, stagione: fS, bosco: fH, ph: fPH, secco: best ? best.fs : 1, aria: fa },
+      zuppo: best ? best.gz : 0, buttata: best && best.bt.v > 0 ? best.bt : null,
+      fattori: { pioggia: best ? best.fp : 0, tempo: best ? best.ft : 0, temperatura: fT, quota: fq, stagione: fS, bosco: fH, ph: fPH, secco: best ? best.fs : 1, aria: fa,
+        ristagno: best ? best.fr : 1, buttate: best ? best.fb : 1 },
       fase: fase(best ? best.dEff : null, best ? best.fp : 0, sp, fS), livello: livello(score) };
   }
 
@@ -2548,9 +2629,9 @@ var RP = (function () {
   function finestra(s, opt, r) {
     r = r || stima(s, 0, opt);
     var e = r.evento; if (!e) return null;
-    var sp = SP[r.specie], V = versanteDa(opt), tt = tempoTermico(s, sp, V ? V.dT : 0), K = sp.tempo, base = ctAt(tt, e.x);
+    var sp = SP[r.specie], V = versanteDa(opt), tt = tempoTermico(s, sp, V ? V.dT : 0), K = sp.tempo, base = ctEst(tt, e.x);
     function quando(soglia) {
-      for (var t = Math.ceil(e.x); t <= H; t++) if (ctAt(tt, t) - base >= soglia) return t;
+      for (var t = Math.ceil(e.x); t <= H; t++) if (ctEst(tt, t) - base >= soglia) return t;
       return null;
     }
     return { ev: Math.round(e.x), tipo: e.tipo, mm: e.mm, da: quando((K[0] + K[1]) / 2), p1: quando(K[1]), p2: quando(K[2]), fine: quando(K[3]), specie: sp.id };
@@ -2573,7 +2654,7 @@ var RP = (function () {
     prepara: prepara, punto: punto, svuota: svuota, distanzaKm: distanzaKm, stima: stima, finestra: finestra, idoneita: idoneita,
     stimaManuale: stimaManuale, finestraManuale: finestraManuale, etichettaPeriodo: etichettaPeriodo, velocita: velocita, fiducia: fiducia,
     fattoreStagione: fattoreStagione, fattoreSuolo: fattoreSuolo, fattoreSuoloW: fattoreSuoloW, fattorePH: fattorePH, nomePH: nomePH, storiaUtile: storiaUtile,
-    bilancio: bilancio, adatto: adatto, NP: NP, NCL: NCL };
+    bilancio: bilancio, adatto: adatto, drenaggio: drenaggio, NP: NP, NCL: NCL };
 })();
 if (typeof module !== "undefined") module.exports = RP;
 
@@ -3127,8 +3208,12 @@ if (typeof module !== "undefined") module.exports = RP;
     var dzde = gx / 9, dzdn = -gy / 9;
     var pend = Math.atan(Math.sqrt(dzde * dzde + dzdn * dzdn)) * 180 / Math.PI;
     var az = (Math.atan2(-dzde, -dzdn) * 180 / Math.PI + 360) % 360;
+    // posizione nel rilievo: quota del punto meno la media dei 7x7 pixel attorno (circa 1,5 km), mare escluso;
+    // negativa nei fondovalle e nelle conche, positiva sui crinali
+    var sz = 0, nz = 0;
+    for (var ry = -3; ry <= 3; ry++) for (var rx = -3; rx <= 3; rx++) { var zz = zDEM(ix + rx, iy + ry); if (zz != null) { sz += zz; nz++; } }
     var dirs = ["nord", "nord-est", "est", "sud-est", "sud", "sud-ovest", "ovest", "nord-ovest"];
-    return { mare: false, quota: Math.max(0, Math.round(q / 10) * 10), pendenza: pend, azimut: az, dir: dirs[Math.round(az / 45) % 8], versante: RP.versanteDaTerreno(pend, az) };
+    return { mare: false, quota: Math.max(0, Math.round(q / 10) * 10), pendenza: pend, azimut: az, tpi: nz ? q - sz / nz : 0, dir: dirs[Math.round(az / 45) % 8], versante: RP.versanteDaTerreno(pend, az) };
   }
   function npx(z) { return 256 * Math.pow(2, z); }
   function lon2xz(lon, z) { return (lon + 180) / 360 * npx(z); }
@@ -3267,7 +3352,7 @@ if (typeof module !== "undefined") module.exports = RP;
     if (!state.pos) { state.punto = null; return; }
     var ter = state.pos.terreno;
     var q = state.pos.quota != null ? state.pos.quota : (ter && ter.quota != null ? ter.quota : null);
-    state.punto = RP.punto(state.st, state.pos.lat, state.pos.lon, q, radarSerie(state.pos.lat, state.pos.lon));
+    state.punto = RP.punto(state.st, state.pos.lat, state.pos.lon, q, radarSerie(state.pos.lat, state.pos.lon), ter);
     state.punto.habitat = habitatPunto(state.pos);
   }
   function salvaPos() { try { if (state.pos) localStorage.setItem(LS_POS, JSON.stringify(state.pos)); else localStorage.removeItem(LS_POS); } catch (e) {} }
@@ -3374,6 +3459,7 @@ if (typeof module !== "undefined") module.exports = RP;
       if (state.versante) txt += "Per la stima uso il versante scelto in alto (" + RP.VERSANTE[state.versante].nome + ").";
       else if (ter.versante && ter.versante.nome !== "intermedio") txt += "Per la stima uso questa esposizione; se nel bosco il versante è diverso, sceglilo in alto.";
       else txt += "Qui l'esposizione conta poco; se conosci il versante del bosco, sceglilo in alto.";
+      if (RP.drenaggio(ter) < 0.5) txt += " " + (ter.tpi <= -20 ? "È un fondovalle" : "È quasi in piano") + ": dopo piogge forti l'acqua in più scende piano e il terreno può restare zuppo, e la stima ne tiene conto.";
       tp.appendChild(document.createTextNode(txt));
       box.appendChild(tp);
     }
@@ -3799,7 +3885,7 @@ if (typeof module !== "undefined") module.exports = RP;
     // il punteggio del giorno è quello della scheda del punto: stessa quota, bosco, suolo, versante e pioggia dal radar
     if (fung.epoca !== posti.epoca) { ric.celle.forEach(function (f) { f.p = null; }); fung.epoca = posti.epoca; }
     ric.celle.forEach(function (f) {
-      if (!f.p) { f.p = RP.punto(state.st, f.lat, f.lon, f.ter.quota, radarSerie(f.lat, f.lon)); f.p.habitat = f.hab; }
+      if (!f.p) { f.p = RP.punto(state.st, f.lat, f.lon, f.ter.quota, radarSerie(f.lat, f.lon), f.ter); f.p.habitat = f.hab; }
       f.r = RP.stima(f.p, state.t, { versante: state.versante || f.ter.versante || null, specie: state.specie });
       f.km = RP.distanzaKm(c.lat, c.lon, f.lat, f.lon);
     });
@@ -4198,7 +4284,8 @@ if (typeof module !== "undefined") module.exports = RP;
     var suolo = "";
     if (e && e.storia && r.acquaPrima != null) { var fw = RP.fattoreSuoloW(r.acquaPrima); suolo = "; prima della pioggia acqua nel suolo " + nf(r.acquaPrima * 100) + "%, " + (fw < 0.85 ? "terreno secco: la pioggia rende meno" : fw > 1.05 ? "terreno umido: la pioggia rende di più" : "nella norma"); }
     else if (e && e.storia) { var fu = RP.fattoreSuolo(e.ant60); suolo = "; nei 60 giorni prima " + nf(e.ant60) + " mm, terreno " + (fu < 0.85 ? "secco: la pioggia rende meno" : fu > 1.05 ? "umido: la pioggia rende di più" : "nella norma"); }
-    riga("Pioggia utile: " + nf(r.mmEff) + " mm" + tipo + (e ? " (" + descrEvento(r) + suolo + ")" : ""), "× " + nf(F.pioggia, 2));
+    var scorsa = e && e.scorsa >= 1 ? "; " + nf(e.scorsa) + " mm scorsi via in superficie" : "";
+    riga("Pioggia utile: " + nf(r.mmEff) + " mm" + tipo + (e ? " (" + descrEvento(r) + scorsa + suolo + ")" : ""), "× " + nf(F.pioggia, 2));
     var sv = r.vel >= 1.05 ? ", sviluppo più rapido per il caldo" : r.vel <= 0.95 ? ", sviluppo più lento per il fresco" : "";
     riga("Giorni dalla pioggia: " + (r.d == null ? "–" : nf(Math.max(0, r.d))) + " (" + r.fase.nome.toLowerCase() + sv + ")", "× " + nf(F.tempo, 2));
     var tTxt = r.tm == null ? "non disponibile" : nf(r.tm, 1) + " °C medi" + (r.prevista ? ", prevista" : s.tStimata ? ", stimata" : "") + (r.tmin != null ? ", minima " + nf(r.tmin, 1) + " °C" : "") + (versNome ? ", corretta per il versante (" + versNome + ")" : "");
@@ -4216,6 +4303,15 @@ if (typeof module !== "undefined") module.exports = RP;
     if (h && h.ph != null) riga("Suolo: pH stimato " + nf(h.ph / 10, 1) + (h.punto ? "" : " in media entro 5 km") + ", " + RP.nomePH(h.ph) + (sp3.suolo ? " (" + (sp3.suolo === "calcareo" ? "la specie preferisce terreni calcarei" : "la specie preferisce terreni acidi") + ")" : " (la specie non ha preferenze)"), "× " + nf(F.ph, 2));
     if (r.acqua != null) riga("Acqua nel suolo quel giorno: " + nf(r.acqua * 100) + "% (pioggia meno evaporazione; " + (r.gg === 1 ? "1 giorno" : nf(r.gg) + " giorni") + " senza pioggia)" + (F.secco < 0.99 ? ": il suolo si sta asciugando" : ""), "× " + nf(F.secco, 2));
     else riga("Giorni senza pioggia a quella data: " + nf(r.gg), "× " + nf(F.secco, 2));
+    if (s.terreno) {
+      var terr = s.terreno, dove = terr.pendenza >= 10 ? "in pendio l'acqua in più scende in un giorno" : terr.tpi <= -20 ? "nel fondovalle l'acqua in più scende piano"
+        : terr.pendenza < 4 ? "in piano l'acqua in più scende piano" : "su un pendio leggero l'acqua in più scende in qualche giorno";
+      riga("Ristagno: " + (r.zuppo >= 0.1 ? "suolo zuppo per circa " + (r.zuppo < 1.5 ? "1 giorno" : nf(r.zuppo) + " giorni") + " dall'inizio della pioggia" : "no") + " (" + dove + ")", "× " + nf(F.ristagno, 2));
+    }
+    if (r.buttata) {
+      var bf = r.buttata.forza;
+      riga("Buttata precedente: " + (bf >= 0.6 ? "forte" : bf >= 0.3 ? "media" : "debole") + ", nel pieno intorno " + pd("al", state.ref + r.buttata.giorno * DAY) + ": il micelio si deve ricaricare", "× " + nf(F.buttate, 2));
+    }
     var a = r.aria || {};
     var aTxt = [];
     if (a.ur != null) {
@@ -4712,7 +4808,7 @@ if (typeof module !== "undefined") module.exports = RP;
   function punteggiLuogo(x, specie) {
     var ter = terrenoDEM(x.lat, x.lon);
     var q = x.quota != null ? x.quota : (ter && ter.quota != null ? ter.quota : null);
-    var p = RP.punto(state.st, x.lat, x.lon, q, radarSerie(x.lat, x.lon));
+    var p = RP.punto(state.st, x.lat, x.lon, q, radarSerie(x.lat, x.lon), ter);
     p.habitat = habitatPunto({ lat: x.lat, lon: x.lon, bosco: x.bosco });
     var o = { versante: state.versante ? state.versante : (ter && ter.versante ? ter.versante : null), specie: specie || state.specie };
     var g = [];

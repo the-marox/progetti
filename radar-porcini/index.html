@@ -1309,20 +1309,20 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <div class="body">
       <p>Dati usati: le stazioni del Centro Funzionale della Regione Toscana (pioggia da 376 pluviometri, temperature minime e massime, umidità da circa 200 stazioni, vento da circa 145; dati in tempo reale, non validati) e il loro archivio, la pioggia stimata dal radar della Protezione Civile, le previsioni dei modelli ICON-EU del servizio meteorologico tedesco (DWD) ed ECMWF del Centro europeo per 10 giorni, la carta dei boschi della Regione Toscana aggiornata con Copernicus, la carta del suolo SoilGrids e un modello digitale del terreno. L'aggiornamento completo parte ogni giorno alle 9:20 ora solare (10:20 con l'ora legale), subito dopo la lettura delle 9 del CFR; misure e previsioni si aggiornano poi ogni ora fino alle 20:20.</p>
       <ul>
-        <li><b>Pioggia caduta e prevista.</b> Si cercano gli eventi di pioggia degli ultimi 15 giorni e quelli previsti; per ogni giorno conta l'evento che dà la stima migliore. Sotto una soglia (10–15 mm secondo la specie) un evento non conta; poi il peso cresce con rendimento decrescente. La pioggia prevista pesa per intero fino a domani, poi sempre meno (90% dopodomani, poi 80, 70, 60%, fino al 35% al decimo giorno), perché più è lontana più è incerta. Una pioggia prevista rimette anche a zero i giorni senza pioggia.</li>
+        <li><b>Pioggia caduta e prevista.</b> Si cercano gli eventi di pioggia degli ultimi 40 giorni e quelli previsti: giorni con almeno 2 mm, con al massimo un giorno asciutto in mezzo. Per ogni giorno conta l'evento che dà la stima migliore. Sotto una soglia (10–15 mm secondo la specie) un evento non conta; poi il peso cresce con rendimento decrescente. Soglia e curva sono stime: gli studi non indicano una pioggia minima. Contano anche, per metà, le piogge arrivate al suolo nei 26 giorni prima dell'evento, fino al doppio della pioggia dell'evento stesso, così una pioggerella dopo un periodo piovoso non vale come un temporale. In dieci anni di faggete tedesche le nascite crescono con la pioggia dei 26 giorni prima, e i porcini comparivano soprattutto con 2–4 mm al giorno in media (Brejon Lamartiniere e Hoffman, 2025). La pioggia prevista pesa per intero fino a domani, poi sempre meno (90% dopodomani, poi 80, 70, 60%, fino al 35% al decimo giorno), perché più è lontana più è incerta. Una pioggia prevista rimette anche a zero i giorni senza pioggia.</li>
         <li><b>Previsioni.</b> Per i primi 4 giorni il modello ICON-EU (celle di circa 5×7 km), poi fino al decimo giorno il modello IFS del Centro europeo ECMWF (celle di circa 20×28 km), meno dettagliato. Oltre il decimo giorno la stima suppone che non piova. Nella tabella delle previsioni c'è anche la probabilità di superare 10 e 20 mm: quante delle 51 previsioni dell'insieme ECMWF li superano, su 24 ore dalle 13 alle 13. Quando la previsione singola dice pioggia e la probabilità è bassa, è meglio non contarci.</li>
         <li><b>Archivio giornaliero.</b> Il giorno di pioggia va dalle 9 alle 9 del giorno dopo, come nell'archivio del Servizio Idrologico Regionale: con la lettura delle 9 la pioggia del giorno appena chiuso è esatta. Ogni giorno si salvano anche minima e massima di ieri; i giorni mancanti o incerti vengono dall'archivio. Così la stima conosce la pioggia giorno per giorno degli ultimi 90 giorni e le temperature vere degli ultimi 40.</li>
-        <li><b>Acqua nel suolo.</b> Giorno per giorno si fa un bilancio: entra la pioggia (meno quella trattenuta da chiome e lettiera), esce l'evaporazione stimata dalle temperature con la formula di Hargreaves, più forte d'estate e col caldo, e più lenta quando il suolo è già asciutto. Ne viene un indice da 0 a 100% d'acqua in uno strato di circa 80 mm, quello del micelio. Prima della pioggia conta quanto era bagnato il suolo: secco, la pioggia rende fino a un terzo in meno; umido, fino al 15% in più. Dopo, se il suolo scende sotto il 30% le nascite rallentano, fino a dimezzarsi. Nel grafico della pioggia del punto è la linea verde.</li>
+        <li><b>Acqua nel suolo.</b> Giorno per giorno si fa un bilancio: entra la pioggia (meno quella trattenuta da chiome e lettiera), esce l'evaporazione stimata dalle temperature con la formula di Hargreaves, quella che la FAO indica quando mancano misure di sole, umidità e vento. Evapora di più d'estate, col caldo e sul solatio (fino al 40% in più), di meno sul bacìo (fino al 30% in meno) e quando il suolo è già asciutto. Ne viene un indice da 0 a 100% d'acqua in uno strato di circa 80 mm, quello del micelio. Prima della pioggia conta quanto era bagnato il suolo: secco, la pioggia rende fino a un terzo in meno; umido, fino al 15% in più. Dopo, se il suolo scende sotto il 30% le nascite rallentano, fino a dimezzarsi. La formula è collaudata ma pensata per un prato aperto: la correzione per il bosco, gli 80 mm e queste soglie sono stime. Nel grafico della pioggia del punto è la linea verde.</li>
         <li><b>Pendenza e ristagno.</b> Sui pendii ripidi una parte delle piogge forti scorre via: fino a circa un terzo sopra i 30° con più di 80 mm in un giorno, niente sotto i 20 mm, che la lettiera assorbe anche in pendio. L'acqua che lo strato del micelio non trattiene se ne va in un giorno sui pendii da 10° in su; sui terreni in piano scende più lentamente (un terzo al giorno), nei fondovalle ancora di più: il modello del terreno li riconosce perché sono più bassi dei dintorni (circa 1,5 km). Se ne resta tanta il suolo è zuppo e il micelio soffre senz'aria: ogni giorno da zuppo dall'inizio della pioggia toglie il 15% alla buttata, fino al 60%. Vale per il tuo punto, i posti e le possibili fungaie; non per le stazioni, che rappresentano i 5 km attorno. Manca una carta della tessitura del suolo: su sabbia, come nelle pinete della costa, l'acqua scende più in fretta di così, su argilla più piano.</li>
         <li><b>Buttate precedenti.</b> Una buttata consuma le riserve del micelio. Se una pioggia fa nascere funghi entro un mese da una buttata, rende meno: fino al 35% in meno subito dopo una buttata piena, sempre meno col passare dei giorni. Quanto era piena la buttata di prima si stima dal tempo di allora: pioggia, temperatura, stagione e acqua nel suolo. È un'ipotesi ragionata: non ci sono misure che dicano quanto vale.</li>
         <li><b>Radar.</b> Per il tuo punto la pioggia dei 90 giorni passati viene dal prodotto «Merging» della Protezione Civile: il radar corretto coi pluviometri, su celle di circa 2 km. Così si vedono anche i temporali caduti tra una stazione e l'altra. Confrontato coi pluviometri toscani sugli ultimi 90 giorni ha uno scarto medio di 0,3 mm al giorno (1–3 mm nei giorni di pioggia forte).</li>
-        <li><b>Tempo dalla pioggia.</b> Il ritardo dipende dalla temperatura media giorno per giorno: quella misurata, poi quella prevista, poi l'ultima prevista. Per il porcino comune, con 12 °C le prime nascite arrivano dopo circa 9 giorni e il pieno tra il 12° e il 17°, come nello studio sull'abetina dell'Amiata (Salerni e colleghi, 2023); col caldo bastano 5–6 giorni, col freddo ne servono 13–20. Le altre specie hanno tempi propri: l'ovolo vuole caldo, il chiodino parte presto col fresco, gallinaccio, sanguinello e steccherino crescono lenti e durano di più.</li>
-        <li><b>Specie.</b> Ogni specie ha stagione, quote, temperature, boschi e tempi propri, presi da schede regionali (Regione Piemonte, progetto Amycoforest; Parco delle Foreste Casentinesi; Regioni Emilia-Romagna e Lombardia) e, dove esistono, da studi sul campo (Amiata per il porcino comune, pinete spagnole per il sanguinello). Per molte specie mancano misure dei tempi di nascita: sono stime ragionate. Con «Porcini, tutte e quattro» ogni stazione prende la specie con la stima migliore.</li>
+        <li><b>Tempo dalla pioggia.</b> Il ritardo dipende dalla temperatura media giorno per giorno: quella misurata, poi quella prevista, poi l'ultima prevista. Per il porcino comune, con 12 °C le prime nascite arrivano dopo circa 9 giorni e il pieno tra il 12° e il 17°. La sola misura viene dallo studio sull'abetina dell'Amiata (Salerni e colleghi, 2023): dopo le giornate con almeno 20 mm di pioggia la produzione risponde di più intorno al 10°–12° giorno. Il calcolo coi gradi-giorno sopra i 3 °C e i tempi col caldo (bastano 5–6 giorni) e col freddo (ne servono 13–20) sono stime. Le altre specie hanno tempi propri: l'ovolo vuole caldo, il chiodino parte presto col fresco, gallinaccio, sanguinello e steccherino crescono lenti e durano di più.</li>
+        <li><b>Specie.</b> Ogni specie ha stagione, quote, temperature, boschi e tempi propri, presi da schede regionali (Regione Piemonte, progetto Amycoforest; Parco delle Foreste Casentinesi; Regioni Emilia-Romagna e Lombardia) e, dove esistono, da studi sul campo (Amiata e faggete tedesche per il porcino comune, pinete spagnole per il sanguinello). Per molte specie mancano misure dei tempi di nascita: sono stime ragionate. Con «Porcini, tutte e quattro» ogni stazione prende la specie con la stima migliore.</li>
         <li><b>Bosco.</b> Il tipo di bosco viene dalla Carta della vegetazione forestale della Regione Toscana: 18 tipi su celle di 250 m, rilevati a fine anni '90. Quella carta ha bosco su meno di un quarto della Toscana, mentre la copertura Copernicus del 2018 ne trova circa metà: dove Copernicus vede bosco e la carta no, conta come latifoglie o conifere senza tipo; dove la carta ha bosco e nel 2018 non c'è più, non conta. Per ogni stazione conta quanta parte dei 5 km attorno è un bosco adatto alla specie; per il tuo punto conta la cella del punto e i 500 m attorno, e puoi correggere il tipo di bosco se lo conosci. Senza bosco adatto il punteggio scende fino a un quarto.</li>
         <li><b>Suolo.</b> Il pH del suolo (media dei primi 15 cm) viene da SoilGrids, una carta mondiale stimata a 250 m. Porcino nero, porcino dei pini e gallinaccio preferiscono terreni acidi, porcino comune, ovolo, colombina e verdone un poco; prugnolo e spugnola terreni calcarei; le altre specie non hanno preferenze. Il peso è leggero (fino a un quarto in meno), perché la carta è solo una stima.</li>
-        <li><b>Versante.</b> Il solatio è trattato come 1,5 °C più caldo e si asciuga circa il 40% più in fretta; il bacìo come 1,5 °C più fresco e più umido. Così col caldo vince il bacìo, col fresco il solatio. L'esposizione del punto viene dal modello del terreno (media su circa 650 m): solatio se il versante guarda verso sud, bacìo se guarda verso nord, intermedio se guarda a est o a ovest o è quasi in piano. Lo sfondo «Versanti» della mappa la mostra ovunque.</li>
-        <li><b>Umidità, vento e nebbie.</b> Per oggi si usa la stazione più vicina e a quota simile, per i giorni coperti dalle previsioni i valori previsti. Umidità media sotto il 55–60% e vento forte abbassano il punteggio, tanto più quanti più giorni sono passati dalla pioggia. Tramontana, grecale e maestrale sono secchi e asciugano già da 10 km/h; libeccio e scirocco portano aria umida. Notti con umidità massima sopra il 97–98% (nebbia o rugiada forte) rallentano l'asciugatura. In tutto il vento pesa poco, perché sotto la chioma è molto più debole.</li>
-        <li><b>Quota e temperatura.</b> Ogni specie ha una fascia di quota e di temperatura media ideale; gelo e caldo eccessivo abbassano il punteggio. Le temperature previste sono riportate alla quota della stazione (0,65 °C ogni 100 m) e le minime corrette con quelle misurate, perché nei fondovalle il modello le dà spesso troppo alte.</li>
+        <li><b>Versante.</b> Il solatio è trattato come 1,5 °C più caldo e si asciuga fino al 40% più in fretta, nel suolo e nell'aria; il bacìo come 1,5 °C più fresco e si asciuga fino al 30% più piano. Così col caldo vince il bacìo, col fresco il solatio. L'esposizione del punto viene dal modello del terreno (media su circa 650 m): solatio se il versante guarda verso sud, bacìo se guarda verso nord, intermedio se guarda a est o a ovest o è quasi in piano. Lo sfondo «Versanti» della mappa la mostra ovunque.</li>
+        <li><b>Umidità, vento e nebbie.</b> Per oggi si usa la stazione più vicina e a quota simile, per i giorni coperti dalle previsioni i valori previsti. Umidità media sotto il 75% (e di più sotto il 55%) e vento forte abbassano il punteggio, tanto più quanti più giorni sono passati dalla pioggia. Tramontana, grecale e maestrale sono secchi e asciugano già da 10 km/h; libeccio e scirocco portano aria umida. Notti con umidità massima sopra il 97–98% (nebbia o rugiada forte) rallentano l'asciugatura. In tutto il vento pesa poco, perché sotto la chioma è molto più debole.</li>
+        <li><b>Quota e temperatura.</b> Ogni specie ha una fascia di quota e di temperatura media ideale; gelo e caldo eccessivo abbassano il punteggio. Per il porcino comune la fascia ideale è 11–16 °C di media: lo studio sulle faggete tedesche trova il massimo intorno ai 13 °C e pochissime nascite tra 5 e 10 °C, ma con la media dei 20 giorni prima, mentre qui conta quella del giorno. Le temperature previste sono riportate alla quota della stazione (0,65 °C ogni 100 m) e le minime corrette con quelle misurate, perché nei fondovalle il modello le dà spesso troppo alte.</li>
         <li><b>Il tuo punto.</b> La pioggia passata viene dal radar; se manca, è la media pesata delle 2–4 stazioni più vicine entro 25 km. La temperatura viene dai termometri vicini riportata alla quota del punto, le previsioni sono quelle della cella del modello. Quota, pendenza ed esposizione vengono da un modello del terreno con pixel di circa 220 m (Terrain Tiles, da SRTM ed EU-DEM). Il tasto «Dove sono» usa la posizione del telefono: dentro Claude il browser può non permetterlo, nella versione installata funziona.</li>
         <li><b>Parchi e riserve.</b> I confini di parchi nazionali, regionali e provinciali e delle riserve naturali regionali vengono dalla Regione Toscana, semplificati a circa 60 m: vicino al confine controlla sulla cartografia del parco.</li>
         <li><b>Regole del giorno.</b> Per il giorno scelto la scheda del punto dà l'orario di raccolta (da un'ora prima dell'alba a un'ora dopo il tramonto, calcolati per il punto), i limiti del comune presi dall'elenco della Regione e i giorni di caccia al cinghiale in braccata del calendario venatorio regionale.</li>
@@ -1332,11 +1332,12 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
         <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
+        <li><b>Cosa è misurato e cosa no.</b> I dati sono misure o previsioni: pioggia, temperature, umidità e vento delle stazioni, il radar, i modelli meteo, la carta dei boschi e il modello del terreno; il pH del suolo è una stima da carta mondiale. Dei legami tra tempo e funghi pochi sono misurati: il ritardo tra pioggia e pieno sull'Amiata e, nelle faggete tedesche, la temperatura migliore e il peso della pioggia del mese prima (studio non ancora rivisto da altri esperti). Il resto sono stime ragionate: la soglia di pioggia e la sua curva, i tempi col caldo e col freddo, l'evaporazione nel bosco, il versante, il ristagno, le buttate precedenti, il peso di umidità e vento.</li>
       </ul>
       <p>Il punteggio va da 0 a 100 ed è il prodotto di questi fattori. È una stima indicativa costruita su studi e regole di esperti, non un modello validato sui raccolti: quanto è battuto il bosco conta quanto la pioggia, i temporali cambiano molto da una valle all'altra e oltre i 10 giorni la stima suppone che non piova.</p>
       <p>L'app non serve a riconoscere i funghi. Nel dubbio fai controllare quelli raccolti all'Ispettorato micologico della ASL: per il consumo in famiglia il controllo è gratuito.</p>
       <p>Prima di andare controlla le regole di raccolta (sopra, «Regole di raccolta in Toscana»).</p>
-      <p><a href="https://www.cfr.toscana.it/index.php?IDS=42&amp;IDSS=277" target="_blank" rel="noopener">Pluviometria CFR Toscana</a> · <a href="https://www.sir.toscana.it/" target="_blank" rel="noopener">Archivio SIR</a> · <a href="https://radar.protezionecivile.it/" target="_blank" rel="noopener">Radar della Protezione Civile</a> · <a href="https://opendata.dwd.de/weather/nwp/icon-eu/" target="_blank" rel="noopener">Previsioni ICON-EU (DWD)</a> · <a href="https://www.ecmwf.int/en/forecasts/datasets/open-data" target="_blank" rel="noopener">Previsioni ECMWF</a> · <a href="https://www502.regione.toscana.it/geoscopio/download/tematici/vegetazione_forestale/index.html" target="_blank" rel="noopener">Carta della vegetazione forestale</a> · <a href="https://land.copernicus.eu/en/products/high-resolution-layer-forest-type" target="_blank" rel="noopener">Copernicus Forest Type</a> · <a href="https://soilgrids.org/" target="_blank" rel="noopener">SoilGrids</a> · <a href="https://www502.regione.toscana.it/geoscopio/download/tematici/aree_protette/aree_protette.zip" target="_blank" rel="noopener">Aree protette</a> · <a href="https://italianmycology.unibo.it/article/view/16464" target="_blank" rel="noopener">Salerni e colleghi 2023</a> · <a href="https://www.regione.piemonte.it/web/media/14354/download" target="_blank" rel="noopener">Schede specie (Regione Piemonte)</a> · <a href="https://sydowia.at/syd63-1/T3-Swiss.html" target="_blank" rel="noopener">Studio sulla luna</a> · <a href="https://www.regione.toscana.it/-/raccolta-funghi-ecco-le-disposizioni" target="_blank" rel="noopener">Regole di raccolta</a></p>
+      <p><a href="https://www.cfr.toscana.it/index.php?IDS=42&amp;IDSS=277" target="_blank" rel="noopener">Pluviometria CFR Toscana</a> · <a href="https://www.sir.toscana.it/" target="_blank" rel="noopener">Archivio SIR</a> · <a href="https://radar.protezionecivile.it/" target="_blank" rel="noopener">Radar della Protezione Civile</a> · <a href="https://opendata.dwd.de/weather/nwp/icon-eu/" target="_blank" rel="noopener">Previsioni ICON-EU (DWD)</a> · <a href="https://www.ecmwf.int/en/forecasts/datasets/open-data" target="_blank" rel="noopener">Previsioni ECMWF</a> · <a href="https://www502.regione.toscana.it/geoscopio/download/tematici/vegetazione_forestale/index.html" target="_blank" rel="noopener">Carta della vegetazione forestale</a> · <a href="https://land.copernicus.eu/en/products/high-resolution-layer-forest-type" target="_blank" rel="noopener">Copernicus Forest Type</a> · <a href="https://soilgrids.org/" target="_blank" rel="noopener">SoilGrids</a> · <a href="https://www502.regione.toscana.it/geoscopio/download/tematici/aree_protette/aree_protette.zip" target="_blank" rel="noopener">Aree protette</a> · <a href="https://italianmycology.unibo.it/article/view/16464" target="_blank" rel="noopener">Salerni e colleghi 2023</a> · <a href="https://www.biorxiv.org/content/10.64898/2025.12.12.693895.full.pdf" target="_blank" rel="noopener">Brejon Lamartiniere e Hoffman 2025</a> · <a href="https://www.fao.org/4/x0490e/x0490e07.htm" target="_blank" rel="noopener">FAO 56 (Hargreaves)</a> · <a href="https://www.regione.piemonte.it/web/media/14354/download" target="_blank" rel="noopener">Schede specie (Regione Piemonte)</a> · <a href="https://sydowia.at/syd63-1/T3-Swiss.html" target="_blank" rel="noopener">Studio sulla luna</a> · <a href="https://www.regione.toscana.it/-/raccolta-funghi-ecco-le-disposizioni" target="_blank" rel="noopener">Regole di raccolta</a></p>
     </div>
   </details>
 
@@ -1688,13 +1689,14 @@ var RP = (function () {
   // pioggia: [mm minimi, scala]. secco: sensibilità all'asciugatura. ant: peso della pioggia dei 30 giorni prima.
   // suolo: "acido", "subacido" (preferenza leggera) o "calcareo"; senza: indifferente.
   var SPECIE = [
+    // porcino comune: ideale 11–16 °C di media, sotto cala in fretta (faggete tedesche: massimo intorno ai 13 °C, poche nascite tra 5 e 10)
     { id: "edulis", suolo: "subacido", nome: "Porcino comune", latino: "Boletus edulis", gruppo: "porcini",
       stagione: [0, 0, 0, 0.02, 0.1, 0.4, 0.6, 0.8, 1, 1, 0.6, 0.15], quota: [150, 500, 1600, 1900, 0.35, 0.5],
-      temp: [5, 9, 16, 20, 0.35, 0.65], gelo: [0.5, 0.75, 0.9], vel: [3, 12], tempo: [6, 12, 17, 26, 34], pioggia: [10, 45], secco: 1,
+      temp: [6, 11, 16, 20, 0.15, 0.65], gelo: [0.5, 0.75, 0.9], vel: [3, 12], tempo: [6, 12, 17, 26, 34], pioggia: [10, 45], secco: 1,
       boschi: B(0.3, { 1: 0.2, 2: 0.15, 3: 0.3, 4: 0.5, 5: 0.4, 6: 0.85, 7: 0.05, 8: 1, 9: 1, 10: 0.1, 11: 0.3, 12: 0.2, 13: 0.6, 14: 0.6, 15: 0.7, 16: 0.35, 17: 0.3, 18: 0.85 }),
       info: { periodo: "Da giugno a novembre, soprattutto settembre e ottobre; d'estate solo in quota.", quota: "Soprattutto 500–1.600 m.",
         boschi: "Faggete, abetine, castagneti alti, pini di montagna; terreni acidi.",
-        clima: "Media di 10–16 °C; nasce 10–15 giorni dopo una pioggia di almeno 30 mm. Soffre i picchi di caldo.",
+        clima: "Media di 11–16 °C, meglio intorno ai 13; sotto i 10 °C ne nascono pochi. Nasce 10–15 giorni dopo una pioggia abbondante, di più se anche il mese prima è stato piovoso. Soffre i picchi di caldo.",
         attenzione: "Si confonde col porcino amaro (Tylopilus felleus) e con boleti a pori rossi tossici come il satanas." } },
     { id: "aereus", suolo: "acido", nome: "Porcino nero", latino: "Boletus aereus", gruppo: "porcini",
       stagione: [0, 0, 0, 0.03, 0.2, 0.45, 0.6, 0.85, 1, 0.9, 0.4, 0.05], quota: [0, 50, 850, 1250, 0.8, 0.2],
@@ -1923,6 +1925,8 @@ var RP = (function () {
   // Un serbatoio di 80 mm (lo strato dove vive il micelio): entra la pioggia meno quella trattenuta da chiome e lettiera,
   // esce l'evapotraspirazione (Hargreaves-Samani, dalle temperature), che rallenta quando il suolo si asciuga.
   // Indice da 0 (secco) a 1 (pieno), giorno per giorno da 90 giorni prima alla fine delle serie.
+  // Col versante (V) l'evaporazione cambia come l'asciugatura: fino al 40% in più sul solatio, fino al 30% in meno sul bacìo.
+  // N: la pioggia arrivata al suolo, sommata giorno per giorno (per le piogge dei 26 giorni prima)
   var WMAX = 80, KC = 0.85;
   // Sui pendii ripidi parte delle piogge forti scorre via in superficie: fino al 35% sopra i 30° e gli 80 mm al giorno,
   // niente sotto i 20 mm, che la lettiera assorbe anche in pendio
@@ -1955,12 +1959,13 @@ var RP = (function () {
   function et0(tm, tn, tx, lat, doy) { return Math.max(0, 0.0023 * radiazioneExtra(lat, doy) * (tm + 17.8) * Math.sqrt(Math.max(0, tx - tn))); }
   function tClima(doy, quota) { return 15.5 - LAPSE * (quota == null ? 300 : quota) + 9 * Math.cos(2 * Math.PI * (doy - 200) / 365); }
   function doyDi(ms) { var d = new Date(ms); return Math.floor((ms - Date.UTC(d.getUTCFullYear(), 0, 1)) / GIORNO) + 1; }
-  function bilancio(s) {
-    if (s._wb !== undefined) return s._wb;
-    if (!storiaUtile(s) || !s.serie || s.ref == null) return (s._wb = null);
-    var lat = s.lat != null ? s.lat : 43.5, P = s.storia.p, S = s.serie, n = NP + H + 1;
+  function bilancio(s, V) {
+    var key = V ? V.secco.toFixed(3) : "-", c = s._wb || (s._wb = {});
+    if (c[key] !== undefined) return c[key];
+    if (!storiaUtile(s) || !s.serie || s.ref == null) return (c[key] = null);
+    var lat = s.lat != null ? s.lat : 43.5, P = s.storia.p, S = s.serie, n = NP + H + 1, fV = V ? V.secco : 1;
     var W = new Float64Array(n), ET = new Float64Array(n), R = new Float64Array(n), w = 0.5 * WMAX;
-    var ter = s.terreno, kd = drenaggio(ter), X = new Float64Array(n), Z = new Float64Array(n + 1), x = 0;
+    var ter = s.terreno, kd = drenaggio(ter), X = new Float64Array(n), Z = new Float64Array(n + 1), N = new Float64Array(n + 1), x = 0;
     for (var j = -NP; j <= H; j++) {
       var k = j + NP, doy = doyDi(s.ref + j * GIORNO), d = S.byT[j], pr;
       if (j < 0) pr = P[j + NP] || 0;
@@ -1973,15 +1978,16 @@ var RP = (function () {
       if (tn == null) tn = tm - 4.5;
       if (tx == null) tx = Math.max(tm, 2 * tm - tn);
       var e0 = et0(tm, tn, tx, lat, doy), pe = Math.max(0, 0.85 * pr - 0.8) - scorrimento(pr, ter);
-      w += pe - e0 * KC * Math.min(1, w / (0.6 * WMAX));
+      w += pe - e0 * KC * fV * Math.min(1, w / (0.6 * WMAX));
       // quello che lo strato non tiene resta come acqua in più (x, in mm): lo rabbocca mentre si asciuga e intanto se ne va col drenaggio
       if (w > WMAX) { x += w - WMAX; w = WMAX; }
       else if (x > 0) { var dx = Math.min(x, WMAX - w); w += dx; x -= dx; }
       w = Math.max(0, w); x *= 1 - kd;
       W[k] = w / WMAX; ET[k] = e0; R[k] = pr; X[k] = x;
       Z[k + 1] = Z[k] + clamp((x - ZUPPO.da) / (ZUPPO.a - ZUPPO.da), 0, 1);
+      N[k + 1] = N[k] + pe;
     }
-    return (s._wb = { W: W, ET: ET, R: R, X: X, Z: Z });
+    return (c[key] = { W: W, ET: ET, R: R, X: X, Z: Z, N: N });
   }
   function acquaAl(wb, j) { return wb ? wb.W[clamp(Math.round(j) + NP, 0, wb.W.length - 1)] : null; }
   // suolo prima della pioggia: secco 0,7; nella norma d'autunno (25% d'acqua, dopo l'estate) 1; umido (45% e oltre) 1,15.
@@ -2527,12 +2533,23 @@ var RP = (function () {
     return d._aria;
   }
 
-  // pioggia che conta per un evento: meno quella scorsa via sul pendio, corretta per l'acqua che il suolo aveva prima
+  // Contano anche, per metà, le piogge arrivate al suolo nei 26 giorni prima dell'evento, fino al doppio della pioggia
+  // dell'evento stesso: in dieci anni di faggete tedesche le nascite crescono con la pioggia dei 26 giorni prima
+  // (Brejon Lamartiniere e Hoffman, 2025). Il limite evita che una pioggerella dopo un periodo piovoso valga come un temporale.
+  var PRIMA = { giorni: 26, peso: 0.5, max: 2 };
+  function piogge26(wb, e) {
+    if (!wb || !wb.N || !e.storia) return 0;
+    var n = wb.N.length - 1, b = clamp(Math.round(e.inizio) + NP, 0, n), a = clamp(b - PRIMA.giorni, 0, n);
+    return Math.max(0, wb.N[b] - wb.N[a]);
+  }
+  // pioggia che conta per un evento: meno quella scorsa via sul pendio, corretta per l'acqua che il suolo aveva prima,
+  // più metà delle piogge dei 26 giorni prima
   function pioggiaEff(e, sp, wb) {
     var w0 = wb && e.storia ? acquaAl(wb, e.inizio - 1) : null, mm = e.mm - (e.scorsa || 0);
     var mmEff = e.storia ? mm * (w0 != null ? fattoreSuoloW(w0) : fattoreSuolo(e.ant60)) + Math.max(0, sp.ant - 0.15) * (w0 != null ? anticipoW(w0) : Math.min(e.ant60 || 0, 100))
       : mm + sp.ant * Math.min(e.prec || 0, 30);
-    return { mmEff: mmEff, w0: w0 };
+    var prima = piogge26(wb, e), extra = Math.min(PRIMA.peso * prima, PRIMA.max * mmEff);
+    return { mmEff: mmEff + extra, w0: w0, prima: prima, extra: extra };
   }
 
   // ---------- buttate precedenti ----------
@@ -2545,7 +2562,7 @@ var RP = (function () {
     var key = sp.id + "|" + (V ? V.dT.toFixed(3) + "/" + V.secco.toFixed(3) : "-");
     var c = s._bt || (s._bt = {});
     if (c[key]) return c[key];
-    var K = sp.tempo, S = s.serie, dT = V ? V.dT : 0, molt = (V ? V.secco : 1) * sp.secco;
+    var K = sp.tempo, S = s.serie, dT = V ? V.dT : 0, molt = sp.secco; // il versante asciuga già il suolo nel bilancio
     var info = s.eventi.map(function (e) {
       var base = ctEst(tt, e.x), p0 = null, p1 = null;
       for (var t = Math.ceil(e.x); t <= H && p1 == null; t++) {
@@ -2580,25 +2597,26 @@ var RP = (function () {
     var fS = fattoreStagione(s.ref == null ? null : s.ref + t * GIORNO, sp), fH = fattoreBosco(s, sp), fPH = fattorePH(s.habitat && s.habitat.ph, sp);
     var last = t >= 0 && t <= H ? S.L[t + J0] : -(s.ggSecchi || 0);
     var gg = Math.max(0, t - last);
-    var ar = ariaGiorno(s, t), neb = ar.nebbia || 0, m2 = molt * (1 - 0.4 * neb);
+    // mS per il suolo: il versante è già nel bilancio dell'acqua; m2 per l'aria, che sul solatio asciuga di più
+    var ar = ariaGiorno(s, t), neb = ar.nebbia || 0, m2 = molt * (1 - 0.4 * neb), mS = sp.secco * (1 - 0.4 * neb);
     var fa = fattoreAria(ar.f == null ? null : ar.f, gg, m2) * (ar.bonus || 1);
     var tt = tempoTermico(s, sp, dT), ct = ctAt(tt, t);
-    var wb = bilancio(s), wt = acquaAl(wb, t), bt = buttate(s, sp, V, tt, wb);
+    var wb = bilancio(s, V), wt = acquaAl(wb, t), bt = buttate(s, sp, V, tt, wb);
     var best = null;
     s.eventi.forEach(function (e, i) {
       var pe = pioggiaEff(e, sp, wb), mmEff = pe.mmEff;
       var fp = fattorePioggia(mmEff, sp);
       var dEff = ct - ctEst(tt, e.x);
       var ft = t < e.x ? 0 : fattoreTempo(dEff, sp);
-      var fs = wt != null ? fattoreSeccoW(wt, m2) : fattoreSecco(mmEff, gg, m2);
+      var fs = wt != null ? fattoreSeccoW(wt, mS) : fattoreSecco(mmEff, gg, m2);
       var gz = giorniZuppo(wb, e, t), fr = fattoreRistagno(gz), fb = 1 - bt[i].v;
       var v = fp * ft * fT * fq * fS * fs * fa * fH * fPH * fr * fb;
       var pot = fp * (t < e.x ? 0.5 : ft + 0.01);
-      if (!best || v > best.v || (v === best.v && pot > best.pot)) best = { v: v, pot: pot, e: e, fp: fp, ft: ft, fs: fs, fr: fr, fb: fb, gz: gz, bt: bt[i], dEff: dEff, mmEff: mmEff, w0: pe.w0 };
+      if (!best || v > best.v || (v === best.v && pot > best.pot)) best = { v: v, pot: pot, e: e, fp: fp, ft: ft, fs: fs, fr: fr, fb: fb, gz: gz, bt: bt[i], dEff: dEff, mmEff: mmEff, w0: pe.w0, prima: pe.prima, extra: pe.extra };
     });
     var score = best ? Math.min(100, Math.round(100 * best.v)) : 0;
     var d = best ? t - best.e.x : null;
-    return { score: score, _v: best ? best.v : 0, specie: sp.id, evento: best ? best.e : null, mmEff: best ? best.mmEff : 0, acqua: wt, acquaPrima: best ? best.w0 : null,
+    return { score: score, _v: best ? best.v : 0, specie: sp.id, evento: best ? best.e : null, mmEff: best ? best.mmEff : 0, prima26: best ? best.prima : 0, extra26: best ? best.extra : 0, acqua: wt, acquaPrima: best ? best.w0 : null,
       d: d, dEff: best ? best.dEff : null, vel: best && d > 0.5 ? best.dEff / d : velocita(tm, sp), tm: tm, tmin: tmin, gg: gg,
       prevista: !!S.byT[t] && S.byT[t].tm != null, aria: ar, idoneita: idoneita(s.habitat, sp),
       zuppo: best ? best.gz : 0, buttata: best && best.bt.v > 0 ? best.bt : null,
@@ -2654,7 +2672,7 @@ var RP = (function () {
     prepara: prepara, punto: punto, svuota: svuota, distanzaKm: distanzaKm, stima: stima, finestra: finestra, idoneita: idoneita,
     stimaManuale: stimaManuale, finestraManuale: finestraManuale, etichettaPeriodo: etichettaPeriodo, velocita: velocita, fiducia: fiducia,
     fattoreStagione: fattoreStagione, fattoreSuolo: fattoreSuolo, fattoreSuoloW: fattoreSuoloW, fattorePH: fattorePH, nomePH: nomePH, storiaUtile: storiaUtile,
-    bilancio: bilancio, adatto: adatto, drenaggio: drenaggio, NP: NP, NCL: NCL };
+    bilancio: bilancio, versanteDa: versanteDa, adatto: adatto, drenaggio: drenaggio, NP: NP, NCL: NCL };
 })();
 if (typeof module !== "undefined") module.exports = RP;
 
@@ -3510,7 +3528,7 @@ if (typeof module !== "undefined") module.exports = RP;
     var cw = el("div", "curve"); cw.appendChild(el("h4", null, "Punteggio nei prossimi giorni"));
     cw.appendChild(curva(function (t) { return RP.stima(p, t, op).score; }, state.start, state.start + 20, state.t));
     box.appendChild(cw);
-    var gpp = graficoPioggia(p, r);
+    var gpp = graficoPioggia(p, r, RP.versanteDa(op));
     if (gpp) { var gpw = el("div"); gpw.appendChild(el("h4", null, p.storia && p.storia.radar ? "Pioggia giorno per giorno nel punto: radar corretto coi pluviometri" : "Pioggia giorno per giorno, media delle stazioni vicine")); gpw.appendChild(gpp); box.appendChild(gpw); }
 
     var fw = el("div"); fw.appendChild(el("h4", null, "Come nasce il punteggio " + pd("del", state.ref + state.t * DAY)));
@@ -4266,7 +4284,7 @@ if (typeof module !== "undefined") module.exports = RP;
     b.appendChild(el("span", "nm", s.stazione));
     var sc = el("span", "sc"); sc.appendChild(el("span", "big", String(r.score))); sc.appendChild(el("span", "pill lv" + r.livello.id, r.livello.nome)); b.appendChild(sc);
     var sub = s.comune + " (" + s.prov + ") · " + nf(s.quota) + " m · " + (state.pos ? nf(s.km) + " km · " : "");
-    sub += r.evento && r.fattori.pioggia > 0 ? descrEvento(r) + " · " + r.fase.nome : "nessuna pioggia utile in 15 giorni" + (s.prev ? " né prevista" : "");
+    sub += r.evento && r.fattori.pioggia > 0 ? descrEvento(r) + " · " + r.fase.nome : "nessuna pioggia utile in 40 giorni" + (s.prev ? " né prevista" : "");
     b.appendChild(el("span", "sub", sub));
     li.appendChild(b);
     b.addEventListener("click", function () {
@@ -4285,7 +4303,8 @@ if (typeof module !== "undefined") module.exports = RP;
     if (e && e.storia && r.acquaPrima != null) { var fw = RP.fattoreSuoloW(r.acquaPrima); suolo = "; prima della pioggia acqua nel suolo " + nf(r.acquaPrima * 100) + "%, " + (fw < 0.85 ? "terreno secco: la pioggia rende meno" : fw > 1.05 ? "terreno umido: la pioggia rende di più" : "nella norma"); }
     else if (e && e.storia) { var fu = RP.fattoreSuolo(e.ant60); suolo = "; nei 60 giorni prima " + nf(e.ant60) + " mm, terreno " + (fu < 0.85 ? "secco: la pioggia rende meno" : fu > 1.05 ? "umido: la pioggia rende di più" : "nella norma"); }
     var scorsa = e && e.scorsa >= 1 ? "; " + nf(e.scorsa) + " mm scorsi via in superficie" : "";
-    riga("Pioggia utile: " + nf(r.mmEff) + " mm" + tipo + (e ? " (" + descrEvento(r) + scorsa + suolo + ")" : ""), "× " + nf(F.pioggia, 2));
+    var prima = r.extra26 >= 1 ? "; più " + nf(r.extra26) + " mm per i " + nf(r.prima26) + " mm arrivati al suolo nei 26 giorni prima" : "";
+    riga("Pioggia utile: " + nf(r.mmEff) + " mm" + tipo + (e ? " (" + descrEvento(r) + scorsa + suolo + prima + ")" : ""), "× " + nf(F.pioggia, 2));
     var sv = r.vel >= 1.05 ? ", sviluppo più rapido per il caldo" : r.vel <= 0.95 ? ", sviluppo più lento per il fresco" : "";
     riga("Giorni dalla pioggia: " + (r.d == null ? "–" : nf(Math.max(0, r.d))) + " (" + r.fase.nome.toLowerCase() + sv + ")", "× " + nf(F.tempo, 2));
     var tTxt = r.tm == null ? "non disponibile" : nf(r.tm, 1) + " °C medi" + (r.prevista ? ", prevista" : s.tStimata ? ", stimata" : "") + (r.tmin != null ? ", minima " + nf(r.tmin, 1) + " °C" : "") + (versNome ? ", corretta per il versante (" + versNome + ")" : "");
@@ -4301,7 +4320,7 @@ if (typeof module !== "undefined") module.exports = RP;
     riga("Bosco: " + bTxt, "× " + nf(F.bosco, 2));
     var sp3 = RP.SP[r.specie];
     if (h && h.ph != null) riga("Suolo: pH stimato " + nf(h.ph / 10, 1) + (h.punto ? "" : " in media entro 5 km") + ", " + RP.nomePH(h.ph) + (sp3.suolo ? " (" + (sp3.suolo === "calcareo" ? "la specie preferisce terreni calcarei" : "la specie preferisce terreni acidi") + ")" : " (la specie non ha preferenze)"), "× " + nf(F.ph, 2));
-    if (r.acqua != null) riga("Acqua nel suolo quel giorno: " + nf(r.acqua * 100) + "% (pioggia meno evaporazione; " + (r.gg === 1 ? "1 giorno" : nf(r.gg) + " giorni") + " senza pioggia)" + (F.secco < 0.99 ? ": il suolo si sta asciugando" : ""), "× " + nf(F.secco, 2));
+    if (r.acqua != null) riga("Acqua nel suolo quel giorno: " + nf(r.acqua * 100) + "% (pioggia meno evaporazione" + (versNome ? ", corretta per il versante" : "") + "; " + (r.gg === 1 ? "1 giorno" : nf(r.gg) + " giorni") + " senza pioggia)" + (F.secco < 0.99 ? ": il suolo si sta asciugando" : ""), "× " + nf(F.secco, 2));
     else riga("Giorni senza pioggia a quella data: " + nf(r.gg), "× " + nf(F.secco, 2));
     if (s.terreno) {
       var terr = s.terreno, dove = terr.pendenza >= 10 ? "in pendio l'acqua in più scende in un giorno" : terr.tpi <= -20 ? "nel fondovalle l'acqua in più scende piano"
@@ -4371,7 +4390,7 @@ if (typeof module !== "undefined") module.exports = RP;
     var cw = el("div", "curve"); cw.appendChild(el("h4", null, "Punteggio nei prossimi giorni"));
     cw.appendChild(curva(function (t) { return stima(s, t).score; }, state.start, state.start + 20, state.t));
     d.appendChild(cw);
-    var gp = graficoPioggia(s, r);
+    var gp = graficoPioggia(s, r, RP.versanteDa(opt()));
     if (gp) { var gw = el("div"); gw.appendChild(el("h4", null, "Pioggia giorno per giorno")); gw.appendChild(gp); d.appendChild(gw); }
     var rw = el("div"); rw.appendChild(el("h4", null, "Pioggia caduta per periodo"));
     if (gp) rw.hidden = true;
@@ -4400,7 +4419,7 @@ if (typeof module !== "undefined") module.exports = RP;
   }
 
   // ---------- pioggia giorno per giorno: 30 giorni misurati e quelli previsti ----------
-  function graficoPioggia(s, r) {
+  function graficoPioggia(s, r, V) {
     if (!RP.storiaUtile(s)) return null;
     var oriz = s.serie ? Math.max(0, s.serie.oriz) : 0, j0 = -30, j1 = Math.max(oriz, 0);
     var vals = [];
@@ -4424,7 +4443,7 @@ if (typeof module !== "undefined") module.exports = RP;
       if (v.f > 0) svg.appendChild(sv("rect", { x: x, y: y(v.o + v.f), width: w, height: y(v.o) - y(v.o + v.f), fill: "color-mix(in srgb, var(--rain) 22%, transparent)", stroke: "var(--rain)", "stroke-width": 0.8, "stroke-dasharray": "2 1.5" }));
     });
     // acqua nel suolo (bilancio pioggia meno evaporazione): da 0 in basso a 100% in alto
-    var wb = RP.bilancio(s), conW = false;
+    var wb = RP.bilancio(s, V), conW = false;
     if (wb) {
       var pts = vals.map(function (v, i) { var w = wb.W[clamp(v.j + RP.NP, 0, wb.W.length - 1)]; return (Lm + (i + 0.5) * bw).toFixed(1) + "," + (T + (1 - w) * (Hh - T - B)).toFixed(1); });
       svg.appendChild(sv("polyline", { points: pts.join(" "), fill: "none", stroke: "var(--moss)", "stroke-width": 1.6, "stroke-linejoin": "round", opacity: 0.9 }));

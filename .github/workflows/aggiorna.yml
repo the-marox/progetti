@@ -7,14 +7,19 @@
 #   POSTI               il testo di «Copia i miei dati» dell'app (i posti restano privati: non finiscono sul sito)
 #   GMAIL_USER          l'indirizzo Gmail che invia e riceve la mail
 #   GMAIL_APP_PASSWORD  una password per le app di Google (16 lettere)
-# Gli avvisi si calcolano solo nel giro completo del mattino (se GitHub lo salta, lo recupera il giro dopo):
-# una mail al massimo al giorno, e solo se un posto diventa buono o ottimo in un giorno che non era gia' stato segnalato.
+# Gli avvisi si calcolano solo nel giro completo del mattino e con le misure di oggi (se il giro salta, o le misure non
+# arrivano, lo rifa' il giro dopo): una mail al massimo al giorno, e solo se un posto diventa buono o ottimo in un giorno
+# che non era gia' stato segnalato.
 # Il registro delle esecuzioni di un repository pubblico lo vede chiunque: non vi si scrivono mai nomi o coordinate dei posti.
 #
 # Newsletter (facoltativa): chi ha un account nell'app e mette la spunta «Ricevi la newsletter» riceve la stessa mail sui
 # posti salvati nel suo account. Serve il segreto
 #   FIREBASE_SERVICE_ACCOUNT  la chiave JSON di un account di servizio del progetto Firebase «radar-porcini»
 # e la mail parte da GMAIL_USER. Solo indirizzi confermati; nel registro solo numeri, mai indirizzi, nomi o coordinate.
+#
+# Il flusso ha i segreti e il permesso di scrivere nel repository, quindi usa solo versioni fissate: le azioni di GitHub
+# per commit (accanto, la versione), i pacchetti Python con versione e impronta in .github/requisiti (come aggiornarli
+# e' scritto in cima a quei file).
 name: Aggiorna Radar Porcini
 
 on:
@@ -45,21 +50,26 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: gh-pages
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
 
       - name: Strumenti
         run: |
-          pip install -q numpy pillow pygrib playwright
+          # pacchetti con versione e impronta fissate: uno cambiato o sostituito non si installa. Gli elenchi stanno nel
+          # ramo master accanto a questo flusso, e si leggono dallo stesso commit del flusso che sta girando
+          git fetch -q --depth 1 origin "$GITHUB_SHA"
+          git show FETCH_HEAD:.github/requisiti/aggiorna.txt > "$RUNNER_TEMP/requisiti-aggiorna.txt"
+          git show FETCH_HEAD:.github/requisiti/newsletter.txt > "$RUNNER_TEMP/requisiti-newsletter.txt"
+          pip install -q --require-hashes -r "$RUNNER_TEMP/requisiti-aggiorna.txt"
           python -m playwright install --with-deps chromium
 
       - name: Avvisi gia' segnalati
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ${{ runner.temp }}/stato
           key: avvisi-${{ github.run_id }}
@@ -77,6 +87,7 @@ jobs:
           # esito.json si aggiorna voce per voce: si parte da quello pubblicato
           [ -f "$SITO/esito.json" ] && cp "$SITO/esito.json" .
 
+          OGGI=$(date -u -d '+1 hour' +%F)   # oggi in ora solare, come le tabelle del CFR
           COMPLETO=no
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.completo }}" = "true" ]; then
             COMPLETO=si
@@ -84,11 +95,12 @@ jobs:
             COMPLETO=si
           else
             # GitHub a volte ritarda o salta gli orari programmati, e l'avvio dall'esterno chiede completo=false:
-            # se oggi il giro completo non c'e' stato, lo fa questo
-            ULTIMO=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["archivio"]["quando"][:10])' "$SITO/esito.json" 2>/dev/null)
-            if [ "$ULTIMO" != "$(date -u +%F)" ]; then
+            # se oggi l'archivio non e' stato rifatto con le misure di oggi (giro completo saltato, o misure non arrivate),
+            # lo fa questo
+            ULTIMO=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["lettura"]["giorno"])' "$SITO/storico.json" 2>/dev/null)
+            if [ "$ULTIMO" != "$OGGI" ]; then
               COMPLETO=si
-              echo "Oggi il giro completo non c'e' stato (ultimo: ${ULTIMO:-mai}): lo faccio adesso"
+              echo "Oggi l'archivio non e' stato rifatto con le misure di oggi (ultimo: ${ULTIMO:-mai}): faccio il giro completo"
             fi
           fi
 
@@ -98,6 +110,13 @@ jobs:
           if echo "$r" | grep -q '"data": *"errore'; then
             sleep 120; timeout 600 python3 -I aggiorna.py misure
           fi
+          # avvisi e newsletter solo con le misure di oggi: con quelle di ieri i punteggi mescolerebbero giorni diversi.
+          # Se mancano, l'archivio resta di ieri e il prossimo giro e' di nuovo completo
+          MISURE=no
+          if [ -f data.json ] && [ "$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["giorno"])' data.json 2>/dev/null)" = "$OGGI" ]; then
+            MISURE=si
+          fi
+          echo "misure=$MISURE" >> "$GITHUB_OUTPUT"
           timeout 600 python3 -I aggiorna.py previsioni
           if [ "$COMPLETO" = si ]; then
             S=""; [ -f "$SITO/storico.json" ] && S="$SITO/storico.json"
@@ -107,7 +126,10 @@ jobs:
           fi
 
           # avvisi per i posti salvati: calcolati nella pagina vera dell'app, con i dati appena scaricati
-          if [ "$COMPLETO" = si ] && [ -n "$POSTI" ]; then
+          if [ "$COMPLETO" = si ] && [ "$MISURE" != si ]; then
+            echo "Mancano le misure di oggi: avvisi e newsletter li fa il prossimo giro"
+          fi
+          if [ "$COMPLETO" = si ] && [ "$MISURE" = si ] && [ -n "$POSTI" ]; then
             P="$RUNNER_TEMP/posti"; mkdir -p "$P"
             printf '%s' "$POSTI" > "$P/posti.json"
             for f in data.json aria.json previsioni.json storico.json radar.json sentieri.json; do
@@ -151,7 +173,7 @@ jobs:
 
       - name: Newsletter
         id: newsletter
-        if: ${{ !cancelled() && steps.calcola.outputs.completo == 'si' }}
+        if: ${{ !cancelled() && steps.calcola.outputs.completo == 'si' && steps.calcola.outputs.misure == 'si' }}
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
@@ -162,7 +184,7 @@ jobs:
             exit 0
           fi
           grep -q 'args\[0\] == "newsletter"' "$GITHUB_WORKSPACE/$APP/aggiorna.py" || { echo "aggiorna.py del sito non sa ancora mandare la newsletter: va unita la sua modifica"; exit 1; }
-          pip install -q firebase-admin
+          pip install -q --require-hashes -r "$RUNNER_TEMP/requisiti-newsletter.txt"
           # i punteggi si calcolano con i dati appena pubblicati; indirizzi e posti restano in memoria
           cd "$GITHUB_WORKSPACE/$APP"
           timeout 900 python3 -I aggiorna.py newsletter index.html "$RUNNER_TEMP/stato"
@@ -170,7 +192,7 @@ jobs:
       - name: Ricorda gli avvisi
         # avvisi.json cambia solo se la mail parte; newsletter.json tiene, per ogni iscritto, i giorni gia' segnalati
         if: ${{ !cancelled() && (steps.mail.outcome == 'success' || steps.newsletter.outcome == 'success' || steps.newsletter.outcome == 'failure') }}
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ${{ runner.temp }}/stato
           key: avvisi-${{ github.run_id }}-${{ github.run_attempt }}

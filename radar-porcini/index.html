@@ -985,6 +985,15 @@ details.sposta { background: var(--surface); border: 1px solid var(--line); bord
 details.sposta summary { cursor: pointer; padding: 10px 0; font-weight: 700; color: var(--moss); }
 .sposta-body { display: grid; gap: 10px; padding-bottom: 12px; }
 .sposta-body textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font: 0.8rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+/* il tuo account */
+.acc-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.acc-form label, .acc-pw { display: grid; gap: 4px; font-size: 0.86rem; color: var(--muted); }
+.acc-form input, .acc-pw input { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-height: 42px; color: var(--ink); width: 100%; min-width: 0; }
+.acc-form .row-f, .acc-form .note { grid-column: 1 / -1; }
+.acc-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 10px; }
+.acc-box p { margin: 0; }
+.linkbtn.piano { border-color: transparent; background: none; padding: 0; color: var(--moss); font-weight: 700; font-size: inherit; }
+.linkbtn.conf { border-color: var(--cap); color: var(--cap); }
 path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke-width: 3; cursor: pointer; }
 .legenda .kq { background: var(--surface); border: 3px solid var(--cap); box-sizing: border-box; }
 .legenda .ks { width: 18px; height: 0; border-radius: 0; border: 0; border-top: 2.5px dashed var(--trail); vertical-align: middle; }
@@ -1109,6 +1118,32 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
  </div>
 
  <div class="col col-b">
+  <section aria-labelledby="h-account" id="sez-account" data-chiudibile hidden>
+    <h2 id="h-account">Il tuo account</h2>
+    <p class="muted" id="acc-intro">Accedi per ritrovare posti, diario e impostazioni su telefono, tablet e computer. Senza account restano solo su questo dispositivo.</p>
+    <button class="linkbtn" type="button" id="acc-apri">Accedi o crea l'account</button>
+    <form class="acc-form" id="acc-form" hidden>
+      <label>Email<input type="email" id="acc-email" autocomplete="username" inputmode="email" spellcheck="false" autocapitalize="off"></label>
+      <label>Password<input type="password" id="acc-pw" autocomplete="current-password"></label>
+      <div class="row-f"><button class="linkbtn" type="submit">Accedi</button><button class="linkbtn" type="button" id="acc-crea">Crea l'account</button><button class="linkbtn" type="button" id="acc-google">Accedi con Google</button></div>
+      <p class="note">Per un account nuovo scrivi la tua email, scegli una password di almeno 6 caratteri e premi «Crea l'account». <button class="linkbtn piano" type="button" id="acc-dimenticata">Password dimenticata?</button></p>
+    </form>
+    <div class="row-f" id="acc-dentro" hidden><button class="linkbtn" type="button" id="acc-esci">Esci</button></div>
+    <div class="acc-box" id="acc-importa" hidden>
+      <p id="acc-importa-testo"></p>
+      <div class="row-f"><button class="linkbtn" type="button" id="acc-importa-si">Copiali nell'account</button><button class="linkbtn" type="button" id="acc-importa-no">No, grazie</button></div>
+    </div>
+    <p class="note" id="acc-msg" role="status"></p>
+    <details class="sposta" id="acc-elimina" hidden>
+      <summary>Elimina l'account</summary>
+      <div class="sposta-body">
+        <p class="note">Cancella per sempre l'account con i posti, le uscite e le impostazioni salvati dentro. Quello che è salvato solo su questo dispositivo resta qui.</p>
+        <label class="acc-pw" id="acc-elimina-pw-box">Per confermare, la tua password<input type="password" id="acc-elimina-pw" autocomplete="current-password"></label>
+        <div class="row-f"><button class="linkbtn" type="button" id="acc-elimina-btn">Elimina l'account e i dati</button></div>
+      </div>
+    </details>
+  </section>
+
   <section aria-labelledby="h-posti" id="sez-posti" data-chiudibile>
     <h2 id="h-posti">I miei posti</h2>
     <p class="muted" id="posti-intro">Salva i boschi dove vai, dalla scheda del punto: qui vedi per ognuno il punteggio dei prossimi giorni. Li vedi solo tu.</p>
@@ -1275,7 +1310,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Regole del giorno.</b> Per il giorno scelto la scheda del punto dà l'orario di raccolta (da un'ora prima dell'alba a un'ora dopo il tramonto, calcolati per il punto), i limiti del comune presi dall'elenco della Regione e i giorni di caccia al cinghiale in braccata del calendario venatorio regionale.</li>
         <li><b>Sentieri e mappa.</b> I sentieri sono quelli della Rete escursionistica toscana nel catasto del Club Alpino Italiano (dati OpenStreetMap), semplificati a circa 12 m: tocca un sentiero per numero, difficoltà e percorribilità. Dove il browser lo permette c'è anche la mappa topografica con strade e curve di livello (OpenTopoMap); dentro Claude può non caricarsi.</li>
         <li><b>Possibili fungaie.</b> Nel raggio scelto attorno al tuo punto si guardano tutte le celle di circa 220 m della carta dei boschi. Restano quelle con un bosco adatto alla specie (il tipo della cella e quelli nei 500 m attorno, la quota e il suolo, come nella scheda del punto), con pendenza fino a 35° e a meno di 400 m da un sentiero CAI (esclusi quelli segnati come non percorribili); i boschi di tipo non noto restano fuori. L'area si divide in riquadri (circa 20 per lato) e per ognuno si tiene la cella più adatta. Per queste si calcola il punteggio del giorno scelto, lo stesso della scheda del punto, e si mostrano le migliori distanti almeno 1 km l'una dall'altra. La carta dei boschi ha celle di 250 m ed è di fine anni '90: una fungaia vera può essere più piccola, e il bosco può essere cambiato.</li>
-        <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono; quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
+        <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono, oppure nel tuo account se accedi (lo vedi solo tu: ogni account legge e scrive soltanto i propri dati); quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
         <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
@@ -4303,6 +4338,7 @@ if (typeof module !== "undefined") module.exports = RP;
     function scriviL(a) { localStorage.setItem(LS_ARCH + nome, JSON.stringify(a)); var c = a.slice(); cbs.forEach(function (cb) { cb(c); }); }
     return {
       locale: true,
+      tutti: leggiL,
       ascolta: function (cb) { cbs.push(cb); cb(leggiL()); },
       aggiungi: function (doc) {
         return new Promise(function (ok, ko) {
@@ -4334,6 +4370,7 @@ if (typeof module !== "undefined") module.exports = RP;
       cb(archivioLocale("uscite"), archivioLocale("posti"), null);
     }
     var cl = window.claude && typeof window.claude.use === "function" ? window.claude : null;
+    if (contoPossibile() && contoAttivo()) { apriConto(cb, locale); return; }
     if (PWA || COPIA || !cl) { locale(); return; }
     Promise.all([cl.use("db"), cl.use("user"), cl.use("assets").catch(function () { return null; })]).then(function (res) {
       var db = res[0], user = res[1];
@@ -4705,6 +4742,9 @@ if (typeof module !== "undefined") module.exports = RP;
       if (da.locale) {
         document.getElementById("diario-intro").textContent = "Segna dove sei andato e cosa hai trovato: dalla decima uscita l'app calcola quanto spesso, a ogni punteggio, hai trovato funghi. Le uscite restano in questo browser.";
         document.getElementById("posti-intro").textContent = "Salva i boschi dove vai, dalla scheda del punto: qui vedi per ognuno il punteggio dei prossimi giorni. Restano in questo browser; per gli avvisi via mail copiali nel segreto POSTI del flusso su GitHub.";
+      } else if (da.conto) {
+        document.getElementById("diario-intro").textContent = "Segna dove sei andato e cosa hai trovato: dalla decima uscita l'app calcola quanto spesso, a ogni punteggio, hai trovato funghi. Le uscite sono nel tuo account: le vedi solo tu, su ogni dispositivo dove accedi. Le foto restano sul dispositivo dove le hai aggiunte.";
+        document.getElementById("posti-intro").textContent = "Salva i boschi dove vai, dalla scheda del punto: qui vedi per ognuno il punteggio dei prossimi giorni. Sono nel tuo account: li vedi solo tu, su ogni dispositivo dove accedi. Per gli avvisi via mail copiali nel segreto POSTI del flusso su GitHub.";
       }
       aggiornaLuogoDiario();
       da.ascolta(function (L) {
@@ -4780,30 +4820,295 @@ if (typeof module !== "undefined") module.exports = RP;
       else aMano();
     } catch (e) { aMano(); }
   });
+  // posti e uscite di d che non ci sono già (stesso nome e luogo; stesso giorno, luogo, specie ed esito)
+  function daAggiungere(d) {
+    var kp = function (x) { return String(x.nome) + "|" + Number(x.lat).toFixed(4) + "|" + Number(x.lon).toFixed(4); };
+    var ku = function (x) { return x.data + "|" + Number(x.lat).toFixed(4) + "|" + Number(x.lon).toFixed(4) + "|" + x.specie + "|" + x.esito; };
+    var hp = {}, hu = {};
+    posti.lista.forEach(function (x) { hp[kp(x)] = 1; }); diario.lista.forEach(function (x) { hu[ku(x)] = 1; });
+    return {
+      posti: (Array.isArray(d.posti) ? d.posti : []).filter(function (x) { return postoValido(x) && !hp[kp(x)]; }).slice(0, 100),
+      uscite: (Array.isArray(d.uscite) ? d.uscite : []).filter(function (x) { return uscitaValida(x) && !hu[ku(x)]; }).slice(0, 300)
+    };
+  }
+  // conFoto: dallo stesso dispositivo le foto del diario restano valide
+  function aggiungiDati(n, conFoto) {
+    var catena = Promise.resolve(), errori = 0, campiU = conFoto ? CAMPI_USCITA.concat(["foto"]) : CAMPI_USCITA;
+    n.posti.forEach(function (x) {
+      var doc = pulito(x, CAMPI_POSTO); doc.nome = String(doc.nome).slice(0, 60); doc.comune = String(doc.comune || "").slice(0, 60); if (!doc.creato) doc.creato = new Date().toISOString();
+      catena = catena.then(function () { return posti.arch.aggiungi(doc).then(null, function () { errori++; }); });
+    });
+    n.uscite.forEach(function (x) {
+      var doc = pulito(x, campiU); doc.note = String(doc.note || "").slice(0, 200); doc.comune = String(doc.comune || "").slice(0, 60);
+      catena = catena.then(function () { return diario.arch.aggiungi(doc).then(null, function () { errori++; }); });
+    });
+    return catena.then(function () { return errori; });
+  }
+  function quanti(n, uno, tanti) { return n === 1 ? "1 " + uno : n + " " + tanti; }
+  function testoDati(n) { return [n.posti.length ? quanti(n.posti.length, "posto", "posti") : "", n.uscite.length ? quanti(n.uscite.length, "uscita", "uscite") : ""].filter(Boolean).join(" e "); }
   document.getElementById("sposta-aggiungi").addEventListener("click", function () {
     var ta = document.getElementById("sposta-testo"), msg = document.getElementById("sposta-msg"), d;
     try { d = JSON.parse(ta.value); } catch (e) { msg.textContent = "Il testo non è valido: incolla quello copiato dall'altra versione."; return; }
     if (!d || d.radarPorcini !== 1) { msg.textContent = "Il testo non viene da Radar Porcini."; return; }
     if (!posti.arch || !diario.arch) return;
-    var kp = function (x) { return String(x.nome) + "|" + Number(x.lat).toFixed(4) + "|" + Number(x.lon).toFixed(4); };
-    var ku = function (x) { return x.data + "|" + Number(x.lat).toFixed(4) + "|" + Number(x.lon).toFixed(4) + "|" + x.specie + "|" + x.esito; };
-    var hp = {}, hu = {};
-    posti.lista.forEach(function (x) { hp[kp(x)] = 1; }); diario.lista.forEach(function (x) { hu[ku(x)] = 1; });
-    var np = (Array.isArray(d.posti) ? d.posti : []).filter(function (x) { return postoValido(x) && !hp[kp(x)]; }).slice(0, 100);
-    var nu = (Array.isArray(d.uscite) ? d.uscite : []).filter(function (x) { return uscitaValida(x) && !hu[ku(x)]; }).slice(0, 300);
-    if (!np.length && !nu.length) { msg.textContent = "Niente di nuovo da aggiungere."; return; }
+    var n = daAggiungere(d);
+    if (!n.posti.length && !n.uscite.length) { msg.textContent = "Niente di nuovo da aggiungere."; return; }
     msg.textContent = "Aggiungo…";
-    var catena = Promise.resolve(), fatti = 0, errori = 0;
-    np.forEach(function (x) {
-      var doc = pulito(x, CAMPI_POSTO); doc.nome = String(doc.nome).slice(0, 60); doc.comune = String(doc.comune || "").slice(0, 60); if (!doc.creato) doc.creato = new Date().toISOString();
-      catena = catena.then(function () { return posti.arch.aggiungi(doc).then(function () { fatti++; }, function () { errori++; }); });
-    });
-    nu.forEach(function (x) {
-      var doc = pulito(x, CAMPI_USCITA); doc.note = String(doc.note || "").slice(0, 200); doc.comune = String(doc.comune || "").slice(0, 60);
-      catena = catena.then(function () { return diario.arch.aggiungi(doc).then(function () { fatti++; }, function () { errori++; }); });
-    });
-    catena.then(function () { msg.textContent = "Aggiunti " + np.length + " posti e " + nu.length + " uscite" + (errori ? " (" + errori + " non salvati)" : "") + "."; ta.value = ""; });
+    aggiungiDati(n, false).then(function (errori) { msg.textContent = "Aggiunti " + n.posti.length + " posti e " + n.uscite.length + " uscite" + (errori ? " (" + errori + " non salvati)" : "") + "."; ta.value = ""; });
   });
+
+  // ---------- il tuo account (Firebase): posti, diario e impostazioni uguali su tutti i dispositivi ----------
+  // Facoltativo: senza configurazione la sezione resta nascosta e tutto resta nel browser. Ogni account legge e scrive solo
+  // utenti/<il suo uid> (regole di sicurezza nella console di Firebase). Le foto del diario restano nel dispositivo.
+  var FIREBASE = { // configurazione del progetto Firebase «radar-porcini»: non è un segreto, i dati li proteggono le regole
+    apiKey: "AIzaSyBrl_4UahX5Bs3BnxtV5c5POax_fVhI0WE", authDomain: "radar-porcini.firebaseapp.com", projectId: "radar-porcini",
+    storageBucket: "radar-porcini.firebasestorage.app", messagingSenderId: "764907479690", appId: "1:764907479690:web:63dafc63dd66b3c00e4373"
+  };
+  var FB_SDK = "https://www.gstatic.com/firebasejs/12.19.0/";
+  var LS_CONTO = "radar-porcini-account", LS_IMPORTATO = "radar-porcini-importato-", SS_MSG = "radar-porcini-msg";
+  var conto = { fb: null, pronto: null, utente: null, pref: null, caricati: {}, daImportare: null, esci: false, elimina: false };
+  function contoPossibile() { return !!(PWA && !COPIA && FIREBASE && FIREBASE.apiKey && /^(https:|http:\/\/(localhost|127\.0\.0\.1)[:/])/.test(location.href)); }
+  function contoAttivo() { try { return localStorage.getItem(LS_CONTO) === "1"; } catch (e) { return false; } }
+  function msgConto(s) { document.getElementById("acc-msg").textContent = s; }
+  function attesa(ms, v) { return new Promise(function (ok) { setTimeout(function () { ok(v); }, ms); }); }
+  var importa = new Function("u", "return import(u)"); // scritto così, import() non rompe la pagina nei browser che non lo conoscono
+  // la libreria di Firebase si carica solo per chi usa l'account
+  function caricaFirebase() {
+    if (!conto.fb) conto.fb = Promise.all(["app", "auth", "firestore"].map(function (m) { return importa(FB_SDK + "firebase-" + m + ".js"); })).then(function (m) {
+      var A = m[0], U = m[1], Fs = m[2], app = A.initializeApp(FIREBASE), auth = U.getAuth(app), db;
+      auth.languageCode = "it";
+      // copia dei dati nel browser (IndexedDB): l'account funziona anche senza rete e si allinea quando torna
+      try { db = Fs.initializeFirestore(app, { ignoreUndefinedProperties: true, localCache: Fs.persistentLocalCache({ tabManager: Fs.persistentMultipleTabManager() }) }); }
+      catch (e) { db = Fs.getFirestore(app); }
+      if (window.RP_EMULATORE) { U.connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true }); Fs.connectFirestoreEmulator(db, "127.0.0.1", 8080); } // solo per le prove
+      return (conto.pronto = { U: U, F: Fs, auth: auth, db: db });
+    }, function (err) { conto.fb = null; throw err; });
+    return conto.fb;
+  }
+  function erroreConto(err) { msgConto("Una modifica non è arrivata nel tuo account (" + (err && err.code || "errore") + "): ricarica la pagina e controlla."); }
+  // come archivioDb, sulla raccolta utenti/<uid>/<nome>
+  function archivioConto(fb, uid, nome, ordine) {
+    var Fs = fb.F, col = Fs.collection(fb.db, "utenti", uid, nome);
+    return {
+      locale: false,
+      conto: true,
+      ascolta: function (cb, errCb) {
+        var primo = true;
+        Fs.onSnapshot(Fs.query(col, Fs.orderBy(ordine, "desc"), Fs.limit(1000)), { includeMetadataChanges: true }, function (snap) {
+          // se cambiano solo i metadati (dati confermati dal server, scritture inviate) non si ridisegna
+          if (primo || snap.docChanges().length) cb(snap.docs.map(function (d) { var x = d.data() || {}, o = { id: d.id }; for (var k in x) o[k] = x[k]; return o; }));
+          primo = false;
+          if (!snap.metadata.fromCache && !conto.caricati[nome]) { conto.caricati[nome] = true; offriImport(); }
+        }, errCb);
+      },
+      // la modifica va subito nella copia del browser e parte verso l'account appena c'è rete: non si aspetta il server
+      aggiungi: function (doc) { try { var ref = Fs.doc(col); Fs.setDoc(ref, doc).catch(erroreConto); return Promise.resolve(ref.id); } catch (e) { return Promise.reject(e); } },
+      togli: function (id) { try { Fs.deleteDoc(Fs.doc(col, id)).catch(erroreConto); return Promise.resolve(); } catch (e) { return Promise.reject(e); } }
+    };
+  }
+  function conPassword(u) { return u.providerData.some(function (p) { return p.providerId === "password"; }); }
+  // u: l'utente dentro; guasto: si era dentro ma l'account adesso non si apre
+  function mostraConto(u, guasto) {
+    var dentro = !!(u || guasto);
+    document.getElementById("acc-intro").textContent = u ? "Sei dentro come " + (u.email || "utente Google") + ". Posti, diario e impostazioni sono nel tuo account: li vedi solo tu e li ritrovi su ogni dispositivo dove accedi, anche senza rete (si allineano quando torna). Le foto del diario restano sul dispositivo dove le hai aggiunte."
+      : guasto ? "Posti e diario sono nel tuo account, che adesso non si apre."
+      : "Accedi per ritrovare posti, diario e impostazioni su telefono, tablet e computer. Senza account restano solo su questo dispositivo.";
+    document.getElementById("acc-apri").hidden = dentro;
+    document.getElementById("acc-form").hidden = true;
+    document.getElementById("acc-dentro").hidden = !dentro;
+    document.getElementById("acc-elimina").hidden = !u;
+    if (u) document.getElementById("acc-elimina-pw-box").hidden = !conPassword(u);
+  }
+  function apriConto(cb, locale) {
+    msgConto("Apro il tuo account…");
+    caricaFirebase().then(function (fb) {
+      return fb.auth.authStateReady().then(function () {
+        var u = fb.auth.currentUser;
+        if (!u) {
+          try { localStorage.removeItem(LS_CONTO); } catch (e) {}
+          mostraConto(null); msgConto("Sei uscito dall'account: posti e diario qui sotto sono quelli di questo dispositivo.");
+          locale(); return;
+        }
+        conto.utente = u; foto.locale = typeof indexedDB !== "undefined";
+        mostraConto(u); msgConto("");
+        cb(archivioConto(fb, u.uid, "uscite", "data"), archivioConto(fb, u.uid, "posti", "creato"), null);
+        prefDalConto();
+      });
+    }).catch(function () {
+      mostraConto(null, true);
+      msgConto("La prima volta su questo dispositivo serve la rete: ricarica la pagina quando c'è campo. Se esci, vedi i dati salvati solo su questo dispositivo.");
+      cb(null, null, "Posti e diario sono nel tuo account, che adesso non si apre: ricarica la pagina quando c'è campo.");
+    });
+  }
+  // la prima volta che entri da un dispositivo: copiare nell'account i posti e le uscite salvati lì fuori dall'account?
+  function offriImport() {
+    var u = conto.utente;
+    if (!u || !conto.caricati.posti || !conto.caricati.uscite || !posti.arch) return;
+    var k = LS_IMPORTATO + u.uid;
+    try { if (localStorage.getItem(k)) return; } catch (e) { return; }
+    var n = daAggiungere({ posti: archivioLocale("posti").tutti(), uscite: archivioLocale("uscite").tutti() });
+    if (!n.posti.length && !n.uscite.length) { try { localStorage.setItem(k, "1"); } catch (e) {} return; }
+    conto.daImportare = n;
+    document.getElementById("acc-importa-testo").textContent = "Su questo dispositivo ci sono dati salvati fuori dall'account (" + testoDati(n) + "). Vuoi copiarli nel tuo account?";
+    document.getElementById("acc-importa").hidden = false;
+  }
+  function importFatto() { document.getElementById("acc-importa").hidden = true; try { localStorage.setItem(LS_IMPORTATO + conto.utente.uid, "1"); } catch (e) {} }
+  document.getElementById("acc-importa-si").addEventListener("click", function () {
+    var n = conto.daImportare; if (!n) return;
+    importFatto();
+    aggiungiDati(n, true).then(function (errori) { msgConto("Copiati nel tuo account " + testoDati(n) + (errori ? " (" + errori + " non salvati)" : "") + ". Restano anche su questo dispositivo, fuori dall'account."); });
+  });
+  document.getElementById("acc-importa-no").addEventListener("click", function () { importFatto(); msgConto("Va bene: restano solo su questo dispositivo. Puoi sempre copiarli con «Copia o sposta posti e diario»."); });
+
+  // impostazioni che seguono l'account (le sezioni aperte o chiuse restano del dispositivo)
+  var PREF = { specie: LS_SPECIE, versante: LS_VERS, sfondo: LS_SFONDO, aree: LS_AREE, sentieri: LS_SENT, topo: LS_TOPO, fungaie: LS_FUNG, vista: LS_POSTI_VISTA, punto: LS_POS };
+  function leggiPref() {
+    var o = {};
+    Object.keys(PREF).forEach(function (k) {
+      var v = null;
+      try { v = localStorage.getItem(PREF[k]); } catch (e) {}
+      if (v != null && k === "punto") {
+        try { var p = JSON.parse(v); v = p && typeof p.lat === "number" ? JSON.stringify({ nome: p.nome || "", lat: p.lat, lon: p.lon, quota: p.quota == null ? null : p.quota, bosco: p.bosco == null ? null : p.bosco }) : null; } catch (e) { v = null; }
+      }
+      if (v != null) o[k] = v;
+    });
+    return o;
+  }
+  function applicaPref(p) {
+    function premi(gruppo, v, ora) {
+      var b = [].filter.call(document.querySelectorAll(gruppo + " button"), function (x) { return x.dataset.v === v; })[0];
+      if (b && String(ora) !== v) b.click();
+    }
+    var sel = document.getElementById("f-specie");
+    if (typeof p.specie === "string" && p.specie !== state.specie && (p.specie === "porcini" || RP.SP[p.specie])) { sel.value = p.specie; sel.dispatchEvent(new Event("change")); }
+    if (typeof p.versante === "string") premi("#f-vers", p.versante, state.versante);
+    if (typeof p.sfondo === "string") premi("#f-sfondo", p.sfondo, state.sfondo);
+    [["aree", "f-aree"], ["sentieri", "f-sentieri"], ["topo", "f-topo"]].forEach(function (x) {
+      if (typeof p[x[0]] === "string" && (p[x[0]] === "1") !== !!state[x[0]]) document.getElementById(x[1]).click();
+    });
+    if (typeof p.fungaie === "string") premi("#f-fung-raggio", p.fungaie, fung.raggio);
+    if (typeof p.vista === "string") premi("#f-posti-vista", p.vista, posti.vista);
+    if (typeof p.punto === "string" && p.punto !== leggiPref().punto) {
+      try {
+        var q = JSON.parse(p.punto);
+        if (q && numeroIn(q.lat, 41.3, 45.2) && numeroIn(q.lon, 8.5, 13.5)) {
+          impostaPos({ nome: String(q.nome || "Punto").slice(0, 80), lat: q.lat, lon: q.lon, quota: q.quota, bosco: q.bosco }, true);
+          if (mappa) mappa.setView([q.lat, q.lon], Math.max(mappa.getZoom(), 10));
+        }
+      } catch (e) {}
+    }
+  }
+  // all'apertura valgono le impostazioni dell'account; poi si salvano quelle cambiate qui
+  function prefDalConto() {
+    var fb = conto.pronto, u = conto.utente;
+    fb.F.getDoc(fb.F.doc(fb.db, "utenti", u.uid)).then(function (d) {
+      var p = d.exists() ? d.data().pref : null;
+      if (p && typeof p === "object") applicaPref(p);
+      conto.pref = p ? JSON.stringify(leggiPref()) : "";
+    }, function () { conto.pref = JSON.stringify(leggiPref()); }).then(spingiPref);
+  }
+  function spingiPref() {
+    var fb = conto.pronto, u = conto.utente;
+    if (!fb || !u || conto.pref == null) return;
+    var s = JSON.stringify(leggiPref());
+    if (s === conto.pref) return;
+    conto.pref = s;
+    fb.F.setDoc(fb.F.doc(fb.db, "utenti", u.uid), { pref: JSON.parse(s), aggiornato: fb.F.serverTimestamp() }).catch(erroreConto);
+  }
+
+  // entrare, creare l'account, uscire, eliminarlo
+  function erroreAccesso(err) {
+    var c = err && err.code || "", T = {
+      "auth/invalid-email": "L'indirizzo email non è valido.", "auth/missing-email": "Scrivi la tua email.", "auth/missing-password": "Scrivi la password.",
+      "auth/invalid-credential": "Email o password sbagliate.", "auth/wrong-password": "Password sbagliata.", "auth/user-not-found": "Email o password sbagliate.",
+      "auth/email-already-in-use": "Esiste già un account con questa email: premi «Accedi».", "auth/weak-password": "La password deve avere almeno 6 caratteri.",
+      "auth/too-many-requests": "Troppi tentativi: riprova tra qualche minuto.", "auth/network-request-failed": "Serve la rete: riprova quando c'è campo.",
+      "auth/popup-closed-by-user": "Accesso con Google annullato.", "auth/cancelled-popup-request": "Accesso con Google annullato.",
+      "auth/popup-blocked": "Il browser ha bloccato la finestra di Google: riprova, oppure usa email e password.", "auth/user-mismatch": "Hai scelto un altro account Google: usa quello con cui sei dentro.",
+      "auth/operation-not-allowed": "Questo modo di accedere non è attivo.", "auth/unauthorized-domain": "Questo indirizzo non è autorizzato ad accedere.",
+      "auth/user-disabled": "Questo account è stato disattivato.", "auth/requires-recent-login": "Per sicurezza esci, rientra e riprova."
+    };
+    msgConto(T[c] || (c.indexOf("auth/") === 0 ? "Non è riuscito (" + c.slice(5) + ")." : "Non riesco a raggiungere il servizio degli account: controlla la rete e riprova."));
+  }
+  function entra(fn) {
+    var bs = document.querySelectorAll("#acc-form button"), p;
+    [].forEach.call(bs, function (b) { b.disabled = true; });
+    msgConto("Un momento…");
+    // con la libreria già caricata la finestra di Google si apre subito, finché il tocco conta ancora per il browser
+    try { p = conto.pronto ? Promise.resolve(fn(conto.pronto)) : caricaFirebase().then(fn); } catch (e) { p = Promise.reject(e); }
+    p.then(function () { try { localStorage.setItem(LS_CONTO, "1"); } catch (e) {} location.reload(); },
+      function (err) { erroreAccesso(err); [].forEach.call(bs, function (b) { b.disabled = false; }); });
+  }
+  function credenziali() { return { email: document.getElementById("acc-email").value.trim(), pw: document.getElementById("acc-pw").value }; }
+  document.getElementById("acc-apri").addEventListener("click", function () {
+    this.hidden = true; document.getElementById("acc-form").hidden = false; document.getElementById("acc-email").focus();
+    caricaFirebase().catch(function () {});
+  });
+  document.getElementById("acc-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var c = credenziali();
+    entra(function (fb) { return fb.U.signInWithEmailAndPassword(fb.auth, c.email, c.pw); });
+  });
+  document.getElementById("acc-crea").addEventListener("click", function () {
+    var c = credenziali();
+    entra(function (fb) { return fb.U.createUserWithEmailAndPassword(fb.auth, c.email, c.pw); });
+  });
+  document.getElementById("acc-google").addEventListener("click", function () {
+    entra(function (fb) { return fb.U.signInWithPopup(fb.auth, new fb.U.GoogleAuthProvider()); });
+  });
+  document.getElementById("acc-dimenticata").addEventListener("click", function () {
+    var email = credenziali().email;
+    if (!email) { msgConto("Scrivi prima la tua email qui sopra."); document.getElementById("acc-email").focus(); return; }
+    msgConto("Un momento…");
+    caricaFirebase().then(function (fb) { return fb.U.sendPasswordResetEmail(fb.auth, email); })
+      .then(function () { msgConto("Se " + email + " ha un account, ti arriva una mail per scegliere una password nuova (guarda anche nello spam)."); }, erroreAccesso);
+  });
+  document.getElementById("acc-esci").addEventListener("click", function () {
+    var fb = conto.pronto, btn = this;
+    function fuori() { try { localStorage.removeItem(LS_CONTO); } catch (e) {} location.reload(); }
+    if (!fb || !conto.utente) { fuori(); return; }
+    spingiPref();
+    btn.disabled = true; msgConto("Esco…");
+    // senza rete le ultime modifiche potrebbero non essere ancora partite: uscendo andrebbero perse
+    (conto.esci ? Promise.resolve(true) : Promise.race([fb.F.waitForPendingWrites(fb.db).then(function () { return true; }), attesa(5000, false)])).then(function (ok) {
+      if (!ok) { conto.esci = true; btn.disabled = false; msgConto("Alcune modifiche non sono ancora arrivate nell'account, forse manca la rete. Se esci adesso si perdono: premi di nuovo «Esci» per uscire lo stesso."); return; }
+      return fb.U.signOut(fb.auth).then(function () { return fb.F.terminate(fb.db); }).then(function () { return fb.F.clearIndexedDbPersistence(fb.db); }).catch(function () {}).then(fuori);
+    });
+  });
+  document.getElementById("acc-elimina-btn").addEventListener("click", function () {
+    var fb = conto.pronto, u = conto.utente, btn = this;
+    if (!fb || !u) return;
+    if (!conto.elimina) { conto.elimina = true; btn.textContent = "Conferma: elimina per sempre"; btn.classList.add("conf"); return; }
+    var pw = document.getElementById("acc-elimina-pw").value, U = fb.U, Fs = fb.F, db = fb.db;
+    if (conPassword(u) && !pw) { msgConto("Scrivi la tua password per confermare."); document.getElementById("acc-elimina-pw").focus(); return; }
+    btn.disabled = true; msgConto("Elimino l'account…");
+    (conPassword(u) ? U.reauthenticateWithCredential(u, U.EmailAuthProvider.credential(u.email, pw)) : U.reauthenticateWithPopup(u, new U.GoogleAuthProvider())).then(function () {
+      conto.utente = null; // niente più impostazioni da salvare
+      return Promise.all(["posti", "uscite"].map(function (nome) {
+        return Fs.getDocs(Fs.collection(db, "utenti", u.uid, nome)).then(function (snap) {
+          var lotti = [];
+          for (var i = 0; i < snap.docs.length; i += 400) {
+            var b = Fs.writeBatch(db);
+            snap.docs.slice(i, i + 400).forEach(function (d) { b.delete(d.ref); });
+            lotti.push(b.commit());
+          }
+          return Promise.all(lotti);
+        });
+      }));
+    }).then(function () { return Fs.deleteDoc(Fs.doc(db, "utenti", u.uid)); })
+      .then(function () { return U.deleteUser(u); })
+      .then(function () {
+        try { localStorage.removeItem(LS_CONTO); localStorage.removeItem(LS_IMPORTATO + u.uid); sessionStorage.setItem(SS_MSG, "Account eliminato, con i posti, il diario e le impostazioni che conteneva."); } catch (e) {}
+        return Fs.terminate(db).then(function () { return Fs.clearIndexedDbPersistence(db); }).catch(function () {});
+      })
+      .then(function () { location.reload(); }, function (err) { conto.utente = u; btn.disabled = false; erroreAccesso(err); });
+  });
+  if (contoPossibile()) {
+    document.getElementById("sez-account").hidden = false;
+    try { var m0 = sessionStorage.getItem(SS_MSG); if (m0) { msgConto(m0); sessionStorage.removeItem(SS_MSG); } } catch (e) {}
+    setInterval(spingiPref, 20000);
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") spingiPref(); });
+  }
 
   // ---------- eventi ----------
   document.getElementById("q").addEventListener("input", function () { state.q = this.value; state.shown = PAGINA; renderLista(); });

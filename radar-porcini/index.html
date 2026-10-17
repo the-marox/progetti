@@ -859,6 +859,13 @@ footer { font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
 .specie-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .specie-row label { font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; line-height: 1.15; }
 .specie-row select { flex: 1 1 260px; font-weight: 700; min-width: 0; max-width: 100%; width: 100%; text-overflow: ellipsis; }
+.piu-specie { display: grid; gap: 8px; }
+.piu-gr { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.piu-gr .tit { flex: 0 0 100%; font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.chip-sp { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 6px 12px; min-height: 36px; cursor: pointer; font-size: 0.92rem; }
+.chip-sp:hover { border-color: var(--moss); }
+.chip-sp[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: var(--moss-ink); font-weight: 700; }
+.warn p + p { margin-top: 6px; }
 .scheda { min-width: 0; overflow-wrap: anywhere; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 10px; }
 .scheda .stato { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .scheda .lat { font-style: italic; color: var(--muted); }
@@ -1051,6 +1058,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
       <label for="f-specie">Cosa cerchi?</label>
       <select id="f-specie"></select>
     </div>
+    <div class="piu-specie" id="piu-specie" role="group" aria-label="Specie da cercare insieme" hidden></div>
     <div class="scheda" id="scheda"></div>
   </section>
 
@@ -1778,6 +1786,12 @@ var RP = (function () {
   var SP = {};
   SPECIE.forEach(function (s) { SP[s.id] = s; if (s.ant == null) s.ant = 0.15; });
   var GRUPPI = { porcini: ["edulis", "aereus", "reticulatus", "pinophilus"] };
+  // le specie di una scelta: un id, un gruppo («porcini») o più id separati da virgola; null se non ce n'è nessuna valida
+  function listaSpecie(id) {
+    if (GRUPPI[id]) return GRUPPI[id];
+    var l = String(id || "").split(",").filter(function (x, i, a) { return SP[x] && a.indexOf(x) === i; });
+    return l.length ? l : null;
+  }
 
   function distanzaKm(lat1, lon1, lat2, lon2) {
     var R = 6371, toR = Math.PI / 180;
@@ -2504,21 +2518,21 @@ var RP = (function () {
       fase: fase(best ? best.dEff : null, best ? best.fp : 0, sp, fS), livello: livello(score) };
   }
 
-  // opt.specie: id di una specie o "porcini" (la migliore delle quattro specie di porcino)
+  // opt.specie: id di una specie, "porcini" (la migliore delle quattro specie di porcino) o più id separati da virgola (la migliore tra quelle)
   function stima(s, t, opt) {
     opt = opt || {};
-    var V = versanteDa(opt), id = opt.specie || "porcini";
+    var V = versanteDa(opt), id = opt.specie || "porcini", ids = listaSpecie(id);
     var key = t + "|" + id + "|" + (V ? V.dT.toFixed(3) + "/" + V.secco.toFixed(3) : "-");
     var memo = s._memo || (s._memo = {});
     if (memo[key]) return memo[key];
     var r;
-    if (GRUPPI[id]) {
-      var tutte = GRUPPI[id].map(function (x) { return stima1(s, t, SP[x], V); });
+    if (ids && ids.length > 1) {
+      var tutte = ids.map(function (x) { return stima1(s, t, SP[x], V); });
       r = tutte.reduce(function (a, b) { return b._v > a._v ? b : a; });
       var copia = {}; for (var kk in r) copia[kk] = r[kk];
       copia.gruppo = id; copia.perSpecie = tutte.map(function (x) { return { id: x.specie, score: x.score }; });
       r = copia;
-    } else r = stima1(s, t, SP[id] || SP.edulis, V);
+    } else r = stima1(s, t, SP[ids ? ids[0] : "edulis"], V);
     return (memo[key] = r);
   }
 
@@ -2547,7 +2561,7 @@ var RP = (function () {
     return finestra(s, opt, stima(s, 0, opt));
   }
 
-  return { VERSANTE: VERSANTE, SPECIE: SPECIE, SP: SP, GRUPPI: GRUPPI, BOSCHI: BOSCHI, versanteDaTerreno: versanteDaTerreno,
+  return { VERSANTE: VERSANTE, SPECIE: SPECIE, SP: SP, GRUPPI: GRUPPI, listaSpecie: listaSpecie, BOSCHI: BOSCHI, versanteDaTerreno: versanteDaTerreno,
     prepara: prepara, punto: punto, svuota: svuota, distanzaKm: distanzaKm, stima: stima, finestra: finestra, idoneita: idoneita,
     stimaManuale: stimaManuale, finestraManuale: finestraManuale, etichettaPeriodo: etichettaPeriodo, velocita: velocita, fiducia: fiducia,
     fattoreStagione: fattoreStagione, fattoreSuolo: fattoreSuolo, fattoreSuoloW: fattoreSuoloW, fattorePH: fattorePH, nomePH: nomePH, storiaUtile: storiaUtile,
@@ -2727,10 +2741,24 @@ if (typeof module !== "undefined") module.exports = RP;
   var state = { data: null, aria: null, prev: null, storico: null, anag: null, st: [], ref: 0, start: 0, t: 0, versante: "", specie: "porcini", sfondo: "rilievo", aree: false, radarN: 7, prov: "", zona: "", quota: "all", sort: "score", q: "", shown: PAGINA, open: {}, allZones: false, pos: null, punto: null, raggio: 30, index: [], pioggiaPrev: [], oriz: -1, best: 0, tScelto: false };
   function opt() { return { versante: state.versante || null, specie: state.specie }; }
   function stima(s, t) { return RP.stima(s, t == null ? state.t : t, opt()); }
-  function idsSpecie() { return RP.GRUPPI[state.specie] || [state.specie]; }
+  function idsSpecie() { return RP.listaSpecie(state.specie) || RP.GRUPPI.porcini; }
+  function specieValida(id) { return typeof id === "string" && !!RP.listaSpecie(id); }
+  function tuttiPorcini(ids) { return RP.GRUPPI.porcini.every(function (x) { return ids.indexOf(x) >= 0; }); }
+  // codice da salvare: l'id se è una sola, «porcini» se sono i quattro porcini, altrimenti gli id separati da virgola
+  function codiceSpecie(ids) { return ids.length === 1 ? ids[0] : ids.length === RP.GRUPPI.porcini.length && tuttiPorcini(ids) ? "porcini" : ids.join(","); }
+  function elenco(a) { return a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " e " + a[a.length - 1]; }
+  // più specie: i nomi fino a tre (i quattro porcini valgono «porcini»), oltre «le N specie scelte»
   function nomeSpecie(id, minuscolo) {
     id = id || state.specie;
-    var n = id === "porcini" ? "porcini" : RP.SP[id] ? RP.SP[id].nome : id;
+    var ids = RP.listaSpecie(id) || [], n;
+    if (id === "porcini") n = "porcini";
+    else if (ids.length === 1) n = RP.SP[ids[0]].nome;
+    else if (!ids.length) n = id;
+    else {
+      var tp = tuttiPorcini(ids), nomi = tp ? ["porcini"] : [];
+      ids.forEach(function (x) { if (!tp || RP.GRUPPI.porcini.indexOf(x) < 0) nomi.push(RP.SP[x].nome.toLowerCase()); });
+      n = nomi.length <= 3 ? elenco(nomi) : "le " + ids.length + " specie scelte";
+    }
     return minuscolo === false ? n : n.toLowerCase();
   }
   // stagione: il valore più alto tra le specie scelte
@@ -2829,30 +2857,57 @@ if (typeof module !== "undefined") module.exports = RP;
   }
 
   // ---------- specie ----------
+  // nell'elenco una specie, i quattro porcini o «Più specie insieme»: allora sotto si accendono le specie volute
+  var PIU = "piu";
   function initSpecie() {
-    var sel = document.getElementById("f-specie"); sel.innerHTML = "";
+    var sel = document.getElementById("f-specie"), box = document.getElementById("piu-specie"); sel.innerHTML = ""; box.innerHTML = "";
     var gruppi = [["porcini", "Porcini"], ["altri", "Altri funghi mangerecci"], ["primavera", "Funghi di primavera"]];
+    sel.appendChild(new Option("Più specie insieme…", PIU));
+    box.appendChild(el("p", "note", "Tocca le specie che cerchi, almeno una: per ogni stazione e ogni giorno conta quella con la stima migliore."));
+    gruppi.forEach(function (g) {
+      var riga = el("div", "piu-gr"); riga.appendChild(el("span", "tit", g[1]));
+      RP.SPECIE.filter(function (s) { return s.gruppo === g[0]; }).forEach(function (s) {
+        var b = el("button", "chip-sp", s.nome); b.type = "button"; b.dataset.v = s.id; b.setAttribute("aria-pressed", "false");
+        b.addEventListener("click", function () {
+          var ids = idsSpecie().slice(), i = ids.indexOf(this.dataset.v);
+          if (i >= 0) { if (ids.length === 1) return; ids.splice(i, 1); } else ids.push(this.dataset.v);
+          scegliSpecie(codiceSpecie(RP.SPECIE.map(function (x) { return x.id; }).filter(function (x) { return ids.indexOf(x) >= 0; })), true);
+        });
+        riga.appendChild(b);
+      });
+      box.appendChild(riga);
+    });
     gruppi.forEach(function (g) {
       var og = document.createElement("optgroup"); og.label = g[1];
       if (g[0] === "porcini") og.appendChild(new Option("Porcini: tutte e quattro le specie", "porcini"));
       RP.SPECIE.filter(function (s) { return s.gruppo === g[0]; }).forEach(function (s) { og.appendChild(new Option(s.nome + " (" + s.latino + ")", s.id)); });
       sel.appendChild(og);
     });
-    sel.value = state.specie;
-    sel.addEventListener("change", function () {
-      state.specie = this.value;
-      try { localStorage.setItem(LS_SPECIE, state.specie); } catch (e) {}
-      ricalcola();
-      disegnaSfondo(); renderLegenda();
-    });
+    sel.addEventListener("change", function () { if (this.value === PIU) scegliSpecie(state.specie, true); else scegliSpecie(this.value, false); });
+    scegliSpecie(state.specie, state.specie.indexOf(",") >= 0);
+  }
+  function scegliSpecie(codice, piu) {
+    var sel = document.getElementById("f-specie"), box = document.getElementById("piu-specie"), cambia = codice !== state.specie;
+    state.specie = codice;
+    var ids = idsSpecie();
+    sel.value = piu ? PIU : codice;
+    sel.options[0].textContent = piu ? "Più specie insieme (" + ids.length + ")" : "Più specie insieme…";
+    box.hidden = !piu;
+    [].forEach.call(box.querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(ids.indexOf(b.dataset.v) >= 0)); });
+    try { localStorage.setItem(LS_SPECIE, state.specie); } catch (e) {}
+    if (!cambia) return;
+    ricalcola();
+    disegnaSfondo(); renderLegenda();
   }
   function renderScheda() {
     var box = document.getElementById("scheda"); box.innerHTML = "";
     var ms = state.ref + state.t * DAY, quando = pd("il", ms);
-    if (state.specie === "porcini") {
-      box.appendChild(el("p", null, "Per ogni stazione e ogni giorno conta la specie di porcino con la stima migliore. Stagione " + pd("al", ms) + ":"));
+    var ids = idsSpecie();
+    if (ids.length > 1) {
+      var soloP = ids.every(function (x) { return RP.SP[x].gruppo === "porcini"; });
+      box.appendChild(el("p", null, "Per ogni stazione e ogni giorno conta " + (soloP ? "la specie di porcino" : "la specie") + " con la stima migliore" + (state.specie === "porcini" ? "" : " tra quelle scelte") + ". Stagione " + pd("al", ms) + ":"));
       var ul = el("ul", "quattro");
-      RP.GRUPPI.porcini.forEach(function (id) {
+      ids.forEach(function (id) {
         var sp = RP.SP[id], st = testoStagione(RP.fattoreStagione(ms, sp)), li = el("li");
         var n = el("span"); n.appendChild(el("b", null, sp.nome)); n.appendChild(document.createTextNode(" ")); n.appendChild(el("span", "lat", sp.latino));
         li.appendChild(n); li.appendChild(el("span", "pill " + st[1], st[0]));
@@ -2860,9 +2915,21 @@ if (typeof module !== "undefined") module.exports = RP;
       });
       box.appendChild(ul);
       box.appendChild(el("p", "note", "Per quote, boschi e clima di ciascuna, scegli la specie dall'elenco."));
-      box.appendChild(el("p", "warn", "Attenzione: si confondono col porcino amaro (Tylopilus felleus) e con boleti a pori rossi tossici, come il satanas."));
+      if (soloP) box.appendChild(el("p", "warn", "Attenzione: si confondono col porcino amaro (Tylopilus felleus) e con boleti a pori rossi tossici, come il satanas."));
+      else {
+        // un avviso per specie; due o più porcini ne hanno uno solo
+        var wb = el("div", "warn"), np = ids.filter(function (x) { return RP.SP[x].gruppo === "porcini"; }).length;
+        if (np > 1) { var wp = el("p"); wp.appendChild(el("b", null, "Porcini. ")); wp.appendChild(document.createTextNode("Si confondono col porcino amaro (Tylopilus felleus) e con boleti a pori rossi tossici, come il satanas.")); wb.appendChild(wp); }
+        ids.forEach(function (id) {
+          var s2 = RP.SP[id];
+          if (np > 1 && s2.gruppo === "porcini") return;
+          var wq = el("p"); wq.appendChild(el("b", null, s2.nome + (s2.info.mortale ? ", rischio mortale. " : ". ")));
+          wq.appendChild(document.createTextNode(cap(s2.info.attenzione.replace(/^Pericolo mortale: /, "")))); wb.appendChild(wq);
+        });
+        box.appendChild(wb);
+      }
     } else {
-      var sp = RP.SP[state.specie], st = testoStagione(RP.fattoreStagione(ms, sp));
+      var sp = RP.SP[ids[0]], st = testoStagione(RP.fattoreStagione(ms, sp));
       var p = el("p", "stato"); p.appendChild(el("span", "pill " + st[1], st[0] + " " + quando)); p.appendChild(el("span", "lat", sp.latino)); box.appendChild(p);
       var det = el("details"); det.appendChild(el("summary", null, "Periodo, quota, boschi e clima"));
       var dl = el("dl");
@@ -2922,7 +2989,7 @@ if (typeof module !== "undefined") module.exports = RP;
     var zs = zoneScores(state.t);
     var good = zs.filter(function (z) { return z.score >= 45; }).slice(0, 3);
     var frase = document.getElementById("frase"), fS = stagione(ms);
-    if (fS < 0.1) frase.textContent = cap(pd("il", ms)) + " è fuori stagione per " + nomeSpecie() + ". " + (state.specie !== "porcini" ? "Periodo: " + RP.SP[state.specie].info.periodo.charAt(0).toLowerCase() + RP.SP[state.specie].info.periodo.slice(1) : "");
+    if (fS < 0.1) frase.textContent = cap(pd("il", ms)) + " è fuori stagione per " + nomeSpecie() + ". " + (idsSpecie().length === 1 ? "Periodo: " + RP.SP[idsSpecie()[0]].info.periodo.charAt(0).toLowerCase() + RP.SP[idsSpecie()[0]].info.periodo.slice(1) : "");
     else if (good.length) frase.textContent = "Zone migliori: " + good.map(function (z) { return nomeZona(z.zona); }).join("; ") + ". Tocca una zona per vedere le sue stazioni.";
     else frase.textContent = zs[0] ? "Nessuna zona arriva a un punteggio buono: è presto rispetto alla pioggia, è piovuto poco o il periodo non è il migliore. Il punteggio più alto è in " + nomeZona(zs[0].zona) + " (" + zs[0].score + "/100)." : "";
     var ul = document.getElementById("zone"); ul.innerHTML = "";
@@ -3242,7 +3309,7 @@ if (typeof module !== "undefined") module.exports = RP;
   function testoSpecie(r) {
     if (!r.perSpecie || r.score < 5) return null;
     var arr = r.perSpecie.slice().sort(function (a, b) { return b.score - a.score; });
-    return "Porcini, specie per specie: " + arr.map(function (x) { return RP.SP[x.id].nome.toLowerCase() + " " + x.score; }).join(", ") + ". Le differenze piccole non sono significative.";
+    return (r.gruppo === "porcini" ? "Porcini, specie per specie: " : "Specie per specie: ") + arr.map(function (x) { return RP.SP[x.id].nome.toLowerCase() + " " + x.score; }).join(", ") + ". Le differenze piccole non sono significative.";
   }
   function specieChiara(r) {
     if (!r.perSpecie || r.score < 10) return null;
@@ -3848,6 +3915,15 @@ if (typeof module !== "undefined") module.exports = RP;
     ctx.putImageData(im, 0, 0);
     sovrapponi(c, "rilievo", rilievo, rilievoURL, "img-rilievo", function (layer, url) { rilievo = layer; rilievoURL = url; });
   }
+  // preferenza di terreno delle specie scelte (per «porcini» quella del porcino comune); con più specie, raggruppate per preferenza
+  function suoloSpecie() {
+    var ids = idsSpecie(), T = { acido: ["preferisce terreni acidi", "preferiscono terreni acidi"], subacido: ["preferisce un poco i terreni acidi", "preferiscono un poco i terreni acidi"],
+      calcareo: ["preferisce terreni calcarei", "preferiscono terreni calcarei"], "": ["non ha preferenze", "non hanno preferenze"] };
+    if (ids.length === 1 || state.specie === "porcini") { var s0 = RP.SP[ids[0]].suolo; return cap(nomeSpecie()) + ": " + (s0 ? T[s0][0] : "nessuna preferenza") + "."; }
+    var g = {}, ord = [];
+    ids.forEach(function (x) { var k = RP.SP[x].suolo || ""; if (!g[k]) { g[k] = []; ord.push(k); } g[k].push(RP.SP[x].nome.toLowerCase()); });
+    return cap(ord.map(function (k) { return elenco(g[k]) + " " + T[k][g[k].length > 1 ? 1 : 0]; }).join("; ")) + ".";
+  }
   // affinità del bosco per la specie scelta (per «porcini» la migliore delle quattro)
   function affinitaSpecie() {
     var ids = idsSpecie(), a = [];
@@ -3978,7 +4054,7 @@ if (typeof module !== "undefined") module.exports = RP;
       [[52, "acido (pH 5)"], [62, "subacido (6)"], [70, "neutro (7)"], [78, "calcareo (8)"]].forEach(function (x) {
         var sp = el("span"), i = el("i"), c3 = colorePH(x[0]); i.style.background = "rgb(" + c3.join(",") + ")"; sp.appendChild(i); sp.appendChild(document.createTextNode(x[1])); box.appendChild(sp);
       });
-      box.appendChild(el("span", "nota", "pH del suolo stimato da SoilGrids (ISRIC), media dei primi 15 cm, pixel di circa 450 m: indicativo, il suolo cambia anche in pochi metri. " + cap(nomeSpecie()) + ": " + (function () { var s0 = RP.SP[idsSpecie()[0]].suolo; return s0 === "acido" ? "preferisce terreni acidi." : s0 === "subacido" ? "preferisce un poco i terreni acidi." : s0 === "calcareo" ? "preferisce terreni calcarei." : "nessuna preferenza."; })()));
+      box.appendChild(el("span", "nota", "pH del suolo stimato da SoilGrids (ISRIC), media dei primi 15 cm, pixel di circa 450 m: indicativo, il suolo cambia anche in pochi metri. " + suoloSpecie()));
     } else if (state.sfondo === "versanti") {
       if (!DEM) { box.appendChild(el("span", "nota", "Modello del terreno non ancora caricato.")); return; }
       [[COL_SOLATIO, "Solatio: guarda a sud, più caldo e asciutto"], [COL_BACIO, "Bacìo: guarda a nord, più fresco e umido"]].forEach(function (x) {
@@ -4730,7 +4806,7 @@ if (typeof module !== "undefined") module.exports = RP;
     sel.innerHTML = "";
     sel.appendChild(new Option("Porcini, specie non distinta", "porcini"));
     RP.SPECIE.forEach(function (sp) { sel.appendChild(new Option(sp.nome, sp.id)); });
-    sel.value = state.specie;
+    sel.value = state.specie.indexOf(",") < 0 ? state.specie : idsSpecie()[0];
     document.getElementById("d-data").value = oggiISO();
     apriArchivio(function (da, pa, msg) {
       var ps = document.getElementById("posti-stato");
@@ -4979,8 +5055,7 @@ if (typeof module !== "undefined") module.exports = RP;
       var b = [].filter.call(document.querySelectorAll(gruppo + " button"), function (x) { return x.dataset.v === v; })[0];
       if (b && String(ora) !== v) b.click();
     }
-    var sel = document.getElementById("f-specie");
-    if (typeof p.specie === "string" && p.specie !== state.specie && (p.specie === "porcini" || RP.SP[p.specie])) { sel.value = p.specie; sel.dispatchEvent(new Event("change")); }
+    if (specieValida(p.specie) && p.specie !== state.specie) scegliSpecie(p.specie, p.specie.indexOf(",") >= 0);
     if (typeof p.versante === "string") premi("#f-vers", p.versante, state.versante);
     if (typeof p.sfondo === "string") premi("#f-sfondo", p.sfondo, state.sfondo);
     [["aree", "f-aree"], ["sentieri", "f-sentieri"], ["topo", "f-topo"]].forEach(function (x) {
@@ -5230,7 +5305,7 @@ if (typeof module !== "undefined") module.exports = RP;
   GEO.comuni = leggi("geo-comuni"); GEO.prov = leggi("geo-prov");
   var gaz = leggi("geo-luoghi");
   try { var v0 = localStorage.getItem(LS_VERS); if (v0 === "solatio" || v0 === "bacio") { state.versante = v0; setPressed("#f-vers", v0); } } catch (e) {}
-  try { var s0 = localStorage.getItem(LS_SPECIE); if (s0 && (s0 === "porcini" || RP.SP[s0])) state.specie = s0; } catch (e) {}
+  try { var s0 = localStorage.getItem(LS_SPECIE); if (specieValida(s0)) state.specie = s0; } catch (e) {}
   try { var f0 = localStorage.getItem(LS_SFONDO); if (f0 === "boschi" || f0 === "suolo" || f0 === "pioggia" || f0 === "versanti") { state.sfondo = f0; setPressed("#f-sfondo", f0); } } catch (e) {}
   try { if (localStorage.getItem(LS_AREE) === "1") { state.aree = true; document.getElementById("f-aree").setAttribute("aria-pressed", "true"); } } catch (e) {}
   try { if (localStorage.getItem(LS_SENT) === "1") { state.sentieri = true; document.getElementById("f-sentieri").setAttribute("aria-pressed", "true"); } } catch (e) {}
@@ -5249,7 +5324,7 @@ if (typeof module !== "undefined") module.exports = RP;
     stato: function () { return { giorno: state.data && state.data.giorno, pioggia_al: state.data && state.data.pioggia_al, previsioni: state.prev && state.prev.creato, radar: RADAR ? RADAR.j.aggiornato : null }; },
     punteggi: function (lista) {
       return (lista || []).filter(postoValido).map(function (x) {
-        var sp = x.specie && (x.specie === "porcini" || RP.SP[x.specie]) ? x.specie : "porcini", v = punteggiLuogo(x, sp);
+        var sp = specieValida(x.specie) ? x.specie : "porcini", v = punteggiLuogo(x, sp);
         return { id: x.id || null, nome: String(x.nome), specie: sp, nomeSpecie: nomeSpecie(sp), quota: v.p.quota, comune: x.comune || comuneDi(x.lat, x.lon) || "",
           giorni: v.giorni.map(function (d) { return { data: isoOf(state.ref + d.t * DAY), score: d.score, livello: d.liv, nome: LIV[d.liv] }; }) };
       });

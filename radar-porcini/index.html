@@ -4860,7 +4860,10 @@ if (typeof module !== "undefined") module.exports = RP;
   // ---------- il tuo account (Firebase): posti, diario e impostazioni uguali su tutti i dispositivi ----------
   // Facoltativo: senza configurazione la sezione resta nascosta e tutto resta nel browser. Ogni account legge e scrive solo
   // utenti/<il suo uid> (regole di sicurezza nella console di Firebase). Le foto del diario restano nel dispositivo.
-  var FIREBASE = null; // configurazione del progetto Firebase (apiKey, authDomain, projectId, appId): non è un segreto
+  var FIREBASE = { // configurazione del progetto Firebase «radar-porcini»: non è un segreto, i dati li proteggono le regole
+    apiKey: "AIzaSyBrl_4UahX5Bs3BnxtV5c5POax_fVhI0WE", authDomain: "radar-porcini.firebaseapp.com", projectId: "radar-porcini",
+    storageBucket: "radar-porcini.firebasestorage.app", messagingSenderId: "764907479690", appId: "1:764907479690:web:63dafc63dd66b3c00e4373"
+  };
   var FB_SDK = "https://www.gstatic.com/firebasejs/12.19.0/";
   var LS_CONTO = "radar-porcini-account", LS_IMPORTATO = "radar-porcini-importato-", SS_MSG = "radar-porcini-msg";
   var conto = { fb: null, pronto: null, utente: null, pref: null, caricati: {}, daImportare: null, esci: false, elimina: false };

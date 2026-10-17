@@ -17,7 +17,7 @@ on:
     - cron: "20 8 * * *"         # giro completo dopo la lettura delle 9 (ora solare), con gli avvisi
     - cron: "20 9-18 * * *"      # ogni ora in giornata: solo misure e previsioni (completo se quello del mattino e' saltato)
                                   # tanti giri perche' GitHub ne ritarda o ne salta alcuni: se uno manca, c'e' quello dopo
-  workflow_dispatch:              # pulsante "Run workflow" per lanciarlo a mano
+  workflow_dispatch:              # pulsante "Run workflow" per lanciarlo a mano, e avvio dall'esterno agli orari (vedi README)
     inputs:
       completo:
         description: "Aggiorna anche archivio e radar e controlla gli avvisi"
@@ -73,12 +73,13 @@ jobs:
           [ -f "$SITO/esito.json" ] && cp "$SITO/esito.json" .
 
           COMPLETO=no
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            [ "${{ inputs.completo }}" = "true" ] && COMPLETO=si
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.completo }}" = "true" ]; then
+            COMPLETO=si
           elif [ "${{ github.event.schedule }}" = "20 8 * * *" ]; then
             COMPLETO=si
           else
-            # GitHub a volte ritarda o salta gli orari programmati: se oggi il giro completo non c'e' stato, lo fa questo
+            # GitHub a volte ritarda o salta gli orari programmati, e l'avvio dall'esterno chiede completo=false:
+            # se oggi il giro completo non c'e' stato, lo fa questo
             ULTIMO=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["archivio"]["quando"][:10])' "$SITO/esito.json" 2>/dev/null)
             if [ "$ULTIMO" != "$(date -u +%F)" ]; then
               COMPLETO=si

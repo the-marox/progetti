@@ -12,5 +12,16 @@ accanto alla pagina:
 - ogni ora dalle 9:20 alle 18:20 UTC solo misure e previsioni; se quel giorno il giro del mattino è saltato, il primo
   di questi lo fa completo. I giri sono tanti perché GitHub a volte ritarda o salta gli orari programmati.
 
+GitHub però ritarda di ore o salta del tutto molti giri programmati. Per questo il flusso può partire anche
+dall'esterno: un servizio come cron-job.org chiama ogni ora, dalle 8:20 alle 18:20 UTC,
+
+    POST https://api.github.com/repos/the-marox/progetti/actions/workflows/aggiorna.yml/dispatches
+    Authorization: Bearer <token>
+    Accept: application/vnd.github+json
+    {"ref": "master", "inputs": {"completo": "false"}}
+
+con un token GitHub «fine-grained» limitato a questo repository e al solo permesso Actions (lettura e scrittura).
+Con `completo` a `false` il primo giro della giornata fa comunque quello completo, gli altri solo misure e previsioni.
+
 L'esito dell'ultimo aggiornamento è in https://the-marox.github.io/progetti/radar-porcini/esito.json.
 Il vecchio flusso `radar-porcini.yml` è disattivato.

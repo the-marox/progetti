@@ -2492,14 +2492,19 @@ var RP = (function () {
       p.termometri = term.map(function (x) { return { s: x.s, km: x.km }; });
     } else { p.tMedia = null; p.tMin = null; p.tStimata = true; p.termometri = []; }
     p.periodi = buckets(p);
-    // archivio del punto: pioggia dalle stesse stazioni e con gli stessi pesi, temperature dai termometri vicini
+    // archivio del punto: pioggia dalle stesse stazioni e con gli stessi pesi, temperature dai termometri vicini.
+    // I giorni che le stazioni hanno preso dalle loro vicine contano solo se quel giorno manca a tutte, invece di zero
     var conS = usate.map(function (x, i) { return { s: x.s, w: w[i] }; }).filter(function (x) { return x.s.storia && x.s.storia.p; });
     if (conS.length) {
       var pp = [], k2;
       for (k2 = 0; k2 < NP; k2++) {
-        var nn = 0, dd = 0;
-        conS.forEach(function (x) { var v = x.s.storia.p[k2]; if (v != null && !(x.s.storia.presi && x.s.storia.presi[k2])) { nn += x.w * v; dd += x.w; } });
-        pp.push(dd ? r1(nn / dd) : null);
+        var nn = 0, dd = 0, np = 0, dp = 0;
+        conS.forEach(function (x) {
+          var v = x.s.storia.p[k2];
+          if (v == null) return;
+          if (x.s.storia.presi && x.s.storia.presi[k2]) { np += x.w * v; dp += x.w; } else { nn += x.w * v; dd += x.w; }
+        });
+        pp.push(dd ? r1(nn / dd) : dp ? r1(np / dp) : null);
       }
       var tns = null, txs = null, termS = (p.termometri || []).filter(function (x) { return x.s.storia && x.s.storia.tn && !x.s.storia.tStimate; });
       if (termS.length) {

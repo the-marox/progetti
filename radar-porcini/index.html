@@ -663,7 +663,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	}
 </style>
 <style>
-/* Layout: una colonna da quaderno di campo; giorno e versante guidano tutto, poi mappa e punto, zone, stazioni, calcolatore */
+/* Layout: un menù in alto e una sezione alla volta, come un quaderno di campo a schede; nella mappa giorno e versante guidano tutto */
 :root {
   --bg: #EDF0E8;
   --surface: #F9FAF6;
@@ -1015,17 +1015,6 @@ section > *, .filtri > * { min-width: 0; }
 .mini i { display: block; flex: 1; height: 7px; border-radius: 2px; }
 .mini i.sel { outline: 2px solid var(--cap); outline-offset: 1px; }
 .posti-altri { justify-self: start; }
-/* sezioni che si aprono e si chiudono; chiuse diventano una riga come «Regole» e «Come funziona» */
-.sez-testa { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
-.sez-testa h2 { flex: 1 1 auto; min-width: 0; }
-.sez-tog { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 99px; padding: 6px 12px; min-height: 36px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
-.sez-tog::after { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(2px) rotate(-135deg); }
-.sez-tog[aria-expanded="false"]::after { transform: translateY(-2px) rotate(45deg); }
-.sez-corpo { display: grid; gap: 12px; }
-.sez-corpo > * { min-width: 0; }
-section.chiusa .sez-testa { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px 8px 16px; }
-section.chiusa .sez-testa h2 { font-size: 1.1rem; }
-.col > .chiusa + .chiusa, .col > .chiusa + .metodo, .col > .metodo + .metodo { margin-top: -16px; }
 .posto-form input[type="text"] { flex: 1 1 200px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-height: 42px; color: var(--ink); min-width: 0; }
 .regole-giorno { display: grid; gap: 6px; }
 details.sposta { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 2px 14px; }
@@ -1061,12 +1050,42 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
 #installa { justify-self: start; }
 .calc form > *, .calc label { min-width: 0; }
 .calc label select { width: 100%; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
-/* la pagina usa tutta la larghezza dello schermo; da 960 px due colonne: a sinistra giorni, mappa e punto; a destra posti, zone, stazioni e il resto */
+/* la pagina usa tutta la larghezza dello schermo; da 960 px due colonne: a sinistra sempre la mappa coi giorni e il punto, a destra la sezione scelta nel menù */
 .col { display: grid; gap: 28px; align-content: start; min-width: 0; }
 .col > * { min-width: 0; }
 @media (min-width: 960px) {
   .wrap { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); column-gap: clamp(28px, 3vw, 64px); align-items: start; padding-left: max(clamp(16px, 2vw, 40px), env(safe-area-inset-left, 0px)); padding-right: max(clamp(16px, 2vw, 40px), env(safe-area-inset-right, 0px)); }
   #mappa { height: clamp(440px, 70vh, 780px); }
+}
+/* menù in alto, sempre visibile: una sezione alla volta. Sul telefono si vede solo la sezione scelta; da 960 px la mappa
+   resta a sinistra e a destra va la sezione scelta. La classe «attiva» la mette lo script; prima, sul telefono, solo la mappa */
+html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
+.menu { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 1100; background: var(--bg); border-bottom: 1px solid var(--line); }
+.menu-in { position: relative; display: flex; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
+.menu-in::-webkit-scrollbar { display: none; }
+/* bordo sfumato dove ci sono altre voci da far scorrere col dito */
+.menu-in.piu-dx { -webkit-mask-image: linear-gradient(to left, transparent, #000 48px); mask-image: linear-gradient(to left, transparent, #000 48px); }
+.menu-in.piu-sx { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px); mask-image: linear-gradient(to right, transparent, #000 48px); }
+.menu-in.piu-sx.piu-dx { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); }
+.menu a { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: 99px; color: var(--ink); text-decoration: none; font-weight: 700; font-size: 0.95rem; white-space: nowrap; }
+@media (hover: hover) { .menu a:hover { background: var(--surface-2); } }
+.menu a[aria-current="page"] { background: var(--moss); color: var(--moss-ink); }
+[data-scheda]:not(.attiva) { display: none; }
+.contesto { display: none; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px; margin-bottom: -14px; }
+.contesto p { flex: 1 1 auto; min-width: 0; text-align: center; font-weight: 700; line-height: 1.25; }
+.ctx-giorno { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 1.4rem; line-height: 1; cursor: pointer; padding: 0 0 3px; }
+.ctx-giorno:disabled { opacity: 0.35; cursor: default; }
+#ctx-cambia { flex: 0 0 auto; }
+.solo-lettori { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 959.98px) {
+  .wrap:not([data-vista]) .col-b, .wrap[data-vista="mappa"] .col-b { display: none; }
+  .wrap[data-vista="zone"] .contesto, .wrap[data-vista="stazioni"] .contesto, .wrap[data-vista="fungaie"] .contesto, .wrap[data-vista="posti"] .contesto { display: flex; }
+}
+@media (min-width: 960px) {
+  .col-a[data-scheda] { display: grid; }
+  .menu a[data-vai="mappa"] { display: none; }
+  .menu-in { padding-left: max(clamp(16px, 2vw, 40px), env(safe-area-inset-left, 0px)); padding-right: max(clamp(16px, 2vw, 40px), env(safe-area-inset-right, 0px)); }
+  .wrap > .banner, .wrap > footer { grid-column: 1 / -1; }
 }
 /* foto del diario */
 .d-foto { display: grid; gap: 8px; }
@@ -1083,8 +1102,22 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
 .lightbox img { max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; }
 </style>
 
+<nav class="menu" id="menu" aria-label="Sezioni dell'app">
+  <div class="menu-in" id="menu-in">
+    <a href="#/mappa" data-vai="mappa" aria-current="page">Mappa</a>
+    <a href="#/posti" data-vai="posti">Posti</a>
+    <a href="#/diario" data-vai="diario">Diario</a>
+    <a href="#/zone" data-vai="zone">Zone</a>
+    <a href="#/stazioni" data-vai="stazioni">Stazioni</a>
+    <a href="#/fungaie" data-vai="fungaie">Fungaie</a>
+    <a href="#/calcola" data-vai="calcola">Calcola</a>
+    <a href="#/info" data-vai="info">Info</a>
+    <a href="#/account" data-vai="account" id="menu-account" hidden>Account</a>
+  </div>
+</nav>
 <div class="wrap">
- <div class="col col-a">
+ <div class="banner" id="banner" hidden></div>
+ <div class="col col-a attiva" data-scheda="mappa">
   <header class="top">
     <div class="eyebrow">Toscana · stazioni CFR, radar e previsioni a 10 giorni</div>
     <h1>Radar Porcini</h1>
@@ -1092,10 +1125,9 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <div class="fonte" id="fonte"></div>
     <p class="note" id="link-pwa">Sul telefono: <a href="https://the-marox.github.io/progetti/radar-porcini/" target="_blank" rel="noopener">versione da installare</a>, con GPS e mappa topografica.</p>
     <button class="linkbtn" type="button" id="installa" hidden>Installa sul telefono</button>
-    <div class="banner" id="banner" hidden></div>
   </header>
 
-  <section class="specie-sec" aria-label="Specie">
+  <section class="specie-sec" id="sez-specie" aria-label="Specie">
     <div class="specie-row">
       <label for="f-specie">Cosa cerchi?</label>
       <select id="f-specie"></select>
@@ -1168,7 +1200,13 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
  </div>
 
  <div class="col col-b">
-  <section aria-labelledby="h-account" id="sez-account" data-chiudibile hidden>
+  <div class="contesto" id="contesto">
+    <button type="button" class="ctx-giorno" id="ctx-prima" aria-label="Giorno prima">‹</button>
+    <p id="ctx-testo" aria-live="polite"></p>
+    <button type="button" class="ctx-giorno" id="ctx-dopo" aria-label="Giorno dopo">›</button>
+    <button type="button" class="linkbtn piano" id="ctx-cambia" aria-label="Cambia specie, giorno o versante">Cambia</button>
+  </div>
+  <section aria-labelledby="h-account" id="sez-account" data-scheda="account" hidden>
     <h2 id="h-account">Il tuo account</h2>
     <p class="muted" id="acc-intro">Accedi per ritrovare posti, diario e impostazioni su telefono, tablet e computer. Senza account restano solo su questo dispositivo.</p>
     <button class="linkbtn" type="button" id="acc-apri">Accedi o crea l'account</button>
@@ -1200,7 +1238,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     </details>
   </section>
 
-  <section aria-labelledby="h-posti" id="sez-posti" data-chiudibile>
+  <section aria-labelledby="h-posti" id="sez-posti" data-scheda="posti">
     <h2 id="h-posti">I miei posti</h2>
     <p class="muted" id="posti-intro">Salva i boschi dove vai, dalla scheda del punto: qui vedi per ognuno il punteggio dei prossimi giorni. Li vedi solo tu.</p>
     <p class="note" id="posti-stato">I posti si stanno caricando…</p>
@@ -1224,7 +1262,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     </details>
   </section>
 
-  <section aria-labelledby="h-fungaie" id="sez-fungaie" data-chiudibile>
+  <section aria-labelledby="h-fungaie" id="sez-fungaie" data-scheda="fungaie">
     <h2 id="h-fungaie">Possibili fungaie</h2>
     <p class="muted">Boschi adatti alla specie a meno di 400 m da un sentiero CAI, attorno al tuo punto. Contano il tipo di bosco, la quota, il suolo, l'esposizione e il tempo del giorno scelto. Sono boschi adatti, non fungaie note: servono a scegliere dove guardare.</p>
     <div class="fung-ctl">
@@ -1242,14 +1280,14 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <p class="note" id="fung-posti" hidden></p>
   </section>
 
-  <section class="verdetto" aria-labelledby="h-verdetto" id="sez-zone" data-chiudibile>
+  <section class="verdetto attiva" aria-labelledby="h-verdetto" id="sez-zone" data-scheda="zone">
     <h2 id="h-verdetto">–</h2>
     <p class="frase" id="frase"></p>
     <ol class="zone" id="zone"></ol>
     <button class="linkbtn" id="zone-more" type="button" hidden>Mostra tutte le zone</button>
   </section>
 
-  <section aria-labelledby="h-stazioni" id="sez-stazioni" data-chiudibile>
+  <section aria-labelledby="h-stazioni" id="sez-stazioni" data-scheda="stazioni">
     <h2 id="h-stazioni">Stazioni</h2>
     <div class="filtri">
       <div class="row-f">
@@ -1276,7 +1314,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <button class="linkbtn" id="more" type="button" hidden>Mostra altre stazioni</button>
   </section>
 
-  <section aria-labelledby="h-diario" id="sez-diario" data-chiudibile>
+  <section aria-labelledby="h-diario" id="sez-diario" data-scheda="diario">
     <h2 id="h-diario">Diario delle uscite</h2>
     <p class="muted" id="diario-intro">Segna dove sei andato e cosa hai trovato: dalla decima uscita l'app calcola quanto spesso, a ogni punteggio, hai trovato funghi. Le uscite le vedi solo tu, anche se condividi l'app.</p>
     <div class="calc diario">
@@ -1310,13 +1348,9 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
       <div id="diario-sintesi"></div>
       <ul class="diario-lista" id="diario-lista"></ul>
     </div>
-    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Foto dell'uscita" hidden>
-      <img id="lightbox-img" alt="">
-      <button class="linkbtn" type="button" id="lightbox-chiudi">Chiudi</button>
-    </div>
   </section>
 
-  <section aria-labelledby="h-calc" id="sez-calc" data-chiudibile>
+  <section aria-labelledby="h-calc" id="sez-calc" data-scheda="calcola">
     <h2 id="h-calc">Calcola con i tuoi dati</h2>
     <p class="muted" id="calc-intro">Dopo una pioggia nuova, o con un pluviometro tuo: inserisci i millimetri e il giorno.</p>
     <div class="calc">
@@ -1331,6 +1365,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     </div>
   </section>
 
+  <section class="info" id="sez-info" data-scheda="info" aria-label="Regole di raccolta e come funziona la stima">
   <details class="metodo" id="regole">
     <summary>Regole di raccolta in Toscana</summary>
     <div class="body">
@@ -1386,13 +1421,17 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
       <p><a href="https://www.cfr.toscana.it/index.php?IDS=42&amp;IDSS=277" target="_blank" rel="noopener">Pluviometria CFR Toscana</a> · <a href="https://www.sir.toscana.it/" target="_blank" rel="noopener">Archivio SIR</a> · <a href="https://radar.protezionecivile.it/" target="_blank" rel="noopener">Radar della Protezione Civile</a> · <a href="https://opendata.dwd.de/weather/nwp/icon-eu/" target="_blank" rel="noopener">Previsioni ICON-EU (DWD)</a> · <a href="https://www.ecmwf.int/en/forecasts/datasets/open-data" target="_blank" rel="noopener">Previsioni ECMWF</a> · <a href="https://www502.regione.toscana.it/geoscopio/download/tematici/vegetazione_forestale/index.html" target="_blank" rel="noopener">Carta della vegetazione forestale</a> · <a href="https://land.copernicus.eu/en/products/high-resolution-layer-forest-type" target="_blank" rel="noopener">Copernicus Forest Type</a> · <a href="https://soilgrids.org/" target="_blank" rel="noopener">SoilGrids</a> · <a href="https://www502.regione.toscana.it/geoscopio/download/tematici/aree_protette/aree_protette.zip" target="_blank" rel="noopener">Aree protette</a> · <a href="https://italianmycology.unibo.it/article/view/16464" target="_blank" rel="noopener">Salerni e colleghi 2023</a> · <a href="https://www.biorxiv.org/content/10.64898/2025.12.12.693895.full.pdf" target="_blank" rel="noopener">Brejon Lamartiniere e Hoffman 2025</a> · <a href="https://www.fao.org/4/x0490e/x0490e07.htm" target="_blank" rel="noopener">FAO 56 (Hargreaves)</a> · <a href="https://www.regione.piemonte.it/web/media/14354/download" target="_blank" rel="noopener">Schede specie (Regione Piemonte)</a> · <a href="https://sydowia.at/syd63-1/T3-Swiss.html" target="_blank" rel="noopener">Studio sulla luna</a> · <a href="https://www.regione.toscana.it/-/raccolta-funghi-ecco-le-disposizioni" target="_blank" rel="noopener">Regole di raccolta</a></p>
     </div>
   </details>
-
+  </section>
+ </div>
   <footer>
     <p id="foot-data"></p>
     <p>© 2026 Maurizio Laschi. Radar Porcini: tutti i diritti riservati sull'app (codice, calcoli, testi e grafica). I dati delle fonti qui sotto restano sotto le loro licenze; la libreria della mappa, Leaflet, è sotto licenza BSD (il testo è nel file LICENSE).</p>
     <p>Stima indicativa, non validata sul campo. Dati: Centro Funzionale e Servizio Idrologico della Regione Toscana. Pioggia da radar e pluviometri: Dipartimento della Protezione Civile, licenza CC BY-SA 4.0, ricampionata (anche l'archivio derivato è CC BY-SA 4.0). Previsioni: Deutscher Wetterdienst (DWD), modello ICON-EU, ed European Centre for Medium-Range Weather Forecasts (ECMWF), modello IFS, licenza CC BY 4.0, rielaborate. Tipi di bosco: Regione Toscana, Carta della vegetazione forestale, licenza CC BY-SA 4.0, ricampionata e aggiornata con Copernicus High Resolution Layer Forest Type 2018 (© Unione europea, Copernicus Land Monitoring Service, Agenzia europea dell'ambiente). Suolo: SoilGrids 2.0, ISRIC, licenza CC BY 4.0. Aree protette: Regione Toscana, licenza CC BY-SA 4.0, semplificate. Sentieri: Rete escursionistica toscana, catasto INFOMONT del Club Alpino Italiano, map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, © <a href="https://infomont.cai.it" target="_blank" rel="noopener">Club Alpino Italiano</a>, licenza ODbL (anche il file semplificato dei sentieri è ODbL). Mappa topografica: © OpenStreetMap contributors, SRTM, stile © OpenTopoMap (CC BY-SA). Probabilità di pioggia: insieme di previsioni ECMWF, licenza CC BY 4.0. Confini comunali: ISTAT, via openpolis. Rilievo: Terrain Tiles di Mapzen su AWS (SRTM; EU-DEM prodotto con dati Copernicus finanziati dall'Unione europea).</p>
   </footer>
- </div>
+</div>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Foto dell'uscita" hidden>
+  <img id="lightbox-img" alt="">
+  <button class="linkbtn" type="button" id="lightbox-chiudi">Chiudi</button>
 </div>
 <div class="gps-barra" id="gps-barra" role="region" aria-label="Uscita col GPS" hidden>
   <div class="gps-barra-in">
@@ -2976,37 +3015,81 @@ if (typeof module !== "undefined") module.exports = RP;
   function livello(score) { return score >= 65 ? 4 : score >= 45 ? 3 : score >= 25 ? 2 : score >= 10 ? 1 : 0; }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function reduceMotion() { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return true; } }
+  // ---------- sezioni: menù in alto, una alla volta ----------
+  // Sul telefono si vede solo la sezione scelta; da 960 px la mappa resta sempre a sinistra e a destra va l'ultima sezione
+  // scelta che non è la mappa (all'inizio le zone). La sezione sta anche nell'indirizzo (#/diario): il tasto indietro e
+  // un ricaricamento la ritrovano. Sul telefono ogni sezione si riapre al punto dove la si era lasciata.
+  var SCHEDE = { mappa: "Mappa", posti: "I miei posti", diario: "Diario", zone: "Zone", stazioni: "Stazioni", fungaie: "Possibili fungaie", calcola: "Calcola", info: "Info", account: "Account" };
+  var schede = { attuale: "mappa", destra: "zone", scroll: {} }, largo = null;
+  try { largo = matchMedia("(min-width: 960px)"); } catch (e) {}
+  try { localStorage.removeItem("radar-porcini-sezioni"); } catch (e) {} // quali sezioni erano chiuse, prima del menù
+  function grande() { return !!(largo && largo.matches); }
+  function schedaVisibile(id) { return id === "mappa" ? grande() || schede.attuale === "mappa" : schede.destra === id && (grande() || schede.attuale === id); }
+  function schedaDa(id) { var n = SCHEDE[id] && document.querySelector('[data-scheda="' + id + '"]'); return n && !n.hidden ? id : "mappa"; }
+  function schedaIndirizzo() { var m = /^#\/([a-z]+)$/.exec(location.hash || ""); return schedaDa(m ? m[1] : "mappa"); }
+  function segnaMenu() {
+    var cur = grande() && schede.attuale === "mappa" ? schede.destra : schede.attuale, m = document.getElementById("menu-in");
+    [].forEach.call(m.querySelectorAll("a[data-vai]"), function (a) {
+      if (a.dataset.vai !== cur) { a.removeAttribute("aria-current"); return; }
+      a.setAttribute("aria-current", "page");
+      var l = a.offsetLeft, r = l + a.offsetWidth; // la voce scelta resta in vista nel menù che scorre, fuori dai bordi sfumati
+      if (l < m.scrollLeft + 48) m.scrollLeft = l - 48; else if (r > m.scrollLeft + m.clientWidth - 48) m.scrollLeft = r - m.clientWidth + 48;
+    });
+    bordiMenu();
+  }
+  function bordiMenu() {
+    var m = document.getElementById("menu-in");
+    m.classList.toggle("piu-sx", m.scrollLeft > 1);
+    m.classList.toggle("piu-dx", m.scrollLeft + m.clientWidth < m.scrollWidth - 1);
+  }
+  document.getElementById("menu-in").addEventListener("scroll", bordiMenu, { passive: true });
+  window.addEventListener("resize", bordiMenu);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(bordiMenu);
+  // come: "menu" (tocco nel menù), "storia" (indietro e avanti), "salta" (da un altro comando, che poi scorre dove serve), "inizio"
+  function mostraScheda(id, come) {
+    id = schedaDa(id);
+    var prima = schede.attuale;
+    if (come === "storia" && id === prima) return;
+    if (!grande()) schede.scroll[prima] = window.scrollY;
+    schede.attuale = id;
+    if (id !== "mappa") schede.destra = id;
+    document.querySelector(".wrap").dataset.vista = id;
+    [].forEach.call(document.querySelectorAll("[data-scheda]"), function (n) {
+      n.classList.toggle("attiva", n.dataset.scheda === "mappa" ? id === "mappa" : n.dataset.scheda === schede.destra);
+    });
+    segnaMenu();
+    document.title = (id === "mappa" ? "" : SCHEDE[id] + " · ") + "Radar Porcini";
+    if (come === "menu" || come === "storia") {
+      if (!grande()) window.scrollTo(0, id === prima ? 0 : schede.scroll[id] || 0); // un secondo tocco torna in cima
+      else {
+        var cb = document.querySelector(".col-b"), y = cb.getBoundingClientRect().top + window.scrollY - document.getElementById("menu").offsetHeight - 10;
+        if (window.scrollY > y) window.scrollTo(0, Math.max(0, y));
+      }
+    }
+    if (mappa && schedaVisibile("mappa")) mappa.invalidateSize();
+    if (fung && schedaVisibile("fungaie")) { fung.viste = true; renderFungaie(); }
+  }
+  function vaiScheda(id, come) {
+    mostraScheda(id, come);
+    var id2 = schede.attuale, voluto = id2 === "mappa" ? "" : "#/" + id2;
+    if (voluto === (location.hash || "")) return;
+    try { history.pushState(null, "", voluto || location.pathname + location.search); } catch (e) {}
+  }
+  [].forEach.call(document.querySelectorAll("#menu-in a[data-vai]"), function (a) {
+    a.addEventListener("click", function (e) { e.preventDefault(); vaiScheda(a.dataset.vai, "menu"); });
+  });
+  window.addEventListener("popstate", function () { mostraScheda(schedaIndirizzo(), "storia"); });
+  window.addEventListener("hashchange", function () { mostraScheda(schedaIndirizzo(), "storia"); });
+  if (largo) {
+    var cambiaLargo = function () { mostraScheda(schede.attuale, "inizio"); };
+    if (largo.addEventListener) largo.addEventListener("change", cambiaLargo); else if (largo.addListener) largo.addListener(cambiaLargo);
+  }
+  // porta alla sezione che contiene l'elemento e lo fa vedere
   function vaiA(id) {
-    var n = document.getElementById(id), sez = n && n.closest && n.closest("section[data-chiudibile]");
-    if (sez && sez.classList.contains("chiusa")) mostraSezione(sez, true, false);
+    var n = document.getElementById(id), sez = n && n.closest && n.closest("[data-scheda]");
+    if (sez && !schedaVisibile(sez.dataset.scheda)) vaiScheda(sez.dataset.scheda, "salta");
     if (n && n.scrollIntoView) n.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
   }
-  // sezioni apribili: si ricorda quali hai chiuso; stazioni, diario e calcolatore partono chiuse
-  var LS_SEZ = "radar-porcini-sezioni", SEZ_CHIUSE = { "sez-stazioni": 1, "sez-diario": 1, "sez-calc": 1 };
-  function statoSezioni() { try { return JSON.parse(localStorage.getItem(LS_SEZ) || "null") || {}; } catch (e) { return {}; } }
-  function mostraSezione(sez, aperta, ricorda) {
-    var b = sez.querySelector(".sez-tog"), c = sez.querySelector(".sez-corpo");
-    if (!b || !c) return;
-    c.hidden = !aperta; sez.classList.toggle("chiusa", !aperta);
-    b.setAttribute("aria-expanded", String(aperta)); b.textContent = aperta ? "Nascondi" : "Mostra";
-    if (ricorda) { var st = statoSezioni(); st[sez.id] = aperta ? 1 : 0; try { localStorage.setItem(LS_SEZ, JSON.stringify(st)); } catch (e) {} }
-    if (sez.id === "sez-fungaie" && fung) renderFungaie(); // le fungaie si cercano solo a sezione aperta
-  }
-  (function preparaSezioni() {
-    var salvato = statoSezioni();
-    [].forEach.call(document.querySelectorAll("section[data-chiudibile]"), function (sez) {
-      var h = sez.querySelector("h2"); if (!h) return;
-      var testa = document.createElement("div"), corpo = document.createElement("div"), b = document.createElement("button");
-      testa.className = "sez-testa"; corpo.className = "sez-corpo"; corpo.id = sez.id + "-corpo";
-      sez.insertBefore(testa, h); testa.appendChild(h);
-      while (testa.nextSibling) corpo.appendChild(testa.nextSibling);
-      sez.appendChild(corpo);
-      b.type = "button"; b.className = "sez-tog"; b.setAttribute("aria-controls", corpo.id); b.setAttribute("aria-describedby", h.id);
-      testa.appendChild(b);
-      testa.addEventListener("click", function () { mostraSezione(sez, corpo.hidden, true); });
-      mostraSezione(sez, sez.id in salvato ? !!salvato[sez.id] : !SEZ_CHIUSE[sez.id], false);
-    });
-  })();
   function setPressed(groupSel, val) { [].forEach.call(document.querySelectorAll(groupSel + " button"), function (x) { x.setAttribute("aria-pressed", String(x.dataset.v === String(val))); }); }
   function sigla(dir) { return dir == null ? "" : ["N", "NE", "E", "SE", "S", "SO", "O", "NO"][Math.round(dir / 45) % 8]; }
 
@@ -3230,7 +3313,7 @@ if (typeof module !== "undefined") module.exports = RP;
       b.appendChild(el("span", "dn num", String(new Date(ms).getUTCDate())));
       var bar = el("span", "bar"); var i = el("i"); i.style.height = Math.max(6, state.index[k] / max * 100) + "%"; bar.appendChild(i); b.appendChild(bar);
       b.appendChild(el("span", "pr", pr != null && pr >= 0.5 ? (pr < 1 ? "<1" : nf(pr)) + " mm" : ""));
-      b.addEventListener("click", function () { state.t = +this.dataset.t; state.tScelto = true; updateStrip(); renderScheda(); renderAll(); });
+      b.addEventListener("click", function () { scegliGiorno(+this.dataset.t); });
       strip.appendChild(b);
     }
     var bt = document.getElementById("best-tag"); bt.innerHTML = "";
@@ -3243,9 +3326,26 @@ if (typeof module !== "undefined") module.exports = RP;
     else nota += "Le piogge future non sono incluse: previsioni non disponibili.";
     document.getElementById("strip-note").textContent = nota;
   }
+  function scegliGiorno(t) { state.t = t; state.tScelto = true; updateStrip(); renderScheda(); renderAll(); }
+  // sul telefono, sopra zone, stazioni, fungaie e posti: giorno e specie scelti, coi tasti per il giorno prima e dopo
+  // (il giorno è scritto corto per stare in una riga; chi usa un lettore di schermo lo sente per intero)
+  function renderContesto() {
+    var ms = state.ref + state.t * DAY, p = document.getElementById("ctx-testo"), lungo = document.createElement("span"), corto = document.createElement("span");
+    lungo.className = "solo-lettori"; lungo.textContent = cap(fmtLong.format(ms));
+    corto.setAttribute("aria-hidden", "true"); corto.textContent = cap(fmtWd.format(ms)).replace(".", "") + " " + fmtShort.format(ms);
+    p.textContent = "";
+    p.appendChild(lungo); p.appendChild(corto);
+    p.appendChild(document.createTextNode(" · " + nomeSpecie() + (state.versante ? " · versante " + RP.VERSANTE[state.versante].nome : "")));
+    document.getElementById("ctx-prima").disabled = state.t <= state.start;
+    document.getElementById("ctx-dopo").disabled = state.t >= state.start + GIORNI - 1;
+  }
+  document.getElementById("ctx-prima").addEventListener("click", function () { if (state.t > state.start) scegliGiorno(state.t - 1); });
+  document.getElementById("ctx-dopo").addEventListener("click", function () { if (state.t < state.start + GIORNI - 1) scegliGiorno(state.t + 1); });
+  document.getElementById("ctx-cambia").addEventListener("click", function () { vaiA("sez-specie"); });
   function updateStrip() { [].forEach.call(document.querySelectorAll(".chip-day"), function (b) { b.setAttribute("aria-pressed", String(+b.dataset.t === state.t)); }); }
 
   function renderAll() {
+    renderContesto();
     renderVerdetto();
     renderPunto();
     renderVicine();
@@ -3981,7 +4081,7 @@ if (typeof module !== "undefined") module.exports = RP;
   // 400 m. L'area si divide in riquadri (circa 20 per lato) e per ognuno si tiene la cella più adatta; per queste si calcola
   // il punteggio del giorno scelto, lo stesso della scheda del punto, e si mostrano le migliori distanti almeno 1 km.
   var FUNG = { sentiero: 400, pendenza: 35, soglia: 0.6, riquadri: 20, distanza: 1000, prime: 8, max: 20 }, LS_FUNG = "radar-porcini-fungaie";
-  var fung = { raggio: 10, centro: null, daLista: false, chiave: null, ric: null, epoca: -1, tutte: false, layer: null, dist: null };
+  var fung = { raggio: 10, centro: null, daLista: false, chiave: null, ric: null, epoca: -1, tutte: false, layer: null, dist: null, viste: false };
   // distanza di ogni cella dal sentiero più vicino (in terzi di cella: trasformata a due passate con pesi 3 e 4) e quale sentiero
   function distanzeSentieri() {
     if (fung.dist || !SENTIERI || !BOSCO) return fung.dist;
@@ -4093,7 +4193,7 @@ if (typeof module !== "undefined") module.exports = RP;
     var c = fung.centro || (state.pos ? { lat: state.pos.lat, lon: state.pos.lon } : null);
     function vuota(testo) { ul.innerHTML = ""; altre.hidden = true; np.hidden = true; na.hidden = true; stato.hidden = false; stato.textContent = testo; marcatoriFungaie([]); }
     if (!c) { vuota("Scegli un punto sulla mappa, scrivi un comune o usa «Dove sono»: qui compaiono i boschi adatti vicino ai sentieri nel raggio scelto."); return; }
-    if (sez.classList.contains("chiusa")) { marcatoriFungaie([]); return; }
+    if (!fung.viste && !schedaVisibile("fungaie")) { marcatoriFungaie([]); return; }
     if (!BOSCO || !DEM) { vuota("Carico le carte dei boschi e del terreno…"); return; }
     if (!SENTIERI) {
       vuota("Carico i sentieri…");
@@ -5336,7 +5436,7 @@ if (typeof module !== "undefined") module.exports = RP;
   }
   function testoErroreGps(err) {
     return err && err.code === 1 ? (PWA ? "La posizione non è permessa: consentila a questa app nelle impostazioni del telefono, poi riaprila."
-      : "La posizione non è permessa qui: usa la versione da installare sul telefono (link in alto).")
+      : "La posizione non è permessa qui: usa la versione da installare sul telefono (il link è in alto, nella mappa).")
       : "Il GPS non ha segnale in questo momento.";
   }
   function gpsErrore(err) { if (err && err.code === 1) gpsFerma(); gps.errore = testoErroreGps(err) + (err && err.code === 1 ? "" : " Il percorso riprende appena torna."); gpsRender(); }
@@ -5910,7 +6010,7 @@ if (typeof module !== "undefined") module.exports = RP;
         var u = fb.auth.currentUser;
         if (!u) {
           try { localStorage.removeItem(LS_CONTO); } catch (e) {}
-          mostraConto(null); msgConto("Sei uscito dall'account: posti e diario qui sotto sono quelli di questo dispositivo.");
+          mostraConto(null); msgConto("Sei uscito dall'account: ora posti e diario sono quelli di questo dispositivo.");
           locale(); return;
         }
         conto.utente = u; foto.locale = typeof indexedDB !== "undefined";
@@ -6102,7 +6202,7 @@ if (typeof module !== "undefined") module.exports = RP;
       .then(function () { location.reload(); }, function (err) { conto.utente = u; btn.disabled = false; erroreAccesso(err); });
   });
   if (contoPossibile()) {
-    document.getElementById("sez-account").hidden = false;
+    document.getElementById("sez-account").hidden = false; document.getElementById("menu-account").hidden = false;
     try { var m0 = sessionStorage.getItem(SS_MSG); if (m0) { msgConto(m0); sessionStorage.removeItem(SS_MSG); } } catch (e) {}
     setInterval(spingiPref, 20000);
     document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") spingiPref(); });
@@ -6317,6 +6417,9 @@ if (typeof module !== "undefined") module.exports = RP;
       pronto.dati = true;
     });
   } catch (e) { pronto.dati = true; pronto.radar = true; }
+
+  // la sezione scritta nell'indirizzo (#/diario), quando mappa, account e dati sono pronti
+  mostraScheda(schedaIndirizzo(), "inizio");
 
   // versione installabile: lavoro senza rete (service worker) e pulsante per installarla
   if (PWA) {

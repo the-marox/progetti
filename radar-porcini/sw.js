@@ -30,6 +30,10 @@ function primaCache(req, nome) {
     });
   });
 }
+// Le tessere arrivano da un altro sito come immagini semplici (risposte «opache»): Chrome, per lo spazio, ne conta ognuna
+// come diversi megabyte anche se ne pesa pochi kilobyte. Se ne tengono le ultime 600, abbastanza per una zona di
+// escursione senza rete, perché tante tessere non tolgano spazio alle foto del diario.
+var MAX_TESSERE = 600;
 function tessera(req) {
   return caches.open(TESSERE).then(function (c) {
     return c.match(req).then(function (m) {
@@ -37,7 +41,7 @@ function tessera(req) {
       return fetch(req).then(function (r) {
         if (r && (r.ok || r.type === "opaque")) {
           c.put(req, r.clone()).then(function () {
-            return c.keys().then(function (k) { if (k.length > 2000) return Promise.all(k.slice(0, k.length - 2000).map(function (x) { return c.delete(x); })); });
+            return c.keys().then(function (k) { if (k.length > MAX_TESSERE) return Promise.all(k.slice(0, k.length - MAX_TESSERE).map(function (x) { return c.delete(x); })); });
           });
         }
         return r;

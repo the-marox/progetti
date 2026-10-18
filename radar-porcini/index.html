@@ -1315,7 +1315,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Acqua nel suolo.</b> Giorno per giorno si fa un bilancio: entra la pioggia (meno quella trattenuta da chiome e lettiera), esce l'evaporazione stimata dalle temperature con la formula di Hargreaves, quella che la FAO indica quando mancano misure di sole, umidità e vento. Evapora di più d'estate, col caldo e sul solatio (fino al 40% in più), di meno sul bacìo (fino al 30% in meno) e quando il suolo è già asciutto. Ne viene un indice da 0 a 100% d'acqua in uno strato di circa 80 mm, quello del micelio. Prima della pioggia conta quanto era bagnato il suolo: secco, la pioggia rende fino a un terzo in meno; umido, fino al 15% in più. Dopo, se il suolo scende sotto il 30% le nascite rallentano, fino a dimezzarsi. La formula è collaudata ma pensata per un prato aperto: la correzione per il bosco, gli 80 mm e queste soglie sono stime. Nel grafico della pioggia del punto è la linea verde.</li>
         <li><b>Pendenza e ristagno.</b> Sui pendii ripidi una parte delle piogge forti scorre via: fino a circa un terzo sopra i 30° con più di 80 mm in un giorno, niente sotto i 20 mm, che la lettiera assorbe anche in pendio. L'acqua che lo strato del micelio non trattiene se ne va in un giorno sui pendii da 10° in su; sui terreni in piano scende più lentamente (un terzo al giorno), nei fondovalle ancora di più: il modello del terreno li riconosce perché sono più bassi dei dintorni (circa 1,5 km). Se ne resta tanta il suolo è zuppo e il micelio soffre senz'aria: ogni giorno da zuppo dall'inizio della pioggia toglie il 15% alla buttata, fino al 60%. Vale per il tuo punto, i posti e le possibili fungaie; non per le stazioni, che rappresentano i 5 km attorno. Manca una carta della tessitura del suolo: su sabbia, come nelle pinete della costa, l'acqua scende più in fretta di così, su argilla più piano.</li>
         <li><b>Buttate precedenti.</b> Una buttata consuma le riserve del micelio. Se una pioggia fa nascere funghi entro un mese da una buttata, rende meno: fino al 35% in meno subito dopo una buttata piena, sempre meno col passare dei giorni. Quanto era piena la buttata di prima si stima dal tempo di allora: pioggia, temperatura, stagione e acqua nel suolo. È un'ipotesi ragionata: non ci sono misure che dicano quanto vale.</li>
-        <li><b>Radar.</b> Per il tuo punto la pioggia dei 90 giorni passati viene dal prodotto «Merging» della Protezione Civile: il radar corretto coi pluviometri, su celle di circa 2 km. Così si vedono anche i temporali caduti tra una stazione e l'altra. Confrontato coi pluviometri toscani sugli ultimi 90 giorni ha uno scarto medio di 0,3 mm al giorno (1–3 mm nei giorni di pioggia forte).</li>
+        <li><b>Radar.</b> Per il tuo punto la pioggia dei 90 giorni passati viene dal prodotto «Merging» della Protezione Civile: il radar corretto coi pluviometri, su celle di circa 2 km. Così si vedono anche i temporali caduti tra una stazione e l'altra. <span id="radar-confronto">Confrontato coi pluviometri toscani sugli ultimi 90 giorni ha uno scarto medio di 0,3 mm al giorno, e di circa 3,5 mm nei giorni in cui il pluviometro ha misurato almeno 20 mm. Il confronto non è indipendente, perché il prodotto usa anche questi pluviometri.</span></li>
         <li><b>Tempo dalla pioggia.</b> Il ritardo dipende dalla temperatura media giorno per giorno: quella misurata, poi quella prevista, poi l'ultima prevista. Per il porcino comune, con 12 °C le prime nascite arrivano dopo circa 9 giorni e il pieno tra il 12° e il 17°. La sola misura viene dallo studio sull'abetina dell'Amiata (Salerni e colleghi, 2023): dopo le giornate con almeno 20 mm di pioggia la produzione risponde di più intorno al 10°–12° giorno. Il calcolo coi gradi-giorno sopra i 3 °C e i tempi col caldo (bastano 5–6 giorni) e col freddo (ne servono 13–20) sono stime. Le altre specie hanno tempi propri: l'ovolo vuole caldo, il chiodino parte presto col fresco, gallinaccio, sanguinello e steccherino crescono lenti e durano di più.</li>
         <li><b>Specie.</b> Ogni specie ha stagione, quote, temperature, boschi e tempi propri, presi da schede regionali (Regione Piemonte, progetto Amycoforest; Parco delle Foreste Casentinesi; Regioni Emilia-Romagna e Lombardia) e, dove esistono, da studi sul campo (Amiata e faggete tedesche per il porcino comune, pinete spagnole per il sanguinello). Per molte specie mancano misure dei tempi di nascita: sono stime ragionate. Con «Porcini, tutte e quattro» ogni stazione prende la specie con la stima migliore.</li>
         <li><b>Bosco.</b> Il tipo di bosco viene dalla Carta della vegetazione forestale della Regione Toscana: 18 tipi su celle di 250 m, rilevati a fine anni '90. Quella carta ha bosco su meno di un quarto della Toscana, mentre la copertura Copernicus del 2018 ne trova circa metà: dove Copernicus vede bosco e la carta no, conta come latifoglie o conifere senza tipo; dove la carta ha bosco e nel 2018 non c'è più, non conta. Per ogni stazione conta quanta parte dei 5 km attorno è un bosco adatto alla specie; per il tuo punto conta la cella del punto e i 500 m attorno, e puoi correggere il tipo di bosco se lo conosci. Senza bosco adatto il punteggio scende fino a un quarto.</li>
@@ -1343,7 +1343,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
 
   <footer>
     <p id="foot-data"></p>
-    <p>© 2026 Maurizio Laschi. Radar Porcini: tutti i diritti riservati sull'app (codice, calcoli, testi e grafica). I dati delle fonti qui sotto restano sotto le loro licenze.</p>
+    <p>© 2026 Maurizio Laschi. Radar Porcini: tutti i diritti riservati sull'app (codice, calcoli, testi e grafica). I dati delle fonti qui sotto restano sotto le loro licenze; la libreria della mappa, Leaflet, è sotto licenza BSD (il testo è nel file LICENSE).</p>
     <p>Stima indicativa, non validata sul campo. Dati: Centro Funzionale e Servizio Idrologico della Regione Toscana. Pioggia da radar e pluviometri: Dipartimento della Protezione Civile, licenza CC BY-SA 4.0, ricampionata (anche l'archivio derivato è CC BY-SA 4.0). Previsioni: Deutscher Wetterdienst (DWD), modello ICON-EU, ed European Centre for Medium-Range Weather Forecasts (ECMWF), modello IFS, licenza CC BY 4.0, rielaborate. Tipi di bosco: Regione Toscana, Carta della vegetazione forestale, licenza CC BY-SA 4.0, ricampionata e aggiornata con Copernicus High Resolution Layer Forest Type 2018 (© Unione europea, Copernicus Land Monitoring Service, Agenzia europea dell'ambiente). Suolo: SoilGrids 2.0, ISRIC, licenza CC BY 4.0. Aree protette: Regione Toscana, licenza CC BY-SA 4.0, semplificate. Sentieri: Rete escursionistica toscana, catasto INFOMONT del Club Alpino Italiano, map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, © <a href="https://infomont.cai.it" target="_blank" rel="noopener">Club Alpino Italiano</a>, licenza ODbL (anche il file semplificato dei sentieri è ODbL). Mappa topografica: © OpenStreetMap contributors, SRTM, stile © OpenTopoMap (CC BY-SA). Probabilità di pioggia: insieme di previsioni ECMWF, licenza CC BY 4.0. Confini comunali: ISTAT, via openpolis. Rilievo: Terrain Tiles di Mapzen su AWS (SRTM; EU-DEM prodotto con dati Copernicus finanziati dall'Unione europea).</p>
   </footer>
  </div>
@@ -2808,6 +2808,18 @@ if (typeof module !== "undefined") module.exports = RP;
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function parseISO(s) { var p = s.split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
   function isoOf(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0"); }
+  // oggi in Italia (mezzanotte UTC di quella data), anche se il telefono è su un altro fuso orario
+  var fmtOggi = null;
+  try { fmtOggi = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit" }); } catch (e) {}
+  function oggiMs() {
+    var n = new Date();
+    if (fmtOggi && fmtOggi.formatToParts) {
+      var q = {};
+      fmtOggi.formatToParts(n).forEach(function (x) { q[x.type] = x.value; });
+      if (q.year && q.month && q.day) return Date.UTC(+q.year, +q.month - 1, +q.day);
+    }
+    return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+  }
   function livello(score) { return score >= 65 ? 4 : score >= 45 ? 3 : score >= 25 ? 2 : score >= 10 ? 1 : 0; }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function reduceMotion() { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return true; } }
@@ -2881,7 +2893,7 @@ if (typeof module !== "undefined") module.exports = RP;
     state.st = RP.prepara(data, state.anag, aria, state.prev, state.storico);
     assegnaHabitat();
     state.ref = parseISO(data.giorno);
-    var now = new Date(); var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    var today = oggiMs();
     state.start = Math.max(0, Math.round((today - state.ref) / DAY));
     aggiornaDistanze();
     calcolaIndice();
@@ -2961,6 +2973,7 @@ if (typeof module !== "undefined") module.exports = RP;
       ban.textContent = "I dati sono di " + state.start + " giorni fa (" + fmtShort.format(state.ref) + "): le piogge successive non sono incluse. Controlla che l'aggiornamento del mattino stia funzionando.";
     } else ban.hidden = true;
     document.getElementById("foot-data").textContent = "Dati letti dal sito del CFR " + pd("il", state.ref) + ". Rete SIR, valori in tempo reale non validati." + (COPIA ? " Copia scaricata: dati e previsioni restano quelli del giorno del download." : "");
+    renderConfronto();
   }
 
   // ---------- specie ----------
@@ -3281,6 +3294,42 @@ if (typeof module !== "undefined") module.exports = RP;
       out.push(v); if (v != null) n++;
     }
     return n >= 30 ? out : null;
+  }
+  // Confronto del radar coi pluviometri, per «Come funziona»: per ogni stazione dell'archivio e ogni giorno dei 90, la
+  // differenza tra la pioggia misurata e quella della cella radar dove sta la stazione; media su tutti i giorni e su
+  // quelli con almeno 20 mm misurati
+  var confronto = { chiave: null, r: null };
+  function confrontoRadar() {
+    var A = state.storico, V = A && A.pioggia && A.pioggia.valori;
+    if (!RADAR || !V || !A.al || !state.anag) return null;
+    var chiave = RADAR.j.aggiornato + "|" + A.aggiornato;
+    if (confronto.chiave === chiave) return confronto.r;
+    var g = RADAR.g, N = RADAR.j.giorni, primo = RADAR.al - (N - 1) * DAY, al = parseISO(A.al);
+    var somma = 0, n = 0, sommaF = 0, nF = 0, stazioni = 0;
+    Object.keys(V).forEach(function (c) {
+      var a = state.anag[c], arr = V[c], usata = false;
+      if (!a || !arr) return;
+      var x = Math.floor((a[6] - g.lon0) / g.passo), y = Math.floor((g.lat0 - a[5]) / g.passo);
+      if (x < 0 || y < 0 || x >= g.nlon || y >= g.nlat) return;
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i] == null) continue;
+        var k = Math.round((al - (arr.length - 1 - i) * DAY - primo) / DAY), r = k >= 0 && k < N ? radarMm(k, x, y) : null;
+        if (r == null) continue;
+        var d = Math.abs(r - arr[i] / 10);
+        somma += d; n++; usata = true;
+        if (arr[i] >= 200) { sommaF += d; nF++; }
+      }
+      if (usata) stazioni++;
+    });
+    confronto = { chiave: chiave, r: n >= 1000 ? { medio: somma / n, forte: nF ? sommaF / nF : null, n: n, stazioni: stazioni } : null };
+    return confronto.r;
+  }
+  function renderConfronto() {
+    var box = document.getElementById("radar-confronto"), c = confrontoRadar();
+    if (!box || !c) return;
+    box.textContent = "Coi dati di oggi, confrontato coi " + c.stazioni + " pluviometri toscani dell'archivio sugli ultimi 90 giorni, ha uno scarto medio di " +
+      nf(c.medio, 1) + " mm al giorno" + (c.forte != null ? ", e di " + nf(c.forte, 1) + " mm nei giorni in cui il pluviometro ha misurato almeno 20 mm" : "") +
+      ". Il confronto non è indipendente, perché il prodotto usa anche questi pluviometri: dice quanto la cella radar segue la stazione, non quanto è giusta tra una stazione e l'altra.";
   }
 
   // ---------- parchi e riserve (Regione Toscana) ----------
@@ -3764,7 +3813,8 @@ if (typeof module !== "undefined") module.exports = RP;
     postiLayer = L.layerGroup();
     posti.lista.forEach(function (x) {
       var m = L.circleMarker([x.lat, x.lon], { radius: 7, className: "m-posto", bubblingMouseEvents: false });
-      m.bindTooltip(x.nome, { direction: "top", offset: [0, -8] });
+      // il nome lo scrive chi usa l'app, o arriva da un file importato: va mostrato come testo, mai come HTML
+      m.bindTooltip(el("span", null, x.nome), { direction: "top", offset: [0, -8] });
       m.on("click", function () { impostaPos({ nome: x.nome, lat: x.lat, lon: x.lon, quota: x.quota, bosco: x.bosco }, false); });
       postiLayer.addLayer(m);
     });
@@ -4695,16 +4745,29 @@ if (typeof module !== "undefined") module.exports = RP;
     if (String(ref).indexOf("idb:") === 0) return FotoLocali.togli(ref.slice(4)).catch(function () {});
     return foto.assets ? foto.assets.delete(ref).catch(function () {}) : Promise.resolve();
   }
+  var fotoDa = null; // il comando da cui si è aperta la foto: ci torna lo stato attivo quando si chiude
   function apriFoto(ref) {
     urlFoto(ref).then(function (u) {
       if (!u) return;
       var lb = document.getElementById("lightbox"); document.getElementById("lightbox-img").src = u;
+      if (lb.hidden) fotoDa = document.activeElement;
       lb.hidden = false; document.getElementById("lightbox-chiudi").focus();
     });
   }
-  function chiudiFoto() { var lb = document.getElementById("lightbox"); if (!lb.hidden) { lb.hidden = true; document.getElementById("lightbox-img").removeAttribute("src"); } }
+  function chiudiFoto() {
+    var lb = document.getElementById("lightbox");
+    if (lb.hidden) return;
+    lb.hidden = true; document.getElementById("lightbox-img").removeAttribute("src");
+    if (fotoDa && fotoDa.focus && document.body.contains(fotoDa)) fotoDa.focus();
+    fotoDa = null;
+  }
   document.getElementById("lightbox").addEventListener("click", chiudiFoto);
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") chiudiFoto(); });
+  // con la foto aperta Esc la chiude, e Tab resta su «Chiudi», l'unico comando della finestra
+  document.addEventListener("keydown", function (e) {
+    if (document.getElementById("lightbox").hidden) return;
+    if (e.key === "Escape") chiudiFoto();
+    else if (e.key === "Tab") { e.preventDefault(); document.getElementById("lightbox-chiudi").focus(); }
+  });
   function testoQuando(x) { return x.giorno ? fmtShort.format(parseISO(x.giorno)) + (x.ora ? " alle " + x.ora : "") : ""; }
 
   // foto in attesa nel modulo del diario: anteprime, e luogo e giorno della foto da usare se servono
@@ -4747,7 +4810,7 @@ if (typeof module !== "undefined") module.exports = RP;
   var LS_POSTI_VISTA = "radar-porcini-posti-vista", POSTI_BREVI = 8;
   try { posti.vista = localStorage.getItem(LS_POSTI_VISTA) || null; } catch (e) {}
   var ESITI = ["Nessun fungo", "Pochi", "Discreti", "Molti"];
-  function oggiISO() { var n = new Date(); return isoOf(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())); }
+  function oggiISO() { return isoOf(oggiMs()); }
   function aggiornaLuogoDiario() {
     var p = document.getElementById("d-luogo"); if (!p) return;
     p.textContent = state.pos ? "Luogo: il tuo punto, " + (state.pos.comune ? "nel comune di " + state.pos.comune + ", " : "") + state.pos.lat.toFixed(4) + ", " + state.pos.lon.toFixed(4) + (state.punto ? ", " + nf(state.punto.quota) + " m" : "") + ". Per cambiarlo, tocca la mappa."

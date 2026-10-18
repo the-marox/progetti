@@ -927,6 +927,12 @@ footer { font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
 /* uscita col GPS: riquadro nel diario, barra in fondo allo schermo durante l'uscita, percorso e ritrovamenti sulla mappa */
 .gps { display: grid; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
 .gps p { margin: 0; }
+.gpx-app { font-size: 0.86rem; color: var(--muted); }
+.gpx-app summary { cursor: pointer; padding: 4px 0; font-weight: 700; color: var(--moss); }
+.gpx-app[open] summary { margin-bottom: 6px; }
+.gpx-app .gpx-corpo { display: grid; gap: 8px; }
+.gpx-app h4 { margin: 4px 0 0; font-size: 0.9rem; color: var(--ink); }
+.gpx-app ol, .gpx-app ul { margin: 0; padding-left: 1.3em; display: grid; gap: 3px; }
 .gps-barra { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500; background: var(--surface); border-top: 2px solid var(--cap); box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.18);
   padding: 10px max(16px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .gps-barra-in { max-width: 720px; margin: 0 auto; display: grid; gap: 6px; }
@@ -1321,8 +1327,34 @@ html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
       <p class="note" id="diario-stato">Il diario si sta caricando…</p>
       <div class="gps" id="gps" hidden>
         <p class="note" id="gps-testo"></p>
-        <div class="row-f"><button class="linkbtn" type="button" id="gps-inizia">Inizia l'uscita col GPS</button><button class="linkbtn" type="button" id="gps-scarta" hidden>Scarta l'uscita col GPS</button></div>
+        <div class="row-f"><button class="linkbtn" type="button" id="gps-inizia">Inizia l'uscita col GPS</button><button class="linkbtn" type="button" id="gpx-scegli">Importa un file GPX</button><button class="linkbtn" type="button" id="gps-scarta" hidden>Scarta l'uscita col GPS</button></div>
+        <input type="file" id="gpx-file" hidden>
         <p class="note" id="gps-msg" role="status"></p>
+        <details class="gpx-app" id="gpx-app">
+          <summary>Quale app usare per registrare il GPX</summary>
+          <div class="gpx-corpo">
+            <p>Il Radar registra il percorso solo con lo schermo acceso. Un'app di tracciamento lo registra anche col telefono in tasca e lo schermo spento: a casa ne importi il file GPX.</p>
+            <h4>iPhone: Open GPX Tracker</h4>
+            <p>Gratis, senza account e senza limiti.</p>
+            <ol>
+              <li>A casa, con internet, guarda nella mappa dell'app la zona dove andrai: i pezzi di mappa che hai visto restano salvati per quando nel bosco non c'è campo.</li>
+              <li>Nel bosco avvia la registrazione e permetti la posizione. Lasciala andare in sottofondo, senza chiudere l'app trascinandola via.</li>
+              <li>A ogni ritrovamento premi il tasto con la puntina.</li>
+              <li>Alla fine ferma la registrazione, premi il tasto Condividi della schermata principale e scegli «Salva su File»: viene un solo file con il percorso e le puntine.</li>
+            </ol>
+            <h4>Android: Geo Tracker</h4>
+            <p>Gratis, c'è anche per iPhone. La versione gratuita tiene un numero limitato di tracce: dopo averle esportate cancella le vecchie.</p>
+            <ol>
+              <li>La prima volta, nelle impostazioni della registrazione, scegli di ignorare l'ottimizzazione della batteria, così il telefono non la ferma.</li>
+              <li>Avvia la registrazione; a ogni ritrovamento premi l'icona della puntina in alto.</li>
+              <li>Alla fine fermala, apri la traccia dall'elenco, premi Condividi, scegli il formato GPX e salva il file in File o in Drive.</li>
+            </ol>
+            <h4>Con la mappa dei sentieri anche senza campo: OsmAnd</h4>
+            <p>Per iPhone e Android, più completa ma meno semplice. Scarica gratis la mappa della Toscana, attiva tra i plugin la registrazione del viaggio e aggiungi un pulsante rapido che mette un punto nella traccia, da premere a ogni ritrovamento: il file GPX della traccia contiene anche i punti.</p>
+            <h4>Poi nel Radar</h4>
+            <p>Qui nel diario premi «Importa un file GPX» e scegli il file: il percorso diventa l'uscita e ogni punto segnato un ritrovamento, col punteggio che il Radar dava lì quel giorno. Prima di un'uscita vera prova cinque minuti attorno a casa: segna due punti, esporta il file, importalo e guarda se ci sono percorso e punti.</p>
+          </div>
+        </details>
       </div>
       <form id="diario-form" hidden autocomplete="off">
         <label>Giorno<input type="date" id="d-data"></label>
@@ -5076,7 +5108,7 @@ if (typeof module !== "undefined") module.exports = RP;
     var g = gps && gps.u && gps.u.stato === "finita" ? gps.u : null;
     if (g && g.centro) {
       var cm = comuneDi(g.centro.lat, g.centro.lon);
-      p.textContent = "Luogo: l'uscita col GPS, " + (cm ? "nel comune di " + cm + ", " : "") + g.centro.lat.toFixed(4) + ", " + g.centro.lon.toFixed(4) + (g.trovati.length ? " (il ritrovamento più centrale)." : " (il punto più centrale del percorso).");
+      p.textContent = "Luogo: l'uscita " + (g.da === "gpx" ? "importata" : "col GPS") + ", " + (cm ? "nel comune di " + cm + ", " : "") + g.centro.lat.toFixed(4) + ", " + g.centro.lon.toFixed(4) + (g.trovati.length ? " (il ritrovamento più centrale)." : " (il punto più centrale del percorso).");
       return;
     }
     p.textContent = state.pos ? "Luogo: il tuo punto, " + (state.pos.comune ? "nel comune di " + state.pos.comune + ", " : "") + state.pos.lat.toFixed(4) + ", " + state.pos.lon.toFixed(4) + (state.punto ? ", " + nf(state.punto.quota) + " m" : "") + ". Per cambiarlo, tocca la mappa."
@@ -5351,7 +5383,7 @@ if (typeof module !== "undefined") module.exports = RP;
       msg.textContent = "Uscita salvata" + (con.length ? " con " + elenco(con) : "") + ".";
       diario.esito = null; setPressed("#d-esito", "x"); document.getElementById("d-note").value = "";
       foto.inAttesa.forEach(function (f) { URL.revokeObjectURL(f.url); }); foto.inAttesa = []; renderAttesa();
-      if (g && gps.u === g) { gps.u = null; gpsSalva(); gpsRender(); aggiornaLuogoDiario(); }
+      if (g && gps.u === g) { gps.u = null; gpsSalva(); gpsRender(); aggiornaLuogoDiario(); document.getElementById("gps-msg").textContent = ""; }
     }).catch(function (err) {
       salvate.forEach(togliFoto);
       var c = err && err.code;
@@ -5403,7 +5435,7 @@ if (typeof module !== "undefined") module.exports = RP;
   function gpsValida(u) {
     return !!u && typeof u === "object" && (u.stato === "corso" || u.stato === "finita") && !isNaN(Date.parse(u.inizio)) && numeroIn(u.km, 0, 1000) &&
       Array.isArray(u.punti) && u.punti.every(function (q) { return Array.isArray(q) && numeroIn(q[0], 41.3, 45.2) && numeroIn(q[1], 8.5, 13.5); }) &&
-      Array.isArray(u.trovati) && u.trovati.every(function (x) { return x && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5) && !isNaN(Date.parse(x.ora)); });
+      Array.isArray(u.trovati) && u.trovati.every(function (x) { return x && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5) && (x.ora == null || !isNaN(Date.parse(x.ora))); });
   }
   // un'uscita lasciata aperta da un altro giorno, o ferma da 12 ore, si chiude da sola
   function gpsVecchia(u) { return giornoDi(u.inizio) !== isoOf(oggiMs()) || Date.now() - Date.parse(u.agg || u.inizio) > 12 * 3600e3; }
@@ -5462,7 +5494,7 @@ if (typeof module !== "undefined") module.exports = RP;
     document.getElementById("d-data").value = giornoDi(u.inizio);
     var n = u.trovati.length;
     if (n) { diario.esito = n <= 3 ? 1 : n <= 9 ? 2 : 3; setPressed("#d-esito", diario.esito); }
-    if (sposta && u.centro) impostaPos({ nome: "Uscita col GPS", lat: u.centro.lat, lon: u.centro.lon }, false);
+    if (sposta && u.centro) impostaPos({ nome: u.da === "gpx" ? "Uscita importata" : "Uscita col GPS", lat: u.centro.lat, lon: u.centro.lon }, false);
     aggiornaLuogoDiario();
   }
   function gpsChiudi(quando, sposta) {
@@ -5552,14 +5584,17 @@ if (typeof module !== "undefined") module.exports = RP;
       document.documentElement.style.setProperty("--gps-h", document.getElementById("gps-barra").offsetHeight + "px");
     }
     else if (tasca.nero || tasca.giro || tasca.lock) tascaFine();
-    document.getElementById("gps").hidden = !diario.arch || !navigator.geolocation;
-    document.getElementById("gps-inizia").hidden = !!u;
-    var bs = document.getElementById("gps-scarta"), cs = gps.scarta > ora;
-    bs.hidden = !finita; bs.textContent = cs ? "Conferma: scarta" : "Scarta l'uscita col GPS"; bs.classList.toggle("conf", cs);
+    document.getElementById("gps").hidden = !diario.arch;
+    document.getElementById("gps-inizia").hidden = !!u || !navigator.geolocation;
+    document.getElementById("gpx-scegli").hidden = !!u;
+    var bs = document.getElementById("gps-scarta"), cs = gps.scarta > ora, gpx = !!u && u.da === "gpx";
+    bs.hidden = !finita; bs.textContent = cs ? "Conferma: scarta" : gpx ? "Scarta l'uscita importata" : "Scarta l'uscita col GPS"; bs.classList.toggle("conf", cs);
     var tx = document.getElementById("gps-testo"), cosa = u ? testoKm(u.km) + ", " + testoTrovati(u.trovati.length) : "";
-    if (!u) tx.textContent = "Nel bosco: l'app segna il percorso e, ogni volta che premi «Trovato qui», il punto e il punteggio che dava lì, per vedere dove il modello sbaglia. Il percorso si registra mentre l'app è aperta: con «In tasca» lo schermo resta acceso ma nero, così continua anche col telefono in tasca. I punteggi sono per la specie scelta qui sotto.";
+    if (!u) tx.textContent = "Nel bosco: l'app segna il percorso e, ogni volta che premi «Trovato qui», il punto e il punteggio che dava lì, per vedere dove il modello sbaglia. Il percorso si registra mentre l'app è aperta: con «In tasca» lo schermo resta acceso ma nero, così continua anche col telefono in tasca. I punteggi sono per la specie scelta qui sotto. " +
+      "Se registri il giro con un'altra app, importa il suo file GPX: il percorso e i punti che hai segnato diventano l'uscita e i ritrovamenti.";
     else if (corso) tx.textContent = "Uscita col GPS in corso dalle " + oraIt(u.inizio) + ": " + cosa + ". «Trovato qui», «In tasca» e «Fine» sono in fondo allo schermo.";
-    else tx.textContent = "Uscita col GPS " + (giornoDi(u.inizio) !== isoOf(oggiMs()) ? "del " + fmtShort.format(parseISO(giornoDi(u.inizio))) + " " : "") + "dalle " + oraIt(u.inizio) + (u.fine ? " alle " + oraIt(u.fine) : "") + ": " + cosa +
+    else tx.textContent = (gpx ? "Uscita dal file GPX " : "Uscita col GPS ") + (gpx || giornoDi(u.inizio) !== isoOf(oggiMs()) ? "del " + fmtShort.format(parseISO(giornoDi(u.inizio))) + " " : "") +
+      (u.senzaOre ? "" : "dalle " + oraIt(u.inizio) + (u.fine ? " alle " + oraIt(u.fine) : "")) + ": " + cosa +
       ". Il modulo qui sotto ha già il giorno e il luogo dell'uscita: indica cosa hai trovato e premi «Salva l'uscita», che salva anche percorso e ritrovamenti.";
     gpsDisegna();
   }
@@ -5761,6 +5796,97 @@ if (typeof module !== "undefined") module.exports = RP;
     gpsStato("Lo schermo si spegne di nuovo da solo, e con lo schermo spento il percorso si ferma. «In tasca» lo tiene di nuovo acceso.");
   });
 
+  // ---------- uscita da un file GPX ----------
+  // Chi registra il giro con un'altra app (che continua anche a schermo spento, col telefono in tasca) ne importa il file GPX:
+  // il percorso diventa quello dell'uscita e i punti segnati (waypoint) i ritrovamenti. Da lì è come un'uscita col GPS finita:
+  // il modulo prende giorno, esito proposto e luogo, e al salvataggio i punteggi si calcolano per quel giorno. Il file si legge
+  // solo qui, nel browser. vicino: km massimi tra un punto segnato e il percorso (più lontano è un altro posto salvato nell'app)
+  var GPX = { maxByte: 25e6, vicino: 1 };
+  function testoFiglio(n, nome) { for (var c = n.firstElementChild; c; c = c.nextElementSibling) if (c.localName === nome) return c.textContent; return null; }
+  function puntiGpx(d, nome) {
+    var out = [], N = d.getElementsByTagNameNS("*", nome);
+    for (var i = 0; i < N.length; i++) {
+      var la = parseFloat(N[i].getAttribute("lat")), lo = parseFloat(N[i].getAttribute("lon")), t = testoFiglio(N[i], "time"), ms = t ? Date.parse(t.trim()) : NaN;
+      if (isFinite(la) && isFinite(lo)) out.push({ lat: la, lon: lo, ms: isFinite(ms) ? ms : null });
+    }
+    return out;
+  }
+  // inizio e fine (ms) del giorno g in Italia, con l'ora legale
+  function limitiGiorno(g) {
+    function primo(x) { return isoOf(oggiMs(new Date(x - 7200e3))) === isoOf(x) ? x - 7200e3 : x - 3600e3; }
+    var a = parseISO(g);
+    return [primo(a), primo(a + DAY)];
+  }
+  // distanza al quadrato, in gradi di latitudine, per cercare il più vicino
+  function d2(a, b, c) { var y = a.lat - b[0], x = (a.lon - b[1]) * c; return x * x + y * y; }
+  function leggiGpx(testo, giornoScelto) {
+    var d = null;
+    try { d = new DOMParser().parseFromString(testo, "application/xml"); } catch (e) {}
+    if (!d || !d.documentElement || d.documentElement.localName !== "gpx" || d.getElementsByTagName("parsererror").length)
+      return { errore: "Questo file non è un GPX: dall'app che ha registrato il giro esporta il percorso in formato GPX." };
+    var T = puntiGpx(d, "trkpt"), W = puntiGpx(d, "wpt");
+    if (!T.length) T = puntiGpx(d, "rtept");
+    var n0 = T.length + W.length, dentro = function (q) { return gpsDentro(q.lat, q.lon); };
+    T = T.filter(dentro); W = W.filter(dentro);
+    if (!T.length && !W.length) return { errore: n0 ? "Il giro è fuori dalla Toscana: lì l'app non ha dati." : "Nel file non ci sono né un percorso né punti segnati." };
+    // il giorno è quello del primo orario nel file (in Italia); senza orari, quello scritto nel modulo
+    var t0 = null, t1 = null, altri = 0;
+    T.concat(W).forEach(function (q) { if (q.ms != null && (t0 == null || q.ms < t0)) t0 = q.ms; });
+    var giorno = t0 != null ? isoOf(oggiMs(new Date(t0))) : giornoScelto, lim = limitiGiorno(giorno);
+    var delGiorno = function (q) { var ok = q.ms == null || (q.ms >= lim[0] && q.ms < lim[1]); if (!ok) altri++; return ok; };
+    T = T.filter(delGiorno); W = W.filter(delGiorno);
+    T.concat(W).forEach(function (q) { if (q.ms != null && (t1 == null || q.ms > t1)) t1 = q.ms; });
+    // percorso: un punto ogni almeno 25 m, come quello registrato qui; con un giro molto lungo il passo cresce
+    var lungo = 0, i;
+    for (i = 1; i < T.length; i++) lungo += RP.distanzaKm(T[i - 1].lat, T[i - 1].lon, T[i].lat, T[i].lon);
+    var passo = Math.max(GPS.passo, lungo * 1000 / (GPS.maxPunti - 1)), P = [], km = 0, l = null;
+    T.forEach(function (q) {
+      if (l) { var dd = RP.distanzaKm(l.lat, l.lon, q.lat, q.lon); if (dd * 1000 < passo) return; km += dd; }
+      P.push([+q.lat.toFixed(5), +q.lon.toFixed(5)]); l = q;
+    });
+    if (P.length > GPS.maxPunti) P = P.slice(0, GPS.maxPunti);
+    // ritrovamenti: i punti segnati vicino al percorso, in ordine di ora
+    var lontani = 0, c = Math.cos((P.length ? P[0][0] : W[0].lat) * Math.PI / 180), v2 = Math.pow(GPX.vicino / 111.2, 2);
+    if (P.length) W = W.filter(function (q) { for (var j = 0; j < P.length; j++) if (d2(q, P[j], c) <= v2) return true; lontani++; return false; });
+    W.sort(function (a, b) { return (a.ms == null ? Infinity : a.ms) - (b.ms == null ? Infinity : b.ms); });
+    var tolti = Math.max(0, W.length - GPS.maxTrovati);
+    W = W.slice(0, GPS.maxTrovati);
+    if (!P.length && !W.length) return { errore: "Nel file ci sono solo punti di un altro giorno." };
+    var trovati = W.map(function (q) { return { lat: +q.lat.toFixed(5), lon: +q.lon.toFixed(5), acc: null, ora: q.ms != null ? new Date(q.ms).toISOString() : null }; });
+    var u = { stato: "finita", da: "gpx", inizio: new Date(t0 != null ? t0 : lim[0] + 12 * 3600e3).toISOString(), agg: null, fine: t1 != null && t1 > t0 ? new Date(t1).toISOString() : null,
+      punti: P, km: km, trovati: trovati, centro: null, tasca: false };
+    if (t0 == null) u.senzaOre = true;
+    u.centro = gpsCentro(u);
+    var note = [], tg = Math.round((parseISO(giorno) - state.ref) / DAY);
+    if (altri) note.push("Il file contiene anche altri giorni: ho preso solo il primo.");
+    if (lontani) note.push(lontani === 1 ? "Un punto segnato lontano dal percorso non è stato preso." : lontani + " punti segnati lontani dal percorso non sono stati presi.");
+    if (tolti) note.push("Ho preso i primi " + GPS.maxTrovati + " punti segnati.");
+    if (!trovati.length) note.push("Nel file non ci sono punti segnati: se li hai messi, controlla che l'app li esporti insieme al percorso.");
+    if (u.senzaOre) note.push("Il file non ha gli orari: controlla il giorno nel modulo.");
+    else if (tg < -30) note.push("È di più di 30 giorni fa: l'uscita si salva, ma senza punteggi.");
+    return { u: u, msg: "Dal file: " + fmtLong.format(parseISO(giorno)) + ", " + (P.length > 1 ? testoKm(km) + " di percorso e " : "") + testoTrovati(trovati.length) + "." + (note.length ? " " + note.join(" ") : "") };
+  }
+  function leggiFile(f) {
+    if (f.text) return f.text();
+    return new Promise(function (ok, no) { var r = new FileReader(); r.onload = function () { ok(String(r.result)); }; r.onerror = no; r.readAsText(f); });
+  }
+  document.getElementById("gpx-scegli").addEventListener("click", function () { var i = document.getElementById("gpx-file"); i.value = ""; i.click(); });
+  document.getElementById("gpx-file").addEventListener("change", function () {
+    var f = this.files && this.files[0], m = document.getElementById("gps-msg");
+    if (!f || gps.u) return;
+    if (f.size > GPX.maxByte) { m.textContent = "Il file è troppo grande per un'uscita (più di 25 MB)."; return; }
+    m.textContent = "Leggo il file…";
+    leggiFile(f).then(function (testo) {
+      if (gps.u) return;
+      var r = leggiGpx(testo, document.getElementById("d-data").value || oggiISO());
+      if (r.errore) { m.textContent = r.errore; return; }
+      gps.u = r.u; gps.msg = ""; gps.errore = ""; gps.annulla = false; gps.scarta = 0;
+      if (gps.vista) { mostraUscitaGps(null); renderDiario(); }
+      gpsSalva(); gpsNelModulo(true); gpsRender();
+      m.textContent = r.msg;
+    }, function () { m.textContent = "Non riesco a leggere il file: riprova."; });
+  });
+
   // percorso come polilinea di Google (precisione 1e-5): l'inverso di decodificaLinea
   function codificaLinea(pts) {
     var out = "", pa = 0, po = 0;
@@ -5793,14 +5919,15 @@ if (typeof module !== "undefined") module.exports = RP;
       return o;
     });
     doc.percorso = u.punti.length > 1 ? codificaLinea(u.punti) : null;
-    doc.gps = { inizio: u.inizio, fine: u.fine || null, km: Math.round(u.km * 100) / 100, punti: u.punti.length, lungo: ok ? stimaLungo(u.punti, u.km, t, sp) : null };
+    doc.gps = { inizio: u.senzaOre ? null : u.inizio, fine: u.senzaOre ? null : u.fine || null, km: Math.round(u.km * 100) / 100, punti: u.punti.length, lungo: ok ? stimaLungo(u.punti, u.km, t, sp) : null };
+    if (u.da === "gpx") doc.gps.da = "gpx";
   }
   // la riga dell'uscita col GPS nell'elenco: punteggi dove hai trovato e lungo il percorso, e il tasto per vederla sulla mappa
   function rigaGps(u) {
     var box = el("span", "gps-uscita"), R = Array.isArray(u.ritrovamenti) ? u.ritrovamenti : [], g = u.gps && typeof u.gps === "object" ? u.gps : {};
     var s = R.map(function (x) { return x && x.stima; }).filter(function (v) { return typeof v === "number"; });
     var da = function (a, b, m) { return a === b ? String(a) : "da " + a + " a " + b + " (media " + m + ")"; };
-    var t = "Col GPS: " + testoTrovati(R.length) + (typeof g.km === "number" ? ", " + testoKm(g.km) : "");
+    var t = (g.da === "gpx" ? "Dal file GPX: " : "Col GPS: ") + testoTrovati(R.length) + (typeof g.km === "number" ? ", " + testoKm(g.km) : "");
     if (s.length) t += ". Dove hai trovato l'app dava " + da(Math.min.apply(null, s), Math.max.apply(null, s), Math.round(s.reduce(function (a, b) { return a + b; }, 0) / s.length));
     var l = g.lungo;
     if (l && typeof l.min === "number") t += (s.length ? ", lungo il percorso " : ". Lungo il percorso l'app dava ") + da(l.min, l.max, l.media);
@@ -5857,8 +5984,10 @@ if (typeof module !== "undefined") module.exports = RP;
     if (!g || typeof g !== "object") return null;
     var l = g.lungo, lo = l && typeof l === "object" && numeroIn(l.n, 1, 10000) && numeroIn(l.min, 0, 100) && numeroIn(l.media, 0, 100) && numeroIn(l.max, 0, 100)
       ? { n: Math.round(l.n), min: Math.round(l.min), media: Math.round(l.media), max: Math.round(l.max) } : null;
-    return { inizio: ISTANTE.test(String(g.inizio)) ? String(g.inizio) : null, fine: ISTANTE.test(String(g.fine)) ? String(g.fine) : null,
+    var o = { inizio: ISTANTE.test(String(g.inizio)) ? String(g.inizio) : null, fine: ISTANTE.test(String(g.fine)) ? String(g.fine) : null,
       km: numeroIn(g.km, 0, 1000) ? Math.round(g.km * 100) / 100 : null, punti: numeroIn(g.punti, 0, 100000) ? Math.round(g.punti) : null, lungo: lo };
+    if (g.da === "gpx") o.da = "gpx";
+    return o;
   }
   function postoValido(x) { return x && typeof x.nome === "string" && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5); }
   function uscitaValida(x) { return x && /^\d{4}-\d{2}-\d{2}$/.test(String(x.data)) && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5) && numeroIn(x.esito, 0, 3); }

@@ -1311,7 +1311,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
       <ul>
         <li><b>Pioggia caduta e prevista.</b> Si cercano gli eventi di pioggia degli ultimi 40 giorni e quelli previsti: giorni con almeno 2 mm, con al massimo un giorno asciutto in mezzo. Per ogni giorno conta l'evento che dà la stima migliore. Sotto una soglia (10–15 mm secondo la specie) un evento non conta; poi il peso cresce con rendimento decrescente. Soglia e curva sono stime: gli studi non indicano una pioggia minima. Contano anche, per metà, le piogge arrivate al suolo nei 26 giorni prima dell'evento, fino al doppio della pioggia dell'evento stesso, così una pioggerella dopo un periodo piovoso non vale come un temporale. In dieci anni di faggete tedesche le nascite crescono con la pioggia dei 26 giorni prima, e i porcini comparivano soprattutto con 2–4 mm al giorno in media (Brejon Lamartiniere e Hoffman, 2025). La pioggia prevista pesa per intero fino a domani, poi sempre meno (90% dopodomani, poi 80, 70, 60%, fino al 35% al decimo giorno), perché più è lontana più è incerta. Una pioggia prevista rimette anche a zero i giorni senza pioggia.</li>
         <li><b>Previsioni.</b> Per i primi 4 giorni il modello ICON-EU (celle di circa 5×7 km), poi fino al decimo giorno il modello IFS del Centro europeo ECMWF (celle di circa 20×28 km), meno dettagliato. Oltre il decimo giorno la stima suppone che non piova. Nella tabella delle previsioni c'è anche la probabilità di superare 10 e 20 mm: quante delle 51 previsioni dell'insieme ECMWF li superano, su 24 ore dalle 13 alle 13. Quando la previsione singola dice pioggia e la probabilità è bassa, è meglio non contarci.</li>
-        <li><b>Archivio giornaliero.</b> Il giorno di pioggia va dalle 9 alle 9 del giorno dopo, come nell'archivio del Servizio Idrologico Regionale: con la lettura delle 9 la pioggia del giorno appena chiuso è esatta. Ogni giorno si salvano anche minima e massima di ieri; i giorni mancanti o incerti vengono dall'archivio. Se a una stazione manca un giorno anche lì, si usa la media pesata delle stazioni vicine entro 25 km, invece di contarlo come asciutto. Così la stima conosce la pioggia giorno per giorno degli ultimi 90 giorni e le temperature vere degli ultimi 40.</li>
+        <li><b>Archivio giornaliero.</b> Il giorno di pioggia va dalle 9 alle 9 del giorno dopo, come nell'archivio del Servizio Idrologico Regionale: con la lettura delle 9 la pioggia del giorno appena chiuso è esatta. Ogni giorno si salvano anche minima e massima di ieri; i giorni mancanti o incerti vengono dall'archivio. Se a una stazione manca un giorno anche lì, si usa la pioggia del radar nella cella della stazione, che vede anche i temporali di una sola valle, oppure, dove il radar non c'è, la media pesata delle stazioni vicine entro 25 km, invece di contarlo come asciutto. Così la stima conosce la pioggia giorno per giorno degli ultimi 90 giorni e le temperature vere degli ultimi 40.</li>
         <li><b>Acqua nel suolo.</b> Giorno per giorno si fa un bilancio: entra la pioggia (meno quella trattenuta da chiome e lettiera), esce l'evaporazione stimata dalle temperature con la formula di Hargreaves, quella che la FAO indica quando mancano misure di sole, umidità e vento. Evapora di più d'estate, col caldo e sul solatio (fino al 40% in più), di meno sul bacìo (fino al 30% in meno) e quando il suolo è già asciutto. Ne viene un indice da 0 a 100% d'acqua in uno strato di circa 80 mm, quello del micelio. Prima della pioggia conta quanto era bagnato il suolo: secco, la pioggia rende fino a un terzo in meno; umido, fino al 15% in più. Dopo, se il suolo scende sotto il 30% le nascite rallentano, fino a dimezzarsi. La formula è collaudata ma pensata per un prato aperto: la correzione per il bosco, gli 80 mm e queste soglie sono stime. Nel grafico della pioggia del punto è la linea verde.</li>
         <li><b>Pendenza e ristagno.</b> Sui pendii ripidi una parte delle piogge forti scorre via: fino a circa un terzo sopra i 30° con più di 80 mm in un giorno, niente sotto i 20 mm, che la lettiera assorbe anche in pendio. L'acqua che lo strato del micelio non trattiene se ne va in un giorno sui pendii da 10° in su; sui terreni in piano scende più lentamente (un terzo al giorno), nei fondovalle ancora di più: il modello del terreno li riconosce perché sono più bassi dei dintorni (circa 1,5 km). Se ne resta tanta il suolo è zuppo e il micelio soffre senz'aria: ogni giorno da zuppo dall'inizio della pioggia toglie il 15% alla buttata, fino al 60%. Vale per il tuo punto, i posti e le possibili fungaie; non per le stazioni, che rappresentano i 5 km attorno. Manca una carta della tessitura del suolo: su sabbia, come nelle pinete della costa, l'acqua scende più in fretta di così, su argilla più piano.</li>
         <li><b>Buttate precedenti.</b> Una buttata consuma le riserve del micelio. Se una pioggia fa nascere funghi entro un mese da una buttata, rende meno: fino al 35% in meno subito dopo una buttata piena, sempre meno col passare dei giorni. Quanto era piena la buttata di prima si stima dal tempo di allora: pioggia, temperatura, stagione e acqua nel suolo. È un'ipotesi ragionata: non ci sono misure che dicano quanto vale.</li>
@@ -1330,7 +1330,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Possibili fungaie.</b> Nel raggio scelto attorno al tuo punto si guardano tutte le celle di circa 220 m della carta dei boschi. Restano quelle con un bosco adatto alla specie (il tipo della cella e quelli nei 500 m attorno, la quota e il suolo, come nella scheda del punto), con pendenza fino a 35° e a meno di 400 m da un sentiero CAI (esclusi quelli segnati come non percorribili); i boschi di tipo non noto restano fuori. L'area si divide in riquadri (circa 20 per lato) e per ognuno si tiene la cella più adatta. Per queste si calcola il punteggio del giorno scelto, lo stesso della scheda del punto, e si mostrano le migliori distanti almeno 1 km l'una dall'altra. La carta dei boschi ha celle di 250 m ed è di fine anni '90: una fungaia vera può essere più piccola, e il bosco può essere cambiato.</li>
         <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono, oppure nel tuo account se accedi (lo vedi solo tu: ogni account legge e scrive soltanto i propri dati); quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
-        <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori, la pioggia utile (con la parte che viene dal mese prima) e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
+        <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori, i numeri di pioggia e temperatura da cui vengono, se la pioggia è del radar o delle stazioni e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
         <li><b>Cosa è misurato e cosa no.</b> I dati sono misure o previsioni: pioggia, temperature, umidità e vento delle stazioni, il radar, i modelli meteo, la carta dei boschi e il modello del terreno; il pH del suolo è una stima da carta mondiale. Dei legami tra tempo e funghi pochi sono misurati: il ritardo tra pioggia e pieno sull'Amiata e, nelle faggete tedesche, la temperatura migliore e il fatto che conti anche la pioggia del mese prima (studio non ancora rivisto da altri esperti). Il resto sono stime ragionate: quanto pesa la pioggia del mese prima, la soglia di pioggia e la sua curva, i tempi col caldo e col freddo, l'evaporazione nel bosco, il versante, il ristagno, le buttate precedenti, il peso di umidità e vento.</li>
       </ul>
@@ -1656,14 +1656,15 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
 <script type="application/json" id="geo-sentieri">null</script>
 <script>
 /* Radar Porcini – modello di stima (indicativo, non validato sul campo) */
-var RP = (function () {
+var RP = (function modello() {
   var LAPSE = 0.0065; // °C per metro
   var GIORNO = 86400000;
   var J0 = 30, H = 50; // serie giornaliere da 30 giorni prima a 50 giorni dopo la data dei dati
   var NP = 90, NT = 40; // giorni di archivio: pioggia e temperature
-  // data dell'ultima modifica al calcolo, da cambiare a ogni modifica: si salva con ogni uscita del diario, così le uscite
-  // si possono confrontare versione per versione
-  var VERSIONE = "2026-10-18";
+  // data dell'ultima modifica al calcolo (con .2, .3 se più d'una nello stesso giorno), da cambiare a ogni modifica: si salva
+  // con ogni uscita del diario, così le uscite si possono confrontare versione per versione. Con l'uscita si salva anche
+  // l'impronta del codice del modello, che cambia da sola a ogni modifica, anche se qui ci si dimentica di cambiare la data
+  var VERSIONE = "2026-10-18.2";
 
   // Versante: il solatio è più caldo e si asciuga prima, il bacìo è più fresco e tiene l'umidità
   var VERSANTE = {
@@ -2408,6 +2409,28 @@ var RP = (function () {
       if (!n) delete s.storia.presi;
     });
   }
+  // Dove il radar della Protezione Civile ha la cella della stazione, i giorni presi dalle vicine prendono la pioggia del
+  // radar, che vede anche i temporali di una sola valle: coi dati del 18/10/2026, sui giorni misurati il radar si scosta dalla
+  // stazione in media di 0,3 mm al giorno e la media delle vicine di 0,9 (3,4 e 10 mm nei giorni da 20 mm in su; il confronto
+  // favorisce il radar, che usa anche quei pluviometri). Il radar arriva dopo le stazioni: radarDi(lat, lon) dà i 90 giorni
+  // della cella, allineati all'archivio. Restituisce quante stazioni sono cambiate
+  function presiDalRadar(st, radarDi) {
+    var n = 0;
+    st.forEach(function (s) {
+      var P = s.storia && s.storia.presi;
+      if (!P) return;
+      var r = radarDi(s.lat, s.lon), cambiati = 0;
+      if (!r) return;
+      Object.keys(P).forEach(function (k) {
+        if (r[k] == null) return;
+        var v = r1(r[k]);
+        if (P[k] === "radar" && s.storia.p[k] === v) return;
+        s.storia.p[k] = v; P[k] = "radar"; cambiati++;
+      });
+      if (cambiati) { completa(s, st._idx); n++; }
+    });
+    return n;
+  }
   // stazioni senza termometro: per ogni giorno la mediana della zona, riportata alla quota della stazione
   function temperatureStoricheStimate(st) {
     var con = st.filter(function (s) { return !s.tStimata && s.storia && s.storia.tn; });
@@ -2496,7 +2519,7 @@ var RP = (function () {
     // I giorni che le stazioni hanno preso dalle loro vicine contano solo se quel giorno manca a tutte, invece di zero
     var conS = usate.map(function (x, i) { return { s: x.s, w: w[i] }; }).filter(function (x) { return x.s.storia && x.s.storia.p; });
     if (conS.length) {
-      var pp = [], k2;
+      var pp = [], k2, presiP = {}, nP = 0;
       for (k2 = 0; k2 < NP; k2++) {
         var nn = 0, dd = 0, np = 0, dp = 0;
         conS.forEach(function (x) {
@@ -2505,6 +2528,7 @@ var RP = (function () {
           if (x.s.storia.presi && x.s.storia.presi[k2]) { np += x.w * v; dp += x.w; } else { nn += x.w * v; dd += x.w; }
         });
         pp.push(dd ? r1(nn / dd) : dp ? r1(np / dp) : null);
+        if (!dd && dp) { presiP[k2] = true; nP++; }
       }
       var tns = null, txs = null, termS = (p.termometri || []).filter(function (x) { return x.s.storia && x.s.storia.tn && !x.s.storia.tStimate; });
       if (termS.length) {
@@ -2521,11 +2545,13 @@ var RP = (function () {
         }
       }
       p.storia = { p: pp, tn: tns, tx: txs };
+      if (nP) p.storia.presi = presiP;
     }
     if (radar && radar.length === NP) {
       var nr = 0;
       if (!p.storia) p.storia = { p: [], tn: null, tx: null };
-      for (var kr = 0; kr < NP; kr++) if (radar[kr] != null) { p.storia.p[kr] = r1(radar[kr]); nr++; } else if (p.storia.p[kr] === undefined) p.storia.p[kr] = null;
+      for (var kr = 0; kr < NP; kr++) if (radar[kr] != null) { p.storia.p[kr] = r1(radar[kr]); nr++; if (p.storia.presi) delete p.storia.presi[kr]; } else if (p.storia.p[kr] === undefined) p.storia.p[kr] = null;
+      if (p.storia.presi && !Object.keys(p.storia.presi).length) delete p.storia.presi;
       p.storia.radar = nr;
     }
     p.prev = campionaPrev(st._prev, lat, lon, q, st._giorno);
@@ -2713,11 +2739,18 @@ var RP = (function () {
     return finestra(s, opt, stima(s, 0, opt));
   }
 
+  // impronta del codice del modello (parametri e formule, FNV-1a a 32 bit): cambia da sola a ogni modifica
+  function impronta() {
+    var t = modello.toString(), x = 0x811c9dc5;
+    for (var i = 0; i < t.length; i++) { x ^= t.charCodeAt(i); x = Math.imul(x, 0x01000193) >>> 0; }
+    return ("0000000" + x.toString(16)).slice(-8);
+  }
+
   return { VERSANTE: VERSANTE, SPECIE: SPECIE, SP: SP, GRUPPI: GRUPPI, listaSpecie: listaSpecie, BOSCHI: BOSCHI, versanteDaTerreno: versanteDaTerreno,
     prepara: prepara, punto: punto, svuota: svuota, distanzaKm: distanzaKm, stima: stima, finestra: finestra, idoneita: idoneita,
     stimaManuale: stimaManuale, finestraManuale: finestraManuale, etichettaPeriodo: etichettaPeriodo, velocita: velocita, fiducia: fiducia,
     fattoreStagione: fattoreStagione, fattoreSuolo: fattoreSuolo, fattoreSuoloW: fattoreSuoloW, fattorePH: fattorePH, nomePH: nomePH, storiaUtile: storiaUtile,
-    bilancio: bilancio, versanteDa: versanteDa, adatto: adatto, drenaggio: drenaggio, NP: NP, NCL: NCL, VERSIONE: VERSIONE };
+    bilancio: bilancio, versanteDa: versanteDa, adatto: adatto, drenaggio: drenaggio, NP: NP, NCL: NCL, VERSIONE: VERSIONE, IMPRONTA: impronta(), presiDalRadar: presiDalRadar };
 })();
 if (typeof module !== "undefined") module.exports = RP;
 
@@ -2938,6 +2971,7 @@ if (typeof module !== "undefined") module.exports = RP;
     state.st = RP.prepara(data, state.anag, aria, state.prev, state.storico);
     assegnaHabitat();
     state.ref = parseISO(data.giorno);
+    if (RADAR) RP.presiDalRadar(state.st, radarSerie);
     var today = oggiMs();
     state.start = Math.max(0, Math.round((today - state.ref) / DAY));
     aggiornaDistanze();
@@ -4554,9 +4588,12 @@ if (typeof module !== "undefined") module.exports = RP;
     var totF = vals.reduce(function (a, v) { return a + v.f; }, 0);
     svg.setAttribute("aria-label", "Pioggia giorno per giorno: " + nf(tot30) + " mm negli ultimi 30 giorni" + (totF >= 0.5 ? ", " + nf(totF) + " mm previsti" : ""));
     var box = el("div", "gpioggia"); box.appendChild(svg);
-    var presi = s.storia && s.storia.presi ? Object.keys(s.storia.presi).filter(function (k) { return +k >= RP.NP + j0; }).length : 0;
+    var presiK = s.storia && s.storia.presi ? Object.keys(s.storia.presi).filter(function (k) { return +k >= RP.NP + j0; }) : [], presi = presiK.length;
+    var daRadar = presiK.filter(function (k) { return s.storia.presi[k] === "radar"; }).length;
+    var fontePresi = daRadar === presi ? "dal radar" : daRadar ? "dal radar e dalle stazioni vicine" : "dalle stazioni vicine";
     box.appendChild(el("p", "note", "Ogni barra è la pioggia dalle 9 del giorno alle 9 del giorno dopo, come nell'archivio del Servizio Idrologico. Barre piene: pioggia " + (s.storia && s.storia.radar ? "stimata dal radar corretto coi pluviometri" : "misurata") + " (più scure quelle della pioggia che conta per la stima). Barre tratteggiate: pioggia prevista. Ultimi 30 giorni: " + nf(tot30) + " mm" + (totF >= 0.5 ? "; previsti " + nf(totF) + " mm." : ".") +
-      (presi ? (presi === 1 ? " Un giorno mancava nell'archivio della stazione: la sua pioggia viene dalle stazioni vicine." : " " + presi + " giorni mancavano nell'archivio della stazione: la loro pioggia viene dalle stazioni vicine.") : "") +
+      (!presi ? "" : s.virtuale ? (presi === 1 ? " Un giorno mancava a tutte le stazioni vicine: la sua pioggia viene da stazioni più lontane o dal radar." : " " + presi + " giorni mancavano a tutte le stazioni vicine: la loro pioggia viene da stazioni più lontane o dal radar.")
+        : presi === 1 ? " Un giorno mancava nell'archivio della stazione: la sua pioggia viene " + fontePresi + "." : " " + presi + " giorni mancavano nell'archivio della stazione: la loro pioggia viene " + fontePresi + ".") +
       (conW ? " Linea verde: acqua nel suolo, dalla pioggia meno l'evaporazione (in basso secco, in alto pieno)." : "")));
     return box;
   }
@@ -5101,7 +5138,9 @@ if (typeof module !== "undefined") module.exports = RP;
       stima: r ? r.score : null, stimaSpecie: r ? r.specie : null, fase: r ? r.fase.id : null, giorniDallaPioggia: r && r.d != null ? Math.round(r.d) : null,
       mmPioggia: r && r.evento ? r.evento.mm : null, acqua: r && r.acqua != null ? Math.round(r.acqua * 100) : null, datiDel: state.data.giorno, salvato: new Date().toISOString(),
       modello: RP.VERSIONE, fattori: r ? fattoriPuliti(r.fattori) : null,
-      mmUtili: r ? numeroPulito(r.mmEff, 2000) : null, mmPrima: r ? numeroPulito(r.extra26, 2000) : null, acquaPrima: r && r.acquaPrima != null ? Math.round(r.acquaPrima * 100) : null };
+      mmUtili: r ? numeroPulito(r.mmEff, 0, 2000) : null, mmPrima: r ? numeroPulito(r.extra26, 0, 2000) : null, acquaPrima: r && r.acquaPrima != null ? Math.round(r.acquaPrima * 100) : null,
+      tm20: r ? numeroPulito(r.tm, -30, 45) : null, giorniEq: r ? numeroPulito(r.dEff, 0, 500) : null, tipoPioggia: r && r.evento ? r.evento.tipo || null : null,
+      pioggiaDa: pioggiaDa(state.punto), giorniPresi: r && r.evento ? giorniPresi(state.punto, r.evento) : null, impronta: RP.IMPRONTA };
     btn.disabled = true; msg.textContent = foto.inAttesa.length ? "Preparo le foto…" : "Salvataggio…";
     var daSalvare = fotoDisponibili() ? foto.inAttesa.slice() : [], salvate = [];
     daSalvare.reduce(function (c, f) {
@@ -5127,7 +5166,8 @@ if (typeof module !== "undefined") module.exports = RP;
   // ---------- copia o sposta posti e diario tra le versioni ----------
   function pulito(x, campi) { var o = {}; campi.forEach(function (k) { if (x[k] !== undefined) o[k] = x[k]; }); return o; }
   var CAMPI_POSTO = ["nome", "lat", "lon", "quota", "bosco", "comune", "specie", "creato"];
-  var CAMPI_USCITA = ["data", "lat", "lon", "quota", "comune", "bosco", "specie", "esito", "note", "stima", "stimaSpecie", "fase", "giorniDallaPioggia", "mmPioggia", "acqua", "datiDel", "salvato", "modello", "fattori", "mmUtili", "mmPrima", "acquaPrima"];
+  var CAMPI_USCITA = ["data", "lat", "lon", "quota", "comune", "bosco", "specie", "esito", "note", "stima", "stimaSpecie", "fase", "giorniDallaPioggia", "mmPioggia", "acqua", "datiDel", "salvato", "modello", "fattori", "mmUtili", "mmPrima", "acquaPrima",
+    "tm20", "giorniEq", "tipoPioggia", "pioggiaDa", "giorniPresi", "impronta"];
   // i fattori del punteggio salvati con l'uscita: solo quelli del modello, come numeri
   var CAMPI_FATTORI = ["pioggia", "tempo", "temperatura", "quota", "stagione", "bosco", "ph", "secco", "aria", "ristagno", "buttate"];
   function fattoriPuliti(f) {
@@ -5137,8 +5177,18 @@ if (typeof module !== "undefined") module.exports = RP;
     return n ? o : null;
   }
   function numeroIn(v, a, b) { v = Number(v); return isFinite(v) && v >= a && v <= b; }
-  // pioggia utile, la sua parte dal mese prima e l'acqua nel suolo prima della pioggia: servono a vedere se il mese prima conta due volte
-  function numeroPulito(v, max) { return v != null && numeroIn(v, 0, max) ? Math.round(Number(v) * 10) / 10 : null; }
+  // numeri dell'uscita (pioggia, acqua nel suolo, temperatura, giorni) a un decimale; null se mancano o sono fuori scala
+  function numeroPulito(v, min, max) { return v != null && v !== "" && numeroIn(v, min, max) ? Math.round(Number(v) * 10) / 10 : null; }
+  // da dove viene la pioggia giorno per giorno del punto
+  function pioggiaDa(p) { return p && p.storia ? (p.storia.radar ? "radar" : "stazioni") : null; }
+  // giorni della pioggia scelta che non avevano misure né radar vicino al punto (presi da stazioni più lontane)
+  function giorniPresi(p, e) {
+    if (!e.storia || e.inizio == null || !p || !p.storia || !p.storia.presi) return 0;
+    var n = 0;
+    for (var j = Math.round(e.inizio); j <= Math.min(Math.round(e.fine), -1); j++) if (p.storia.presi[j + RP.NP]) n++;
+    return n;
+  }
+  var CAMPI_NUMERI = [["mmUtili", 0, 2000], ["mmPrima", 0, 2000], ["acquaPrima", 0, 100], ["tm20", -30, 45], ["giorniEq", 0, 500], ["giorniPresi", 0, 100]];
   function postoValido(x) { return x && typeof x.nome === "string" && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5); }
   function uscitaValida(x) { return x && /^\d{4}-\d{2}-\d{2}$/.test(String(x.data)) && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5) && numeroIn(x.esito, 0, 3); }
   document.getElementById("sposta-copia").addEventListener("click", function () {
@@ -5174,7 +5224,10 @@ if (typeof module !== "undefined") module.exports = RP;
       var doc = pulito(x, campiU); doc.note = String(doc.note || "").slice(0, 200); doc.comune = String(doc.comune || "").slice(0, 60);
       if (doc.modello !== undefined) doc.modello = String(doc.modello).slice(0, 20);
       if (doc.fattori !== undefined) doc.fattori = fattoriPuliti(doc.fattori);
-      [["mmUtili", 2000], ["mmPrima", 2000], ["acquaPrima", 100]].forEach(function (c) { if (doc[c[0]] !== undefined) doc[c[0]] = numeroPulito(doc[c[0]], c[1]); });
+      CAMPI_NUMERI.forEach(function (c) { if (doc[c[0]] !== undefined) doc[c[0]] = numeroPulito(doc[c[0]], c[1], c[2]); });
+      if (doc.tipoPioggia !== undefined) doc.tipoPioggia = ["osservata", "prevista", "mista"].indexOf(doc.tipoPioggia) >= 0 ? doc.tipoPioggia : null;
+      if (doc.pioggiaDa !== undefined) doc.pioggiaDa = doc.pioggiaDa === "radar" || doc.pioggiaDa === "stazioni" ? doc.pioggiaDa : null;
+      if (doc.impronta !== undefined) doc.impronta = /^[0-9a-f]{8}$/.test(String(doc.impronta)) ? String(doc.impronta) : null;
       catena = catena.then(function () { return diario.arch.aggiungi(doc).then(null, function () { errori++; }); });
     });
     return catena.then(function () { return errori; });
@@ -5641,6 +5694,7 @@ if (typeof module !== "undefined") module.exports = RP;
       caricaBoschi(leggi("geo-boschi"), function () {
         caricaSuolo(leggi("geo-suolo"), function () {
           caricaRadar(radarSeed, function () {
+            if (RADAR) RP.presiDalRadar(state.st, radarSerie);
             assegnaHabitat(); renderFonte(); ricalcola(); disegnaSfondo(); renderLegenda();
             pronto.terreno = true;
           });
@@ -5671,6 +5725,7 @@ if (typeof module !== "undefined") module.exports = RP;
         pronto.radar = true;
         if (!ok) return;
         radarSeed = rr; renderFonte(); posti.epoca++;
+        if (RP.presiDalRadar(state.st, radarSerie)) ricalcola();
         if (state.pos) { calcolaPunto(); renderPunto(); }
         renderPosti(); renderFungaie();
         if (state.sfondo === "pioggia") { disegnaSfondo(); renderLegenda(); }

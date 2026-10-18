@@ -940,7 +940,23 @@ footer { font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
 .gps-tasti .linkbtn { flex: 0 0 auto; min-height: 48px; }
 .gps-trovato { flex: 1 1 auto; min-height: 58px; border: 0; border-radius: 99px; background: var(--cap); color: var(--surface); font: 800 1.15rem var(--font-display); cursor: pointer; }
 .gps-trovato:disabled { opacity: 0.6; cursor: wait; }
-body.gps-on .wrap { padding-bottom: calc(200px + env(safe-area-inset-bottom, 0px)); }
+body.gps-on .wrap { padding-bottom: calc(var(--gps-h, 200px) + 16px); } /* --gps-h: l'altezza della barra, misurata */
+.gps-testa { display: flex; gap: 6px 10px; align-items: center; }
+.gps-testa .gps-riass { flex: 1 1 auto; min-width: 0; }
+.gps-testa .linkbtn { flex: 0 0 auto; min-height: 40px; padding: 6px 14px; }
+/* «In tasca»: schermata nera sopra tutto, dove un tocco non preme niente; si torna all'app tenendo premuto il cerchio */
+.gps-nero { position: fixed; inset: 0; z-index: 6000; background: #000; color: #8C8C8C; display: grid; justify-items: center; align-content: center; gap: 22px; text-align: center;
+  padding: max(24px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+.gps-nero p { margin: 0; max-width: 30em; font-size: 0.9rem; line-height: 1.45; }
+.gps-nero p:empty { display: none; }
+.gps-nero .gps-nero-riass { color: #A3A3A3; font-weight: 700; }
+.gps-sblocca { position: relative; width: 136px; height: 136px; border-radius: 50%; border: 2px solid #5E5E5E; background: none; color: #A3A3A3; font-weight: 700; cursor: pointer; overflow: hidden;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.gps-sblocca::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #2E2E2E; transform: scale(0); transition: transform 0.15s ease-out; }
+.gps-sblocca.premuto::before { transform: scale(1); transition: transform 1.5s linear; } /* si riempie mentre lo tieni premuto */
+.gps-sblocca span { position: relative; }
+.gps-sblocca:focus-visible { outline: 2px solid #8C8C8C; outline-offset: 4px; }
 .gps-uscita { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; color: var(--muted); font-size: 0.84rem; }
 .gps-uscita .linkbtn.piano { font-size: 0.84rem; }
 path.m-percorso { fill: none; stroke: var(--cap); stroke-width: 3.5; stroke-opacity: 0.9; stroke-linecap: round; stroke-linejoin: round; }
@@ -1360,7 +1376,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono, oppure nel tuo account se accedi (lo vedi solo tu: ogni account legge e scrive soltanto i propri dati); quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
         <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori, i numeri di pioggia e temperatura da cui vengono, se la pioggia è del radar o delle stazioni e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
-        <li><b>Uscita col GPS.</b> Nel diario, «Inizia l'uscita col GPS» registra il percorso e, a ogni «Trovato qui», il punto, la precisione del GPS e il punteggio che l'app dà lì; durante l'uscita la barra in fondo allo schermo dice anche il punteggio dove sei. A «Fine» il modulo del diario prende il giorno dell'uscita e, come luogo, il ritrovamento più centrale (senza ritrovamenti, il punto più centrale del percorso): indichi cosa hai trovato e salvi. Al salvataggio l'app ricalcola, per il giorno e la specie dell'uscita, il punteggio di ogni ritrovamento con i suoi fattori, la quota e il bosco della carta in quel punto, e il punteggio lungo il percorso (al massimo 60 punti, almeno 100 m l'uno dall'altro): così si vede se dove hai trovato funghi il punteggio era più alto che nel resto del bosco, e quale fattore sbaglia. Tocca un ritrovamento sulla mappa per aprirne la scheda. Il percorso si registra solo con l'app aperta: con lo schermo spento il telefono non dà la posizione all'app e, quando la riapri, il tratto mancante resta una linea dritta. «Trovato qui» invece chiede ogni volta la posizione, così i ritrovamenti sono sempre al loro posto. L'uscita in corso resta nel telefono anche se l'app si chiude; salvata, sta nel diario come le altre uscite.</li>
+        <li><b>Uscita col GPS.</b> Nel diario, «Inizia l'uscita col GPS» registra il percorso e, a ogni «Trovato qui», il punto, la precisione del GPS e il punteggio che l'app dà lì; durante l'uscita la barra in fondo allo schermo dice anche il punteggio dove sei. A «Fine» il modulo del diario prende il giorno dell'uscita e, come luogo, il ritrovamento più centrale (senza ritrovamenti, il punto più centrale del percorso): indichi cosa hai trovato e salvi. Al salvataggio l'app ricalcola, per il giorno e la specie dell'uscita, il punteggio di ogni ritrovamento con i suoi fattori, la quota e il bosco della carta in quel punto, e il punteggio lungo il percorso (al massimo 60 punti, almeno 100 m l'uno dall'altro): così si vede se dove hai trovato funghi il punteggio era più alto che nel resto del bosco, e quale fattore sbaglia. Tocca un ritrovamento sulla mappa per aprirne la scheda. Il percorso si registra solo con l'app aperta e lo schermo acceso: con lo schermo spento il telefono non dà la posizione all'app e, quando la riapri, il tratto mancante resta una linea dritta. «Trovato qui» invece chiede ogni volta la posizione, così i ritrovamenti sono sempre al loro posto. Per non perdere il percorso col telefono in tasca, prima di mettercelo premi «In tasca»: lo schermo resta acceso ma diventa nero, e i tocchi non premono niente. Per tornare all'app tieni premuto il cerchio per un secondo e mezzo; dopo 30 secondi senza tocchi lo schermo torna nero da solo, finché non premi «Fine» o «Lascia spegnere lo schermo». Così il telefono consuma più batteria. Se lo schermo si spegne lo stesso, per l'uscita metti il blocco automatico su «Mai» nelle impostazioni del telefono (su iPhone: Schermo e luminosità, Blocco automatico) e poi rimettilo com'era. L'uscita in corso resta nel telefono anche se l'app si chiude; salvata, sta nel diario come le altre uscite.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
         <li><b>Cosa è misurato e cosa no.</b> I dati sono misure o previsioni: pioggia, temperature, umidità e vento delle stazioni, il radar, i modelli meteo, la carta dei boschi e il modello del terreno; il pH del suolo è una stima da carta mondiale. Dei legami tra tempo e funghi pochi sono misurati: il ritardo tra pioggia e pieno sull'Amiata e, nelle faggete tedesche, la temperatura migliore e il fatto che conti anche la pioggia del mese prima (studio non ancora rivisto da altri esperti). Il resto sono stime ragionate: quanto pesa la pioggia del mese prima, la soglia di pioggia e la sua curva, i tempi col caldo e col freddo, l'evaporazione nel bosco, il versante, il ristagno, le buttate precedenti, il peso di umidità e vento.</li>
       </ul>
@@ -1380,13 +1396,19 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
 </div>
 <div class="gps-barra" id="gps-barra" role="region" aria-label="Uscita col GPS" hidden>
   <div class="gps-barra-in">
-    <p class="gps-riass" id="gps-riass"></p>
-    <div class="gps-riga"><p id="gps-stato" role="status"></p><button type="button" class="linkbtn piano" id="gps-annulla" hidden>Annulla l'ultimo</button></div>
+    <div class="gps-testa"><p class="gps-riass" id="gps-riass"></p><button type="button" class="linkbtn" id="gps-tasca">In tasca</button></div>
+    <div class="gps-riga"><p id="gps-stato" role="status"></p><button type="button" class="linkbtn piano" id="gps-annulla" hidden>Annulla l'ultimo</button><button type="button" class="linkbtn piano" id="gps-spegni" hidden>Lascia spegnere lo schermo</button></div>
     <div class="gps-tasti">
       <button type="button" class="gps-trovato" id="gps-trovato">Trovato qui</button>
       <button type="button" class="linkbtn" id="gps-fine">Fine</button>
     </div>
   </div>
+</div>
+<div class="gps-nero" id="gps-nero" role="dialog" aria-modal="true" aria-label="Telefono in tasca" hidden>
+  <p class="gps-nero-riass" id="gps-nero-riass"></p>
+  <button type="button" class="gps-sblocca" id="gps-sblocca"><span id="gps-sblocca-testo">Tieni premuto</span></button>
+  <p id="gps-nero-nota"></p>
+  <p id="gps-nero-stato"></p>
 </div>
 
 <script>/* @preserve
@@ -5239,6 +5261,8 @@ if (typeof module !== "undefined") module.exports = RP;
   var GPS = { passo: 25, impreciso: 100, maxPunti: 3000, maxTrovati: 200, fresca: 15000, vecchia: 120000, campioni: 60 };
   var gps = { u: null, watch: null, ultimo: null, primo: true, quiS: null, errore: "", msg: "", msgFino: 0, annulla: false, tocco: 0, fine: 0, scarta: 0,
     layer: null, linea: null, mQui: null, trov: null, kTrov: "", vista: null, layerVista: null };
+  // «In tasca» (più sotto): schermo acceso, schermata nera, ultimo tocco, dito sul cerchio
+  var tasca = { lock: null, chiede: false, no: false, nero: false, tocco: 0, giro: null, premuto: null, prima: null, ingoia: 0, colore: null };
   var fmtHM = null;
   try { fmtHM = new Intl.DateTimeFormat("it-IT", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome" }); } catch (e) {}
   function oraIt(iso) { var d = new Date(iso); return fmtHM ? fmtHM.format(d) : String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
@@ -5329,8 +5353,8 @@ if (typeof module !== "undefined") module.exports = RP;
     aggiornaLuogoDiario();
   }
   function gpsChiudi(quando, sposta) {
-    var u = gps.u; gpsFerma();
-    u.stato = "finita"; u.fine = quando; u.centro = gpsCentro(u);
+    var u = gps.u; gpsFerma(); tascaFine();
+    u.stato = "finita"; u.fine = quando; u.centro = gpsCentro(u); u.tasca = false;
     gps.msg = ""; gps.errore = ""; gps.annulla = false; gps.ultimo = null; gps.quiS = null; gps.fine = 0;
     gpsSalva(); gpsNelModulo(sposta); gpsRender();
   }
@@ -5391,7 +5415,8 @@ if (typeof module !== "undefined") module.exports = RP;
     document.getElementById("gps-barra").hidden = !corso;
     document.body.classList.toggle("gps-on", corso);
     if (corso) {
-      document.getElementById("gps-riass").textContent = "Uscita dalle " + oraIt(u.inizio) + " · " + testoKm(u.km) + " · " + testoTrovati(u.trovati.length) + " · " + nomeSpDiario(specieGps());
+      var riass = "Uscita dalle " + oraIt(u.inizio) + " · " + testoKm(u.km) + " · " + testoTrovati(u.trovati.length) + " · " + nomeSpDiario(specieGps());
+      document.getElementById("gps-riass").textContent = riass;
       var st = (gps.msg && gps.msgFino > ora ? gps.msg : "") || gps.errore;
       if (!st && !gps.ultimo) st = "Cerco il GPS…";
       else if (!st) {
@@ -5403,14 +5428,24 @@ if (typeof module !== "undefined") module.exports = RP;
       document.getElementById("gps-annulla").hidden = !gps.annulla || !u.trovati.length;
       var bf = document.getElementById("gps-fine"), cf = gps.fine > ora;
       bf.textContent = cf ? "Conferma la fine" : "Fine"; bf.classList.toggle("conf", cf);
+      document.getElementById("gps-spegni").hidden = !u.tasca;
+      if (tasca.nero) {
+        document.getElementById("gps-nero-riass").textContent = riass;
+        document.getElementById("gps-nero-stato").textContent = st;
+        document.getElementById("gps-nero-nota").textContent = tasca.no
+          ? "Questo telefono non lascia all'app tenere acceso lo schermo: per l'uscita metti il blocco automatico su «Mai» nelle impostazioni (su iPhone: Schermo e luminosità, Blocco automatico), poi rimettilo com'era. Per tornare all'app tieni premuto il cerchio."
+          : "Il percorso continua anche in tasca. Per tornare all'app tieni premuto il cerchio.";
+      }
+      document.documentElement.style.setProperty("--gps-h", document.getElementById("gps-barra").offsetHeight + "px");
     }
+    else if (tasca.nero || tasca.giro || tasca.lock) tascaFine();
     document.getElementById("gps").hidden = !diario.arch || !navigator.geolocation;
     document.getElementById("gps-inizia").hidden = !!u;
     var bs = document.getElementById("gps-scarta"), cs = gps.scarta > ora;
     bs.hidden = !finita; bs.textContent = cs ? "Conferma: scarta" : "Scarta l'uscita col GPS"; bs.classList.toggle("conf", cs);
     var tx = document.getElementById("gps-testo"), cosa = u ? testoKm(u.km) + ", " + testoTrovati(u.trovati.length) : "";
-    if (!u) tx.textContent = "Nel bosco: l'app segna il percorso e, ogni volta che premi «Trovato qui», il punto e il punteggio che dava lì, per vedere dove il modello sbaglia. Il percorso si registra mentre l'app è aperta. I punteggi sono per la specie scelta qui sotto.";
-    else if (corso) tx.textContent = "Uscita col GPS in corso dalle " + oraIt(u.inizio) + ": " + cosa + ". «Trovato qui» e «Fine» sono in fondo allo schermo.";
+    if (!u) tx.textContent = "Nel bosco: l'app segna il percorso e, ogni volta che premi «Trovato qui», il punto e il punteggio che dava lì, per vedere dove il modello sbaglia. Il percorso si registra mentre l'app è aperta: con «In tasca» lo schermo resta acceso ma nero, così continua anche col telefono in tasca. I punteggi sono per la specie scelta qui sotto.";
+    else if (corso) tx.textContent = "Uscita col GPS in corso dalle " + oraIt(u.inizio) + ": " + cosa + ". «Trovato qui», «In tasca» e «Fine» sono in fondo allo schermo.";
     else tx.textContent = "Uscita col GPS " + (giornoDi(u.inizio) !== isoOf(oggiMs()) ? "del " + fmtShort.format(parseISO(giornoDi(u.inizio))) + " " : "") + "dalle " + oraIt(u.inizio) + (u.fine ? " alle " + oraIt(u.fine) : "") + ": " + cosa +
       ". Il modulo qui sotto ha già il giorno e il luogo dell'uscita: indica cosa hai trovato e premi «Salva l'uscita», che salva anche percorso e ritrovamenti.";
     gpsDisegna();
@@ -5420,13 +5455,21 @@ if (typeof module !== "undefined") module.exports = RP;
     try { u = JSON.parse(localStorage.getItem(LS_GPS) || "null"); } catch (e) {}
     gps.u = gpsValida(u) ? u : null;
     if (u && !gps.u) gpsSalva(); // dati rovinati: si tolgono
-    if (gps.u && gps.u.stato === "corso") { if (gpsVecchia(gps.u)) gpsChiudi(gps.u.agg || gps.u.inizio, false); else gpsAvvia(); }
+    if (gps.u && gps.u.stato === "corso") {
+      if (gpsVecchia(gps.u)) gpsChiudi(gps.u.agg || gps.u.inizio, false);
+      else { gpsAvvia(); if (gps.u.tasca) { tascaGiro(); tieniAcceso(); } } // «In tasca» resta: la schermata nera torna dopo 30 secondi senza tocchi
+    }
     else if (gps.u) gpsNelModulo(false);
     gpsRender();
   }
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState !== "visible" || !gps.u || gps.u.stato !== "corso") return;
-    if (gpsVecchia(gps.u)) gpsChiudi(gps.u.agg || gps.u.inizio, false); else gpsAvvia(); // al ritorno il browser può aver fermato il GPS
+    if (document.visibilityState !== "visible") { tascaMolla(false); return; }
+    if (!gps.u || gps.u.stato !== "corso") return;
+    if (gpsVecchia(gps.u)) gpsChiudi(gps.u.agg || gps.u.inizio, false);
+    else { // al ritorno il browser può aver fermato il GPS e tolto lo schermo acceso
+      gpsAvvia();
+      if (gps.u.tasca) { tasca.tocco = Date.now(); tieniAcceso(); }
+    }
   });
   document.getElementById("gps-inizia").addEventListener("click", function () {
     var m = document.getElementById("gps-msg");
@@ -5474,6 +5517,136 @@ if (typeof module !== "undefined") module.exports = RP;
     document.getElementById("gps-msg").textContent = "Uscita col GPS scartata.";
   });
   document.getElementById("d-specie").addEventListener("change", function () { if (gps.u && gps.u.stato === "corso") { gpsQui(); gpsRender(); } });
+
+  // ---------- «In tasca»: schermo acceso, nero e con i tasti bloccati, perché il percorso continui col telefono in tasca ----------
+  // Con lo schermo spento il telefono non dà la posizione all'app: «In tasca» chiede al browser di tenerlo acceso (Screen Wake
+  // Lock) e copre la pagina con una schermata nera dove un tocco non preme niente. Si torna all'app tenendo premuto il cerchio;
+  // dopo 30 secondi senza tocchi la schermata torna da sola, finché non premi «Fine» o «Lascia spegnere lo schermo». Il browser
+  // toglie lo schermo acceso quando l'app va in secondo piano: al ritorno lo si richiede. La scelta resta nell'uscita in corso.
+  // tieni: ms da tenere premuto il cerchio; nero: ms senza tocchi prima che la schermata torni; sposta: px che il dito può muoversi
+  var TASCA = { tieni: 1500, nero: 30000, sposta: 24 };
+  var sblocca = document.getElementById("gps-sblocca"), sbloccaTesto = document.getElementById("gps-sblocca-testo"), schermoNero = document.getElementById("gps-nero");
+  function tascaOn() { return !!gps.u && gps.u.stato === "corso" && !!gps.u.tasca; }
+  function lascia(l) { try { var p = l && l.release(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+  function tieniAcceso() {
+    if (!tascaOn() || tasca.lock || tasca.chiede || document.visibilityState !== "visible") return;
+    if (!navigator.wakeLock || typeof navigator.wakeLock.request !== "function") { if (!tasca.no) { tasca.no = true; gpsRender(); } return; }
+    var no = function () { tasca.chiede = false; tasca.no = true; gpsRender(); };
+    tasca.chiede = true;
+    try {
+      navigator.wakeLock.request("screen").then(function (l) {
+        tasca.chiede = false;
+        if (!tascaOn()) { lascia(l); return; }
+        tasca.lock = l; tasca.no = false;
+        l.addEventListener("release", function () { if (tasca.lock === l) tasca.lock = null; });
+        gpsRender();
+      }, no);
+    } catch (e) { no(); }
+  }
+  // la barra del telefono, dove l'app la colora, diventa nera con la schermata
+  function coloreTema(nero) {
+    var m = document.querySelector('meta[name="theme-color"]'); if (!m) return;
+    if (nero) { if (tasca.colore == null) tasca.colore = m.getAttribute("content"); m.setAttribute("content", "#000000"); }
+    else if (tasca.colore != null) { m.setAttribute("content", tasca.colore); tasca.colore = null; }
+  }
+  function tascaNero(si) {
+    if (tasca.nero === si) return;
+    var fuori = [document.querySelector(".wrap"), document.getElementById("gps-barra")];
+    tascaMolla(false);
+    tasca.nero = si;
+    if (si) {
+      tasca.prima = document.activeElement;
+      fuori.forEach(function (x) { if (x) x.setAttribute("inert", ""); }); // la pagina sotto non si tocca e non prende il fuoco
+      schermoNero.hidden = false; coloreTema(true); gpsRender();
+      try { sblocca.focus({ preventScroll: true }); } catch (e) {}
+    } else {
+      fuori.forEach(function (x) { if (x) x.removeAttribute("inert"); });
+      schermoNero.hidden = true; coloreTema(false);
+      tasca.tocco = Date.now();
+      var p = tasca.prima; tasca.prima = null;
+      if (p && p !== document.body && p.focus && document.body.contains(p)) { try { p.focus({ preventScroll: true }); } catch (e) {} }
+    }
+  }
+  function tascaGiro() {
+    if (tasca.giro) return;
+    tasca.tocco = Date.now();
+    tasca.giro = setInterval(function () {
+      if (!tascaOn()) { tascaFine(); return; }
+      if (document.visibilityState !== "visible") return;
+      if (!tasca.lock && !tasca.no) tieniAcceso();
+      if (!tasca.nero && Date.now() - tasca.tocco > TASCA.nero) tascaNero(true);
+    }, 2000);
+  }
+  function tascaFine() {
+    clearInterval(tasca.giro); tasca.giro = null;
+    var l = tasca.lock; tasca.lock = null; lascia(l);
+    tasca.no = false; tascaNero(false);
+  }
+  // si torna all'app tenendo premuto il cerchio per un secondo e mezzo, con un dito solo e senza spostarlo: in tasca non capita per caso.
+  // La schermata sparisce quando il dito si alza, così il tocco non arriva a quello che c'è sotto
+  function tascaPremi(id, x, y) {
+    if (tasca.premuto) { if (!tasca.premuto.fatto) tascaMolla(false); return; } // un secondo dito annulla
+    var p = { id: id, x: x, y: y, fatto: false, t: 0 };
+    p.t = setTimeout(function () {
+      if (tasca.premuto !== p) return;
+      p.fatto = true; sbloccaTesto.textContent = "Lascia pure";
+      try { if (navigator.vibrate) navigator.vibrate(30); } catch (e) {}
+    }, TASCA.tieni);
+    tasca.premuto = p;
+    sblocca.classList.add("premuto");
+  }
+  function tascaMolla(apri) {
+    var p = tasca.premuto; if (!p) return;
+    clearTimeout(p.t); tasca.premuto = null;
+    sblocca.classList.remove("premuto"); sbloccaTesto.textContent = "Tieni premuto";
+    if (apri && p.fatto) { tasca.ingoia = Date.now() + 700; tascaNero(false); }
+  }
+  sblocca.addEventListener("pointerdown", function (e) {
+    if (!tasca.nero || !e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
+    tascaPremi(e.pointerId, e.clientX, e.clientY);
+  });
+  schermoNero.addEventListener("pointerdown", function (e) { var p = tasca.premuto; if (p && !p.fatto && e.pointerId !== p.id) tascaMolla(false); });
+  window.addEventListener("pointermove", function (e) {
+    var p = tasca.premuto; if (!p || p.fatto || e.pointerId !== p.id) return;
+    if (Math.abs(e.clientX - p.x) > TASCA.sposta || Math.abs(e.clientY - p.y) > TASCA.sposta) tascaMolla(false);
+  }, true);
+  ["pointerup", "pointercancel"].forEach(function (t) {
+    window.addEventListener(t, function (e) { var p = tasca.premuto; if (p && e.pointerId === p.id) tascaMolla(true); }, true);
+  });
+  sblocca.addEventListener("pointerleave", function (e) { var p = tasca.premuto; if (p && !p.fatto && e.pointerId === p.id) tascaMolla(false); });
+  sblocca.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    if (!e.repeat && tasca.nero) tascaPremi("tasto", 0, 0);
+  });
+  sblocca.addEventListener("keyup", function (e) { var p = tasca.premuto; if ((e.key === "Enter" || e.key === " ") && p && p.id === "tasto") tascaMolla(true); });
+  sblocca.addEventListener("blur", function () { var p = tasca.premuto; if (p && p.id === "tasto") tascaMolla(false); });
+  // sulla schermata nera niente menu, selezione, scorrimento o clic
+  schermoNero.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  ["touchstart", "touchmove", "touchend"].forEach(function (t) { schermoNero.addEventListener(t, function (e) { if (e.cancelable) e.preventDefault(); }, { passive: false }); });
+  // il clic che il browser manda quando il dito si alza dal cerchio va alla pagina (al body, perché la schermata non c'è più):
+  // si ignora quello, non un tocco vero su un tasto subito dopo
+  window.addEventListener("click", function (e) {
+    var t = e.target;
+    if (Date.now() > tasca.ingoia || !(t === document.body || t === document.documentElement || (t && t.closest && t.closest("#gps-nero")))) return;
+    tasca.ingoia = 0; e.preventDefault(); e.stopPropagation();
+  }, true);
+  document.addEventListener("keydown", function (e) { if (tasca.nero && e.key === "Tab") { e.preventDefault(); sblocca.focus(); } });
+  // i tocchi nell'app rimandano la schermata nera; il permesso di tenere acceso lo schermo, se serve un gesto, si richiede al tocco
+  ["pointerdown", "keydown", "wheel", "scroll"].forEach(function (t) {
+    document.addEventListener(t, function () { if (!tasca.nero) tasca.tocco = Date.now(); }, { capture: true, passive: true });
+  });
+  ["pointerup", "keyup"].forEach(function (t) { document.addEventListener(t, function () { if (tascaOn() && !tasca.lock) tieniAcceso(); }, true); });
+  document.getElementById("gps-tasca").addEventListener("click", function () {
+    var u = gps.u; if (!u || u.stato !== "corso") return;
+    if (!u.tasca) { u.tasca = true; gpsSalva(); }
+    tascaGiro(); tieniAcceso(); tascaNero(true);
+  });
+  document.getElementById("gps-spegni").addEventListener("click", function () {
+    var u = gps.u; if (!u || u.stato !== "corso") return;
+    u.tasca = false; gpsSalva(); tascaFine();
+    gpsStato("Lo schermo si spegne di nuovo da solo, e con lo schermo spento il percorso si ferma. «In tasca» lo tiene di nuovo acceso.");
+  });
 
   // percorso come polilinea di Google (precisione 1e-5): l'inverso di decodificaLinea
   function codificaLinea(pts) {

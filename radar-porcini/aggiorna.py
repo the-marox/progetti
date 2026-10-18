@@ -994,6 +994,11 @@ def valuta(risultati, prima, oggi):
     return segnalati, nuovi
 
 
+def notizia(r, g):
+    """Un posto che diventa buono o ottimo in un giorno, come lo confrontano la mail dei posti e la newsletter."""
+    return "%s %s %s" % (r["nome"], g["data"], g["nome"])
+
+
 def oggetto_mail(nuovi):
     r0, g0 = max(nuovi, key=lambda x: x[1]["score"])
     altri = len({x[0]["nome"] for x in nuovi}) - 1
@@ -1029,7 +1034,7 @@ def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://
             righe.append("%s (%s%s m, %s): %s." % (r["nome"], (r["comune"].replace(" (", ", ").rstrip(")") + ", ") if r["comune"] else "",
                                                    int(round(r["quota"] or 0)), r["nomeSpecie"],
                                                    "; ".join("%s %s (%d)" % (g["nome"].lower(), giorno_it(g["data"]), g["score"]) for g in buoni)))
-    out["nuovi"] = ["%s %s %s" % (r["nome"], g["data"], g["nome"]) for r, g in nuovi]
+    out["nuovi"] = [notizia(r, g) for r, g in nuovi]
     if nuovi:
         out["invia"] = True
         out["oggetto"] = oggetto_mail(nuovi)
@@ -1233,6 +1238,9 @@ def mail(origine, cartella_stato, sito):
         posta.chiudi()
         # niente oggetto nel registro: in un repository pubblico lo legge chiunque, e contiene il nome di un posto
         print("mail inviata")
+        # la newsletter, che gira dopo, legge qui che questo indirizzo ha gia' avuto queste notizie
+        a["inviata"] = dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        scrivi(a, origine)
     else:
         print("nessun giorno nuovo da segnalare: nessuna mail")
     os.makedirs(cartella_stato, exist_ok=True)
@@ -1240,6 +1248,27 @@ def mail(origine, cartella_stato, sito):
 
 
 MAX_NEWSLETTER = 300  # mail al giorno al massimo (Gmail ne permette circa 500): le altre partono il giorno dopo
+
+
+def indirizzo(a):
+    """Un indirizzo come lo riconosce Gmail: senza maiuscole e, per gli indirizzi Gmail, senza punti e senza quello che segue un «+»."""
+    loc, _, dom = (a or "").strip().lower().partition("@")
+    if dom in ("gmail.com", "googlemail.com"):
+        loc, dom = loc.split("+", 1)[0].replace(".", ""), "gmail.com"
+    return loc + "@" + dom if loc and dom else ""
+
+
+def notizie_mail_posti(cartella_stato, oggi):
+    """Le notizie che la mail del segreto POSTI ha gia' portato oggi all'indirizzo GMAIL_USER. Il flusso lascia avvisi.json
+    accanto alla cartella dello stato (non nello stato: ha i nomi dei posti, e lo stato finisce nella cache)."""
+    f = os.path.join(os.path.dirname(os.path.abspath(cartella_stato)), "avvisi.json")
+    try:
+        a = json.load(open(f, encoding="utf-8"))
+    except Exception:
+        return set()
+    if not str(a.get("inviata") or "").startswith(oggi):
+        return set()
+    return set(a.get("nuovi") or [])
 
 
 def iscritti_newsletter():
@@ -1286,8 +1315,11 @@ def newsletter(pagina, cartella_stato, sito):
     con_posti = [x for x in iscritti if x["posti"]]
     stato, risultati = punteggi_pagina(pagina, [x["posti"] for x in con_posti]) if con_posti else (None, [])
     oggi = dt.datetime.now(UTC).date().isoformat()
-    dopo, inviate, errori, rimandate, posta = {}, 0, 0, 0, None
+    dopo, inviate, errori, rimandate, coperte, posta = {}, 0, 0, 0, 0, None
     attivi = {x["uid"] for x in iscritti}
+    # chi riceve anche la mail del segreto POSTI (l'indirizzo GMAIL_USER) non ha due mail uguali: se quella e' partita oggi
+    # e la newsletter non ha notizie in piu', per lui la newsletter non parte
+    gia, proprietario = notizie_mail_posti(cartella_stato, oggi), indirizzo(os.environ.get("GMAIL_USER"))
     os.makedirs(cartella_stato, exist_ok=True)
 
     def salva():
@@ -1305,6 +1337,10 @@ def newsletter(pagina, cartella_stato, sito):
                 continue
             segnalati, nuovi = valuta(ris, vecchi, oggi)
             if not nuovi:
+                dopo[x["uid"]] = {"segnalati": segnalati}
+                continue
+            if gia and proprietario and indirizzo(x["email"]) == proprietario and {notizia(r, g) for r, g in nuovi} <= gia:
+                coperte += 1
                 dopo[x["uid"]] = {"segnalati": segnalati}
                 continue
             if inviate >= MAX_NEWSLETTER:
@@ -1329,8 +1365,9 @@ def newsletter(pagina, cartella_stato, sito):
         if posta:
             posta.chiudi()
     salva()
-    r = "%d iscritti con l'email confermata (%d con posti), %d in attesa di conferma, %d mail inviate%s%s" % (
-        len(iscritti), len(con_posti), in_attesa, inviate, ", %d non partite" % errori if errori else "", ", %d rimandate a domani" % rimandate if rimandate else "")
+    r = "%d iscritti con l'email confermata (%d con posti), %d in attesa di conferma, %d mail inviate%s%s%s" % (
+        len(iscritti), len(con_posti), in_attesa, inviate, ", %d non partite" % errori if errori else "", ", %d rimandate a domani" % rimandate if rimandate else "",
+        ", %d non mandate perché le stesse notizie erano già nella mail dei posti" % coperte if coperte else "")
     print(r)
     return r, errori
 

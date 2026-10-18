@@ -177,6 +177,11 @@ except ImportError:  # senza pygrib si aggiornano comunque misure, archivio e ra
 
 BASE = "https://opendata.dwd.de/weather/nwp/icon-eu/grib"
 EC = "https://data.ecmwf.int/forecasts"
+# il portale ECMWF accetta al massimo 750 connessioni insieme, per tutti, e quando e' pieno rifiuta le nuove (succede
+# nelle ore in cui escono le corse): gli stessi file sono copiati su Google Cloud e AWS, che il Centro europeo indica
+# per quando il portale non risponde
+EC_COPIE = ("https://storage.googleapis.com/ecmwf-open-data", "https://ecmwf-forecasts.s3.eu-central-1.amazonaws.com")
+ec_conto = {}  # in questo giro: scaricamenti non riusciti per fonte, e file presi dalle copie
 PASSO = 0.0625
 J0, J1, I0, I1 = 203, 241, 530, 575  # griglia ICON-EU: lat 42,1875-44,5625, lon 9,625-12,4375
 LAT0, LON0, NLAT, NLON = 29.5 + J0 * PASSO, -23.5 + I0 * PASSO, J1 - J0 + 1, I1 - I0 + 1
@@ -275,8 +280,22 @@ def icon_giorni(giorni, rif):
     return {"run": run, "quota": F[("hsurf", 0)], "giorni": out, "resto": resto}
 
 
-def ec_url(run, step, ext):
-    return f"{EC}/{run:%Y%m%d}/{run:%H}z/ifs/0p25/oper/{run:%Y%m%d%H}0000-{step}h-oper-fc.{ext}"
+def ec_file(run, step, ext):
+    return f"{run:%Y%m%d}/{run:%H}z/ifs/0p25/oper/{run:%Y%m%d%H}0000-{step}h-oper-fc.{ext}"
+
+
+def ec_scarica(percorso, out=None, head=False, intervallo=None):
+    """Un file dei dati aperti ECMWF dal portale o, se non lo da', dalle copie. Una fonte che in questo giro non ha dato
+    3 file si prova per ultima (le richieste head non contano: per le corse non ancora uscite e' normale)."""
+    for f in sorted((EC,) + EC_COPIE, key=lambda f: ec_conto.get(f, 0) >= 3):
+        r = curl(f + "/" + percorso, out, head=head, intervallo=intervallo)
+        if r:
+            if f != EC and not head:
+                ec_conto["copie"] = ec_conto.get("copie", 0) + 1
+            return r
+        if not head:
+            ec_conto[f] = ec_conto.get(f, 0) + 1
+    return False
 
 
 def ec_attorno(h):  # passi ECMWF che racchiudono h ore dall'inizio della corsa, e peso
@@ -290,7 +309,7 @@ def ec_attorno(h):  # passi ECMWF che racchiudono h ore dall'inizio della corsa,
 
 def ec_indice(job):
     run, step = job
-    txt = curl(ec_url(run, step, "index"))
+    txt = ec_scarica(ec_file(run, step, "index"))
     if not txt:
         raise RuntimeError("indice ECMWF mancante al passo %d" % step)
     idx = {}
@@ -319,7 +338,7 @@ def ec_campo(job):
     if time.time() - INIZIO > 420:
         raise RuntimeError("tempo scaduto durante lo scaricamento delle previsioni ECMWF")
     f = os.path.join(TMP, "ec_%s_%d.grib2" % (param, step))
-    if not curl(ec_url(run, step, "grib2"), f, intervallo="%d-%d" % (off, off + lun - 1)):
+    if not ec_scarica(ec_file(run, step, "grib2"), f, intervallo="%d-%d" % (off, off + lun - 1)):
         raise RuntimeError("download ECMWF non riuscito: %s al passo %d" % (param, step))
     m = pygrib.fromstring(open(f, "rb").read())
     os.remove(f)
@@ -357,8 +376,8 @@ def ec_servono(run, giorni):
 
 def ecmwf_giorni(giorni):
     """Giorni dal modello IFS del Centro europeo (dati aperti a 0,25 gradi), sulle sue celle; quota della sua orografia.
-    La corsa piu' recente si usa solo se ha l'indice di tutti i passi che servono: mentre la pubblicano, o se un indice non
-    arriva, si usa quella di 12 ore prima (il giro delle 8:20 UTC capita proprio mentre esce la corsa delle 00)."""
+    La corsa piu' recente si usa solo se arrivano tutti i file che servono, dal portale o dalle copie: se no si usa quella
+    di 12 ore prima (le copie arrivano dopo il portale, e per la corsa appena uscita possono non averli ancora)."""
     adesso = dt.datetime.now(UTC)
     base = adesso.replace(hour=12 if adesso.hour >= 12 else 0, minute=0, second=0, microsecond=0)
     ultimo = finestra_pioggia(giorni[-1])[1]
@@ -367,25 +386,25 @@ def ecmwf_giorni(giorni):
         r = base - dt.timedelta(hours=12 * k)
         h = (ultimo - r).total_seconds() / 3600
         s = next((p for p in EC_PASSI if p >= h), None)
-        if s is None or not curl(ec_url(r, s, "index"), head=True):
+        if s is None or not ec_scarica(ec_file(r, s, "index"), head=True):
             continue
         serve = ec_servono(r, giorni)
         try:
             with cf.ThreadPoolExecutor(8) as ex:
                 idx = dict(ex.map(ec_indice, [(r, p) for p in serve]))
+            jobs = [(r, p, c) + idx[p][c] for p in serve for c in sorted(serve[p]) if c in idx[p]]
+            F = {}
+            with cf.ThreadPoolExecutor(12) as ex:
+                for kk, v in ex.map(ec_campo, jobs):
+                    F[kk] = v
         except RuntimeError as e:
-            saltate.append("corsa %s UTC incompleta: %s" % (r.strftime("%Y-%m-%d %H"), e))
+            saltate.append("corsa %s UTC saltata: %s" % (r.strftime("%Y-%m-%d %H"), e))
             continue
         run = r
         break
     if run is None:
         raise RuntimeError("; ".join(saltate) or "nessuna corsa ECMWF disponibile")
     ore = lambda x: (x - run).total_seconds() / 3600
-    jobs = [(run, s, p) + idx[s][p] for s in serve for p in sorted(serve[s]) if p in idx[s]]
-    F = {}
-    with cf.ThreadPoolExecutor(12) as ex:
-        for k, v in ex.map(ec_campo, jobs):
-            F[k] = v
     zq = F[("z", 0)] / 9.80665
 
     def tp(x):
@@ -417,12 +436,12 @@ def ecmwf_giorni(giorni):
 EP_SOGLIE = (5, 10, 20)  # mm in 24 ore
 
 
-def ep_url(run, fine, ext):
-    return f"{EC}/{run:%Y%m%d}/{run:%H}z/ifs/0p25/enfo/{run:%Y%m%d%H}0000-{fine}h-enfo-ep.{ext}"
+def ep_file(run, fine, ext):
+    return f"{run:%Y%m%d}/{run:%H}z/ifs/0p25/enfo/{run:%Y%m%d%H}0000-{fine}h-enfo-ep.{ext}"
 
 
 def ep_indice(run, fine):
-    txt = curl(ep_url(run, fine, "index"))
+    txt = ec_scarica(ep_file(run, fine, "index"))
     if not txt:
         return None
     idx = {}
@@ -439,7 +458,7 @@ def ep_campo(job):
     if time.time() - INIZIO > 450:
         raise RuntimeError("tempo scaduto durante lo scaricamento delle probabilita' ECMWF")
     f = os.path.join(TMP, "ep_%s_%s.grib2" % (param, step))
-    if not curl(ep_url(run, fine, "grib2"), f, intervallo="%d-%d" % (off, off + lun - 1)):
+    if not ec_scarica(ep_file(run, fine, "grib2"), f, intervallo="%d-%d" % (off, off + lun - 1)):
         raise RuntimeError("download delle probabilita' ECMWF non riuscito: %s %s" % (param, step))
     m = pygrib.fromstring(open(f, "rb").read())
     os.remove(f)
@@ -451,6 +470,7 @@ def ecmwf_probabilita(giorni):
     dell'insieme vanno dalle 12 alle 12 UTC: si usa quella che parte alle 12 del giorno, 4 ore dopo il giorno di pioggia 9-9."""
     adesso = dt.datetime.now(UTC)
     base = adesso.replace(hour=12 if adesso.hour >= 12 else 0, minute=0, second=0, microsecond=0)
+    saltate = []
     for k in range(4):
         run = base - dt.timedelta(hours=12 * k)
         finestre = {}
@@ -474,9 +494,13 @@ def ecmwf_probabilita(giorni):
         if not jobs:
             continue
         F = {}
-        with cf.ThreadPoolExecutor(8) as ex:
-            for kk, v in ex.map(ep_campo, jobs):
-                F[kk] = v
+        try:
+            with cf.ThreadPoolExecutor(8) as ex:
+                for kk, v in ex.map(ep_campo, jobs):
+                    F[kk] = v
+        except RuntimeError as e:
+            saltate.append("corsa %s UTC saltata: %s" % (run.strftime("%Y-%m-%d %H"), e))
+            continue
         out = []
         for D in giorni:
             if D not in finestre:
@@ -493,7 +517,7 @@ def ecmwf_probabilita(giorni):
             return {"corsa": run.strftime("%Y-%m-%dT%H:%MZ"), "soglie": list(EP_SOGLIE), "griglia": EGRIGLIA,
                     "finestra": "24 ore dalle 13 ora solare del giorno (il giorno di pioggia va dalle 9 alle 9)",
                     "unita": "percentuale delle 51 previsioni dell'insieme ECMWF", "giorni": out}
-    raise RuntimeError("probabilita' ECMWF non disponibili")
+    raise RuntimeError("; ".join(saltate) or "probabilita' ECMWF non disponibili")
 
 
 def previsioni(dati="data.json", uscita="previsioni.json"):
@@ -505,6 +529,7 @@ def previsioni(dati="data.json", uscita="previsioni.json"):
     G = (rif + dt.timedelta(hours=1)).date()
     giorni = [G + k * GIORNO for k in range(GIORNI_PREV)]
     note, icon, ecm = [], None, None
+    ec_conto.clear()
     try:
         icon = icon_giorni(giorni, rif)
         note.append("ICON-EU %s UTC" % icon["run"].strftime("%Y-%m-%d %H"))
@@ -534,6 +559,8 @@ def previsioni(dati="data.json", uscita="previsioni.json"):
         note.append("probabilita' ECMWF %s UTC" % prob["corsa"][:13].replace("T", " "))
     except Exception as e:
         note.append("probabilita' non disponibili (%s)" % breve(e, 120))
+    if ec_conto.get("copie"):
+        note.append("%d file ECMWF dalle copie su Google Cloud e AWS (il portale non li dava)" % ec_conto["copie"])
     q = lambda arr, k=1: [int(round(float(v) * k)) for v in np.asarray(arr).ravel()]
     out_giorni = []
     for g in scelti:

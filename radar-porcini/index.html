@@ -1330,7 +1330,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Possibili fungaie.</b> Nel raggio scelto attorno al tuo punto si guardano tutte le celle di circa 220 m della carta dei boschi. Restano quelle con un bosco adatto alla specie (il tipo della cella e quelli nei 500 m attorno, la quota e il suolo, come nella scheda del punto), con pendenza fino a 35° e a meno di 400 m da un sentiero CAI (esclusi quelli segnati come non percorribili); i boschi di tipo non noto restano fuori. L'area si divide in riquadri (circa 20 per lato) e per ognuno si tiene la cella più adatta. Per queste si calcola il punteggio del giorno scelto, lo stesso della scheda del punto, e si mostrano le migliori distanti almeno 1 km l'una dall'altra. La carta dei boschi ha celle di 250 m ed è di fine anni '90: una fungaia vera può essere più piccola, e il bosco può essere cambiato.</li>
         <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono, oppure nel tuo account se accedi (lo vedi solo tu: ogni account legge e scrive soltanto i propri dati); quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
-        <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
+        <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori, la pioggia utile (con la parte che viene dal mese prima) e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
         <li><b>Cosa è misurato e cosa no.</b> I dati sono misure o previsioni: pioggia, temperature, umidità e vento delle stazioni, il radar, i modelli meteo, la carta dei boschi e il modello del terreno; il pH del suolo è una stima da carta mondiale. Dei legami tra tempo e funghi pochi sono misurati: il ritardo tra pioggia e pieno sull'Amiata e, nelle faggete tedesche, la temperatura migliore e il fatto che conti anche la pioggia del mese prima (studio non ancora rivisto da altri esperti). Il resto sono stime ragionate: quanto pesa la pioggia del mese prima, la soglia di pioggia e la sua curva, i tempi col caldo e col freddo, l'evaporazione nel bosco, il versante, il ristagno, le buttate precedenti, il peso di umidità e vento.</li>
       </ul>
@@ -5100,7 +5100,8 @@ if (typeof module !== "undefined") module.exports = RP;
       bosco: h ? (h.scelto != null ? h.scelto : h.centro) : null, specie: spId, esito: diario.esito, note: (document.getElementById("d-note").value || "").trim().slice(0, 200),
       stima: r ? r.score : null, stimaSpecie: r ? r.specie : null, fase: r ? r.fase.id : null, giorniDallaPioggia: r && r.d != null ? Math.round(r.d) : null,
       mmPioggia: r && r.evento ? r.evento.mm : null, acqua: r && r.acqua != null ? Math.round(r.acqua * 100) : null, datiDel: state.data.giorno, salvato: new Date().toISOString(),
-      modello: RP.VERSIONE, fattori: r ? fattoriPuliti(r.fattori) : null };
+      modello: RP.VERSIONE, fattori: r ? fattoriPuliti(r.fattori) : null,
+      mmUtili: r ? numeroPulito(r.mmEff, 2000) : null, mmPrima: r ? numeroPulito(r.extra26, 2000) : null, acquaPrima: r && r.acquaPrima != null ? Math.round(r.acquaPrima * 100) : null };
     btn.disabled = true; msg.textContent = foto.inAttesa.length ? "Preparo le foto…" : "Salvataggio…";
     var daSalvare = fotoDisponibili() ? foto.inAttesa.slice() : [], salvate = [];
     daSalvare.reduce(function (c, f) {
@@ -5126,7 +5127,7 @@ if (typeof module !== "undefined") module.exports = RP;
   // ---------- copia o sposta posti e diario tra le versioni ----------
   function pulito(x, campi) { var o = {}; campi.forEach(function (k) { if (x[k] !== undefined) o[k] = x[k]; }); return o; }
   var CAMPI_POSTO = ["nome", "lat", "lon", "quota", "bosco", "comune", "specie", "creato"];
-  var CAMPI_USCITA = ["data", "lat", "lon", "quota", "comune", "bosco", "specie", "esito", "note", "stima", "stimaSpecie", "fase", "giorniDallaPioggia", "mmPioggia", "acqua", "datiDel", "salvato", "modello", "fattori"];
+  var CAMPI_USCITA = ["data", "lat", "lon", "quota", "comune", "bosco", "specie", "esito", "note", "stima", "stimaSpecie", "fase", "giorniDallaPioggia", "mmPioggia", "acqua", "datiDel", "salvato", "modello", "fattori", "mmUtili", "mmPrima", "acquaPrima"];
   // i fattori del punteggio salvati con l'uscita: solo quelli del modello, come numeri
   var CAMPI_FATTORI = ["pioggia", "tempo", "temperatura", "quota", "stagione", "bosco", "ph", "secco", "aria", "ristagno", "buttate"];
   function fattoriPuliti(f) {
@@ -5136,6 +5137,8 @@ if (typeof module !== "undefined") module.exports = RP;
     return n ? o : null;
   }
   function numeroIn(v, a, b) { v = Number(v); return isFinite(v) && v >= a && v <= b; }
+  // pioggia utile, la sua parte dal mese prima e l'acqua nel suolo prima della pioggia: servono a vedere se il mese prima conta due volte
+  function numeroPulito(v, max) { return v != null && numeroIn(v, 0, max) ? Math.round(Number(v) * 10) / 10 : null; }
   function postoValido(x) { return x && typeof x.nome === "string" && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5); }
   function uscitaValida(x) { return x && /^\d{4}-\d{2}-\d{2}$/.test(String(x.data)) && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5) && numeroIn(x.esito, 0, 3); }
   document.getElementById("sposta-copia").addEventListener("click", function () {
@@ -5171,6 +5174,7 @@ if (typeof module !== "undefined") module.exports = RP;
       var doc = pulito(x, campiU); doc.note = String(doc.note || "").slice(0, 200); doc.comune = String(doc.comune || "").slice(0, 60);
       if (doc.modello !== undefined) doc.modello = String(doc.modello).slice(0, 20);
       if (doc.fattori !== undefined) doc.fattori = fattoriPuliti(doc.fattori);
+      [["mmUtili", 2000], ["mmPrima", 2000], ["acquaPrima", 100]].forEach(function (c) { if (doc[c[0]] !== undefined) doc[c[0]] = numeroPulito(doc[c[0]], c[1]); });
       catena = catena.then(function () { return diario.arch.aggiungi(doc).then(null, function () { errori++; }); });
     });
     return catena.then(function () { return errori; });

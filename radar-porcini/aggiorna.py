@@ -330,21 +330,8 @@ def es(t):  # tensione di vapore saturo (hPa), t in gradi
     return 6.112 * np.exp(17.67 * t / (t + 243.5))
 
 
-def ecmwf_giorni(giorni):
-    """Giorni dal modello IFS del Centro europeo (dati aperti a 0,25 gradi), sulle sue celle; quota della sua orografia."""
-    adesso = dt.datetime.now(UTC)
-    base = adesso.replace(hour=12 if adesso.hour >= 12 else 0, minute=0, second=0, microsecond=0)
-    ultimo = finestra_pioggia(giorni[-1])[1]
-    run = None
-    for k in range(4):
-        r = base - dt.timedelta(hours=12 * k)
-        h = (ultimo - r).total_seconds() / 3600
-        s = next((p for p in EC_PASSI if p >= h), None)
-        if s is not None and curl(ec_url(r, s, "index"), head=True):
-            run = r
-            break
-    if run is None:
-        raise RuntimeError("nessuna corsa ECMWF disponibile")
+def ec_servono(run, giorni):
+    """I passi della corsa che servono per questi giorni, e per ogni passo i campi."""
     ore = lambda x: (x - run).total_seconds() / 3600
     serve = {0: {"z"}}
 
@@ -365,8 +352,35 @@ def ecmwf_giorni(giorni):
             P = 3 if s <= 144 else 6
             if s > 0 and ga <= run + dt.timedelta(hours=s - P / 2) < gb:
                 add(s, "mx2t%d" % P); add(s, "mn2t%d" % P)
-    with cf.ThreadPoolExecutor(8) as ex:
-        idx = dict(ex.map(ec_indice, [(run, s) for s in serve]))
+    return serve
+
+
+def ecmwf_giorni(giorni):
+    """Giorni dal modello IFS del Centro europeo (dati aperti a 0,25 gradi), sulle sue celle; quota della sua orografia.
+    La corsa piu' recente si usa solo se ha l'indice di tutti i passi che servono: mentre la pubblicano, o se un indice non
+    arriva, si usa quella di 12 ore prima (il giro delle 8:20 UTC capita proprio mentre esce la corsa delle 00)."""
+    adesso = dt.datetime.now(UTC)
+    base = adesso.replace(hour=12 if adesso.hour >= 12 else 0, minute=0, second=0, microsecond=0)
+    ultimo = finestra_pioggia(giorni[-1])[1]
+    run, saltate = None, []
+    for k in range(4):
+        r = base - dt.timedelta(hours=12 * k)
+        h = (ultimo - r).total_seconds() / 3600
+        s = next((p for p in EC_PASSI if p >= h), None)
+        if s is None or not curl(ec_url(r, s, "index"), head=True):
+            continue
+        serve = ec_servono(r, giorni)
+        try:
+            with cf.ThreadPoolExecutor(8) as ex:
+                idx = dict(ex.map(ec_indice, [(r, p) for p in serve]))
+        except RuntimeError as e:
+            saltate.append("corsa %s UTC incompleta: %s" % (r.strftime("%Y-%m-%d %H"), e))
+            continue
+        run = r
+        break
+    if run is None:
+        raise RuntimeError("; ".join(saltate) or "nessuna corsa ECMWF disponibile")
+    ore = lambda x: (x - run).total_seconds() / 3600
     jobs = [(run, s, p) + idx[s][p] for s in serve for p in sorted(serve[s]) if p in idx[s]]
     F = {}
     with cf.ThreadPoolExecutor(12) as ex:
@@ -397,7 +411,7 @@ def ecmwf_giorni(giorni):
             tmin = np.min(np.stack(mn), 0) - 273.15 if mn else T.min(0)
             g.update(riassunto(tmin, tmax, U, np.stack([F[("10u", s)] for s in cs]), np.stack([F[("10v", s)] for s in cs])))
         out[D] = g
-    return {"run": run, "quota": zq, "giorni": out}
+    return {"run": run, "quota": zq, "giorni": out, "saltate": saltate}
 
 
 EP_SOGLIE = (5, 10, 20)  # mm in 24 ore
@@ -501,7 +515,7 @@ def previsioni(dati="data.json", uscita="previsioni.json"):
     if mancano:
         try:
             ecm = ecmwf_giorni(mancano)
-            note.append("ECMWF %s UTC" % ecm["run"].strftime("%Y-%m-%d %H"))
+            note.append("ECMWF %s UTC%s" % (ecm["run"].strftime("%Y-%m-%d %H"), " (%s)" % "; ".join(ecm["saltate"]) if ecm["saltate"] else ""))
         except Exception as e:
             note.append("ECMWF non disponibile (%s)" % e)
     scelti = []

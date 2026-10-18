@@ -1322,7 +1322,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>Suolo.</b> Il pH del suolo (media dei primi 15 cm) viene da SoilGrids, una carta mondiale stimata a 250 m. Porcino nero, porcino dei pini e gallinaccio preferiscono terreni acidi, porcino comune, ovolo, colombina e verdone un poco; prugnolo e spugnola terreni calcarei; le altre specie non hanno preferenze. Il peso è leggero (fino a un quarto in meno), perché la carta è solo una stima.</li>
         <li><b>Versante.</b> Il solatio è trattato come 1,5 °C più caldo e si asciuga fino al 40% più in fretta, nel suolo e nell'aria; il bacìo come 1,5 °C più fresco e si asciuga fino al 30% più piano. Così col caldo vince il bacìo, col fresco il solatio. L'esposizione del punto viene dal modello del terreno (media su circa 650 m): solatio se il versante guarda verso sud, bacìo se guarda verso nord, intermedio se guarda a est o a ovest o è quasi in piano. Lo sfondo «Versanti» della mappa la mostra ovunque.</li>
         <li><b>Umidità, vento e nebbie.</b> Per oggi si usa la stazione più vicina e a quota simile, per i giorni coperti dalle previsioni i valori previsti. Umidità media sotto il 75% (e di più sotto il 55%) e vento forte abbassano il punteggio, tanto più quanti più giorni sono passati dalla pioggia. Tramontana, grecale e maestrale sono secchi e asciugano già da 10 km/h; libeccio e scirocco portano aria umida. Notti con umidità massima sopra il 97–98% (nebbia o rugiada forte) rallentano l'asciugatura. In tutto il vento pesa poco, perché sotto la chioma è molto più debole.</li>
-        <li><b>Quota e temperatura.</b> Ogni specie ha una fascia di quota e di temperatura media ideale; gelo e caldo eccessivo abbassano il punteggio. Per il porcino comune la fascia ideale è 11–16 °C di media: lo studio sulle faggete tedesche trova il massimo intorno ai 13 °C e pochissime nascite tra 5 e 10 °C, ma con la media dei 20 giorni prima, mentre qui conta quella del giorno. Le temperature previste sono riportate alla quota della stazione (0,65 °C ogni 100 m) e le minime corrette con quelle misurate, perché nei fondovalle il modello le dà spesso troppo alte.</li>
+        <li><b>Quota e temperatura.</b> Ogni specie ha una fascia di quota e di temperatura media ideale; la temperatura è la media dei 20 giorni fino a quello scelto, misurati o previsti. Gelo e caldo eccessivo abbassano il punteggio, e il gelo si guarda giorno per giorno con la minima. Per il porcino comune la fascia ideale è 11–16 °C di media: lo studio sulle faggete tedesche, con la stessa media dei 20 giorni, trova il massimo intorno ai 13 °C e pochissime nascite tra 5 e 10 °C. Le temperature previste sono riportate alla quota della stazione (0,65 °C ogni 100 m) e le minime corrette con quelle misurate, perché nei fondovalle il modello le dà spesso troppo alte.</li>
         <li><b>Il tuo punto.</b> La pioggia passata viene dal radar; se manca, è la media pesata delle 2–4 stazioni più vicine entro 25 km. La temperatura viene dai termometri vicini riportata alla quota del punto, le previsioni sono quelle della cella del modello. Quota, pendenza ed esposizione vengono da un modello del terreno con pixel di circa 220 m (Terrain Tiles, da SRTM ed EU-DEM). Il tasto «Dove sono» usa la posizione del telefono: dentro Claude il browser può non permetterlo, nella versione installata funziona.</li>
         <li><b>Parchi e riserve.</b> I confini di parchi nazionali, regionali e provinciali e delle riserve naturali regionali vengono dalla Regione Toscana, semplificati a circa 60 m: vicino al confine controlla sulla cartografia del parco.</li>
         <li><b>Regole del giorno.</b> Per il giorno scelto la scheda del punto dà l'orario di raccolta (da un'ora prima dell'alba a un'ora dopo il tramonto, calcolati per il punto), i limiti del comune presi dall'elenco della Regione e i giorni di caccia al cinghiale in braccata del calendario venatorio regionale.</li>
@@ -1684,7 +1684,7 @@ var RP = (function () {
 
   // ---------- specie ----------
   // stagione: peso per mese (metà mese, da gennaio). quota: [q0, q1, q2, q3, sotto q0, sopra q3].
-  // temp: media giornaliera [t0, t1, t2, t3, sotto t0, a t3]. gelo: fattore con minima ≤0, ≤2, ≤4 °C.
+  // temp: media dei 20 giorni fino a quello [t0, t1, t2, t3, sotto t0, a t3]. gelo: fattore con la minima del giorno ≤0, ≤2, ≤4 °C.
   // vel: [base, riferimento] della velocità di sviluppo. tempo: giorni equivalenti [inizio, pieno da, pieno fino a, calo, fine].
   // pioggia: [mm minimi, scala]. secco: sensibilità all'asciugatura. ant: peso della pioggia dei 30 giorni prima.
   // suolo: "acido", "subacido" (preferenza leggera) o "calcareo"; senza: indifferente.
@@ -2028,6 +2028,16 @@ var RP = (function () {
     return 0.05;
   }
 
+  // temperatura media dei 20 giorni fino a quello, misurati o previsti: le soglie vengono dallo studio sulle faggete
+  // tedesche, che usa questa media. Con meno di 10 giorni noti resta quella del giorno
+  var MEDIA_T = 20;
+  function tMedia20(S, k) {
+    var c = S._t20 || (S._t20 = {});
+    if (c[k] !== undefined) return c[k];
+    var s = 0, n = 0;
+    for (var i = Math.max(0, k - MEDIA_T + 1); i <= k; i++) if (S.T[i] != null) { s += S.T[i]; n++; }
+    return (c[k] = n >= MEDIA_T / 2 ? s / n : S.T[k]);
+  }
   function fattoreTemperatura(tm, tmin, sp) {
     var T = sp.temp, f;
     if (tm == null) f = 0.9;
@@ -2571,7 +2581,7 @@ var RP = (function () {
         if (d >= K[1]) p1 = t;
       }
       if (p1 == null) return { p0: p0, p1: null, forza: 0 };
-      var k = clamp(p1 + J0, 0, S.T.length - 1), tm = S.T[k] == null ? null : S.T[k] + dT, tmin = S.Tn[k] == null ? null : S.Tn[k] + dT;
+      var k = clamp(p1 + J0, 0, S.T.length - 1), t20 = tMedia20(S, k), tm = t20 == null ? null : t20 + dT, tmin = S.Tn[k] == null ? null : S.Tn[k] + dT;
       var wt = acquaAl(wb, p1);
       var forza = fattorePioggia(pioggiaEff(e, sp, wb).mmEff, sp) * fattoreTemperatura(tm, tmin, sp) * fattoreStagione(s.ref == null ? null : s.ref + p1 * GIORNO, sp) *
         (wt != null ? fattoreSeccoW(wt, molt) : 1) * fattoreRistagno(giorniZuppo(wb, e, p1));
@@ -2592,7 +2602,7 @@ var RP = (function () {
   function stima1(s, t, sp, V) {
     var dT = V ? V.dT : 0, molt = (V ? V.secco : 1) * sp.secco;
     var S = s.serie, k = clamp(t + J0, 0, S.T.length - 1);
-    var tm = S.T[k] == null ? null : S.T[k] + dT, tmin = S.Tn[k] == null ? null : S.Tn[k] + dT;
+    var t20 = tMedia20(S, k), tm = t20 == null ? null : t20 + dT, tmin = S.Tn[k] == null ? null : S.Tn[k] + dT;
     var fT = fattoreTemperatura(tm, tmin, sp), fq = fattoreQuota(s.quota, sp);
     var fS = fattoreStagione(s.ref == null ? null : s.ref + t * GIORNO, sp), fH = fattoreBosco(s, sp), fPH = fattorePH(s.habitat && s.habitat.ph, sp);
     var last = t >= 0 && t <= H ? S.L[t + J0] : -(s.ggSecchi || 0);
@@ -4357,8 +4367,8 @@ if (typeof module !== "undefined") module.exports = RP;
     riga("Pioggia utile: " + nf(r.mmEff) + " mm" + tipo + (e ? " (" + descrEvento(r) + scorsa + suolo + prima + ")" : ""), "× " + nf(F.pioggia, 2));
     var sv = r.vel >= 1.05 ? ", sviluppo più rapido per il caldo" : r.vel <= 0.95 ? ", sviluppo più lento per il fresco" : "";
     riga("Giorni dalla pioggia: " + (r.d == null ? "–" : nf(Math.max(0, r.d))) + " (" + r.fase.nome.toLowerCase() + sv + ")", "× " + nf(F.tempo, 2));
-    var tTxt = r.tm == null ? "non disponibile" : nf(r.tm, 1) + " °C medi" + (r.prevista ? ", prevista" : s.tStimata ? ", stimata" : "") + (r.tmin != null ? ", minima " + nf(r.tmin, 1) + " °C" : "") + (versNome ? ", corretta per il versante (" + versNome + ")" : "");
-    riga("Temperatura quel giorno: " + tTxt, "× " + nf(F.temperatura, 2));
+    var tTxt = r.tm == null ? "non disponibile" : nf(r.tm, 1) + " °C di media nei 20 giorni fino a quello" + (r.prevista ? ", in parte prevista" : s.tStimata ? ", stimata" : "") + (r.tmin != null ? "; minima del giorno " + nf(r.tmin, 1) + " °C" : "") + (versNome ? "; corrette per il versante (" + versNome + ")" : "");
+    riga("Temperatura: " + tTxt, "× " + nf(F.temperatura, 2));
     riga("Quota: " + nf(s.quota) + " m", "× " + nf(F.quota, 2));
     riga("Periodo dell'anno: " + testoStagione(F.stagione)[0].toLowerCase(), "× " + nf(F.stagione, 2));
     var h = s.habitat, bTxt;

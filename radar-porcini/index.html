@@ -924,6 +924,30 @@ footer { font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
 .diario-sintesi { font-size: 0.92rem; }
 [hidden] { display: none !important; }
 .diario input[type="text"] { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-height: 42px; color: var(--ink); width: 100%; }
+/* uscita col GPS: riquadro nel diario, barra in fondo allo schermo durante l'uscita, percorso e ritrovamenti sulla mappa */
+.gps { display: grid; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.gps p { margin: 0; }
+.gps-barra { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500; background: var(--surface); border-top: 2px solid var(--cap); box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.18);
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.gps-barra-in { max-width: 720px; margin: 0 auto; display: grid; gap: 6px; }
+.gps-barra p { margin: 0; font-size: 0.86rem; color: var(--muted); }
+.gps-barra .gps-riass { color: var(--ink); font-weight: 700; }
+.gps-barra p:empty { display: none; }
+.gps-riga { display: flex; flex-wrap: wrap; gap: 0 12px; align-items: baseline; }
+.gps-riga p { flex: 1 1 180px; }
+.gps-riga .linkbtn.piano { font-size: 0.86rem; min-height: 32px; }
+.gps-tasti { display: flex; gap: 8px; align-items: center; }
+.gps-tasti .linkbtn { flex: 0 0 auto; min-height: 48px; }
+.gps-trovato { flex: 1 1 auto; min-height: 58px; border: 0; border-radius: 99px; background: var(--cap); color: var(--surface); font: 800 1.15rem var(--font-display); cursor: pointer; }
+.gps-trovato:disabled { opacity: 0.6; cursor: wait; }
+body.gps-on .wrap { padding-bottom: calc(200px + env(safe-area-inset-bottom, 0px)); }
+.gps-uscita { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; color: var(--muted); font-size: 0.84rem; }
+.gps-uscita .linkbtn.piano { font-size: 0.84rem; }
+path.m-percorso { fill: none; stroke: var(--cap); stroke-width: 3.5; stroke-opacity: 0.9; stroke-linecap: round; stroke-linejoin: round; }
+path.m-trovato { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke-width: 3; cursor: pointer; }
+path.m-trovato.lv0 { fill: var(--s0); } path.m-trovato.lv1 { fill: var(--s1); } path.m-trovato.lv2 { fill: var(--s2); } path.m-trovato.lv3 { fill: var(--s3); } path.m-trovato.lv4 { fill: var(--s4); }
+path.m-qui { fill: var(--rain); fill-opacity: 1; stroke: var(--surface); stroke-width: 3; }
+.legenda .kg { width: 18px; height: 0; border-radius: 0; border: 0; border-top: 3.5px solid var(--cap); vertical-align: middle; }
 
 /* posizione, collegamenti, strati */
 :root { --area: #7B4FA0; }
@@ -1108,7 +1132,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     </div>
     <div id="mappa" role="application" aria-label="Mappa della Toscana con le stazioni CFR"></div>
     <div class="legenda" aria-hidden="true">
-      <span><i class="k4"></i>Ottimo</span><span><i class="k3"></i>Buono</span><span><i class="k2"></i>Discreto</span><span><i class="k1"></i>Scarso</span><span><i class="k0"></i>Quasi nullo</span><span><i class="kp"></i>Il tuo punto</span><span><i class="ka"></i>Parchi e riserve</span><span><i class="ks"></i>Sentieri CAI</span><span><i class="kq"></i>I miei posti</span><span><i class="kf"></i>Possibili fungaie</span>
+      <span><i class="k4"></i>Ottimo</span><span><i class="k3"></i>Buono</span><span><i class="k2"></i>Discreto</span><span><i class="k1"></i>Scarso</span><span><i class="k0"></i>Quasi nullo</span><span><i class="kp"></i>Il tuo punto</span><span><i class="ka"></i>Parchi e riserve</span><span><i class="ks"></i>Sentieri CAI</span><span><i class="kq"></i>I miei posti</span><span><i class="kf"></i>Possibili fungaie</span><span><i class="kg"></i>Uscita col GPS</span>
     </div>
     <p class="note" id="sentieri-msg" hidden></p>
     <div class="leg-boschi" id="leg-boschi" hidden></div>
@@ -1176,7 +1200,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <details class="sposta" id="sposta">
       <summary>Copia o sposta posti e diario</summary>
       <div class="sposta-body">
-        <p class="note">Per portare posti e uscite tra la versione dentro Claude e quella installata sul telefono: copia il testo da una, incollalo nell'altra e premi «Aggiungi». Le foto del diario non vengono copiate. Il testo contiene i tuoi posti: non condividerlo.</p>
+        <p class="note">Per portare posti e uscite tra la versione dentro Claude e quella installata sul telefono: copia il testo da una, incollalo nell'altra e premi «Aggiungi». Le foto del diario e i percorsi delle uscite col GPS non vengono copiati. Il testo contiene i tuoi posti: non condividerlo.</p>
         <div class="row-f"><button class="linkbtn" type="button" id="sposta-copia">Copia i miei dati</button><button class="linkbtn" type="button" id="sposta-aggiungi">Aggiungi dal testo incollato</button></div>
         <textarea id="sposta-testo" rows="4" spellcheck="false" aria-label="Dati da copiare o incollare"></textarea>
         <p class="note" id="sposta-msg" role="status"></p>
@@ -1241,6 +1265,11 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <p class="muted" id="diario-intro">Segna dove sei andato e cosa hai trovato: dalla decima uscita l'app calcola quanto spesso, a ogni punteggio, hai trovato funghi. Le uscite le vedi solo tu, anche se condividi l'app.</p>
     <div class="calc diario">
       <p class="note" id="diario-stato">Il diario si sta caricando…</p>
+      <div class="gps" id="gps" hidden>
+        <p class="note" id="gps-testo"></p>
+        <div class="row-f"><button class="linkbtn" type="button" id="gps-inizia">Inizia l'uscita col GPS</button><button class="linkbtn" type="button" id="gps-scarta" hidden>Scarta l'uscita col GPS</button></div>
+        <p class="note" id="gps-msg" role="status"></p>
+      </div>
       <form id="diario-form" hidden autocomplete="off">
         <label>Giorno<input type="date" id="d-data"></label>
         <label>Specie<select id="d-specie"></select></label>
@@ -1331,6 +1360,7 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
         <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono, oppure nel tuo account se accedi (lo vedi solo tu: ogni account legge e scrive soltanto i propri dati); quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
         <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori, i numeri di pioggia e temperatura da cui vengono, se la pioggia è del radar o delle stazioni e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
+        <li><b>Uscita col GPS.</b> Nel diario, «Inizia l'uscita col GPS» registra il percorso e, a ogni «Trovato qui», il punto, la precisione del GPS e il punteggio che l'app dà lì; durante l'uscita la barra in fondo allo schermo dice anche il punteggio dove sei. A «Fine» il modulo del diario prende il giorno dell'uscita e, come luogo, il ritrovamento più centrale (senza ritrovamenti, il punto più centrale del percorso): indichi cosa hai trovato e salvi. Al salvataggio l'app ricalcola, per il giorno e la specie dell'uscita, il punteggio di ogni ritrovamento con i suoi fattori, la quota e il bosco della carta in quel punto, e il punteggio lungo il percorso (al massimo 60 punti, almeno 100 m l'uno dall'altro): così si vede se dove hai trovato funghi il punteggio era più alto che nel resto del bosco, e quale fattore sbaglia. Tocca un ritrovamento sulla mappa per aprirne la scheda. Il percorso si registra solo con l'app aperta: con lo schermo spento il telefono non dà la posizione all'app e, quando la riapri, il tratto mancante resta una linea dritta. «Trovato qui» invece chiede ogni volta la posizione, così i ritrovamenti sono sempre al loro posto. L'uscita in corso resta nel telefono anche se l'app si chiude; salvata, sta nel diario come le altre uscite.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
         <li><b>Cosa è misurato e cosa no.</b> I dati sono misure o previsioni: pioggia, temperature, umidità e vento delle stazioni, il radar, i modelli meteo, la carta dei boschi e il modello del terreno; il pH del suolo è una stima da carta mondiale. Dei legami tra tempo e funghi pochi sono misurati: il ritardo tra pioggia e pieno sull'Amiata e, nelle faggete tedesche, la temperatura migliore e il fatto che conti anche la pioggia del mese prima (studio non ancora rivisto da altri esperti). Il resto sono stime ragionate: quanto pesa la pioggia del mese prima, la soglia di pioggia e la sua curva, i tempi col caldo e col freddo, l'evaporazione nel bosco, il versante, il ristagno, le buttate precedenti, il peso di umidità e vento.</li>
       </ul>
@@ -1347,6 +1377,16 @@ path.m-posto { fill: var(--surface); fill-opacity: 1; stroke: var(--cap); stroke
     <p>Stima indicativa, non validata sul campo. Dati: Centro Funzionale e Servizio Idrologico della Regione Toscana. Pioggia da radar e pluviometri: Dipartimento della Protezione Civile, licenza CC BY-SA 4.0, ricampionata (anche l'archivio derivato è CC BY-SA 4.0). Previsioni: Deutscher Wetterdienst (DWD), modello ICON-EU, ed European Centre for Medium-Range Weather Forecasts (ECMWF), modello IFS, licenza CC BY 4.0, rielaborate. Tipi di bosco: Regione Toscana, Carta della vegetazione forestale, licenza CC BY-SA 4.0, ricampionata e aggiornata con Copernicus High Resolution Layer Forest Type 2018 (© Unione europea, Copernicus Land Monitoring Service, Agenzia europea dell'ambiente). Suolo: SoilGrids 2.0, ISRIC, licenza CC BY 4.0. Aree protette: Regione Toscana, licenza CC BY-SA 4.0, semplificate. Sentieri: Rete escursionistica toscana, catasto INFOMONT del Club Alpino Italiano, map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, © <a href="https://infomont.cai.it" target="_blank" rel="noopener">Club Alpino Italiano</a>, licenza ODbL (anche il file semplificato dei sentieri è ODbL). Mappa topografica: © OpenStreetMap contributors, SRTM, stile © OpenTopoMap (CC BY-SA). Probabilità di pioggia: insieme di previsioni ECMWF, licenza CC BY 4.0. Confini comunali: ISTAT, via openpolis. Rilievo: Terrain Tiles di Mapzen su AWS (SRTM; EU-DEM prodotto con dati Copernicus finanziati dall'Unione europea).</p>
   </footer>
  </div>
+</div>
+<div class="gps-barra" id="gps-barra" role="region" aria-label="Uscita col GPS" hidden>
+  <div class="gps-barra-in">
+    <p class="gps-riass" id="gps-riass"></p>
+    <div class="gps-riga"><p id="gps-stato" role="status"></p><button type="button" class="linkbtn piano" id="gps-annulla" hidden>Annulla l'ultimo</button></div>
+    <div class="gps-tasti">
+      <button type="button" class="gps-trovato" id="gps-trovato">Trovato qui</button>
+      <button type="button" class="linkbtn" id="gps-fine">Fine</button>
+    </div>
+  </div>
 </div>
 
 <script>/* @preserve
@@ -2886,11 +2926,11 @@ if (typeof module !== "undefined") module.exports = RP;
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function parseISO(s) { var p = s.split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
   function isoOf(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0"); }
-  // oggi in Italia (mezzanotte UTC di quella data), anche se il telefono è su un altro fuso orario
+  // oggi (o il giorno dell'istante n) in Italia, come mezzanotte UTC di quella data, anche se il telefono è su un altro fuso orario
   var fmtOggi = null;
   try { fmtOggi = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit" }); } catch (e) {}
-  function oggiMs() {
-    var n = new Date();
+  function oggiMs(n) {
+    n = n || new Date();
     if (fmtOggi && fmtOggi.formatToParts) {
       var q = {};
       fmtOggi.formatToParts(n).forEach(function (x) { q[x.type] = x.value; });
@@ -4898,6 +4938,12 @@ if (typeof module !== "undefined") module.exports = RP;
   function oggiISO() { return isoOf(oggiMs()); }
   function aggiornaLuogoDiario() {
     var p = document.getElementById("d-luogo"); if (!p) return;
+    var g = gps && gps.u && gps.u.stato === "finita" ? gps.u : null;
+    if (g && g.centro) {
+      var cm = comuneDi(g.centro.lat, g.centro.lon);
+      p.textContent = "Luogo: l'uscita col GPS, " + (cm ? "nel comune di " + cm + ", " : "") + g.centro.lat.toFixed(4) + ", " + g.centro.lon.toFixed(4) + (g.trovati.length ? " (il ritrovamento più centrale)." : " (il punto più centrale del percorso).");
+      return;
+    }
     p.textContent = state.pos ? "Luogo: il tuo punto, " + (state.pos.comune ? "nel comune di " + state.pos.comune + ", " : "") + state.pos.lat.toFixed(4) + ", " + state.pos.lon.toFixed(4) + (state.punto ? ", " + nf(state.punto.quota) + " m" : "") + ". Per cambiarlo, tocca la mappa."
       : "Scegli prima il punto sulla mappa, nella sezione «Il tuo punto».";
   }
@@ -4929,6 +4975,7 @@ if (typeof module !== "undefined") module.exports = RP;
     var ul = document.getElementById("diario-lista"), sint = document.getElementById("diario-sintesi");
     ul.innerHTML = ""; sint.innerHTML = "";
     var L = diario.lista;
+    if (gps.vista && !L.some(function (u) { return u.id === gps.vista; })) mostraUscitaGps(null);
     if (!L.length) { ul.appendChild(el("li", "note", "Nessuna uscita ancora.")); return; }
     L.forEach(function (u) {
       var li = el("li");
@@ -4945,6 +4992,7 @@ if (typeof module !== "undefined") module.exports = RP;
       });
       li.appendChild(del);
       li.appendChild(el("span", "sub", nomeSpDiario(u.specie) + (u.quota != null ? " · " + nf(u.quota) + " m" : "") + (u.stima != null ? " · stima dell'app " + u.stima : "") + (u.note ? " · " + u.note : "")));
+      if (Array.isArray(u.ritrovamenti) || typeof u.percorso === "string") li.appendChild(rigaGps(u));
       if (Array.isArray(u.foto) && u.foto.length) {
         var fr = el("span", "foto-uscita");
         u.foto.forEach(function (ref, i) {
@@ -5096,6 +5144,7 @@ if (typeof module !== "undefined") module.exports = RP;
       document.getElementById("d-foto-box").hidden = !fotoDisponibili();
       stato.hidden = true;
       document.getElementById("diario-form").hidden = false;
+      gpsRender();
       if (da.locale) {
         document.getElementById("diario-intro").textContent = "Segna dove sei andato e cosa hai trovato: dalla decima uscita l'app calcola quanto spesso, a ogni punteggio, hai trovato funghi. Le uscite restano in questo browser.";
         document.getElementById("posti-intro").textContent = "Salva i boschi dove vai, dalla scheda del punto: qui vedi per ognuno il punteggio dei prossimi giorni. Restano in questo browser; per gli avvisi via mail copiali nel segreto POSTI del flusso su GitHub.";
@@ -5126,33 +5175,48 @@ if (typeof module !== "undefined") module.exports = RP;
     e.preventDefault();
     var msg = document.getElementById("d-msg"), btn = document.getElementById("d-salva");
     if (!diario.arch) return;
-    if (!state.pos || !state.punto) { msg.textContent = "Scegli prima il punto sulla mappa."; return; }
+    // con un'uscita col GPS finita, il luogo è quello dell'uscita (il ritrovamento più centrale), non il punto della mappa
+    var g = gps.u && gps.u.stato === "finita" ? gps.u : null, pos = state.pos, P = state.punto, vers = optPunto().versante;
+    if (g && g.centro && state.st.length) {
+      var qg = puntoIn(g.centro.lat, g.centro.lon);
+      pos = { lat: g.centro.lat, lon: g.centro.lon, comune: comuneDi(g.centro.lat, g.centro.lon) }; P = qg.p; vers = qg.versante;
+    }
+    if (!pos || !P) { msg.textContent = "Scegli prima il punto sulla mappa."; return; }
     if (diario.esito == null) { msg.textContent = "Indica se hai trovato funghi."; return; }
     var dv = document.getElementById("d-data").value;
     if (!dv) { msg.textContent = "Indica il giorno."; return; }
     var spId = document.getElementById("d-specie").value, t = Math.round((parseISO(dv) - state.ref) / DAY);
-    var r = t >= -30 && t <= 40 ? RP.stima(state.punto, t, { versante: optPunto().versante, specie: spId }) : null;
-    var h = state.punto.habitat;
-    var doc = { data: dv, lat: +state.pos.lat.toFixed(5), lon: +state.pos.lon.toFixed(5), quota: state.punto.quota, comune: state.pos.comune || "",
+    var r = t >= -30 && t <= 40 ? RP.stima(P, t, { versante: vers, specie: spId }) : null;
+    var h = P.habitat;
+    var doc = { data: dv, lat: +pos.lat.toFixed(5), lon: +pos.lon.toFixed(5), quota: P.quota, comune: pos.comune || "",
       bosco: h ? (h.scelto != null ? h.scelto : h.centro) : null, specie: spId, esito: diario.esito, note: (document.getElementById("d-note").value || "").trim().slice(0, 200),
       stima: r ? r.score : null, stimaSpecie: r ? r.specie : null, fase: r ? r.fase.id : null, giorniDallaPioggia: r && r.d != null ? Math.round(r.d) : null,
       mmPioggia: r && r.evento ? r.evento.mm : null, acqua: r && r.acqua != null ? Math.round(r.acqua * 100) : null, datiDel: state.data.giorno, salvato: new Date().toISOString(),
       modello: RP.VERSIONE, fattori: r ? fattoriPuliti(r.fattori) : null,
       mmUtili: r ? numeroPulito(r.mmEff, 0, 2000) : null, mmPrima: r ? numeroPulito(r.extra26, 0, 2000) : null, acquaPrima: r && r.acquaPrima != null ? Math.round(r.acquaPrima * 100) : null,
       tm20: r ? numeroPulito(r.tm, -30, 45) : null, giorniEq: r ? numeroPulito(r.dEff, 0, 500) : null, tipoPioggia: r && r.evento ? r.evento.tipo || null : null,
-      pioggiaDa: pioggiaDa(state.punto), giorniPresi: r && r.evento ? giorniPresi(state.punto, r.evento) : null, impronta: RP.IMPRONTA };
-    btn.disabled = true; msg.textContent = foto.inAttesa.length ? "Preparo le foto…" : "Salvataggio…";
+      pioggiaDa: pioggiaDa(P), giorniPresi: r && r.evento ? giorniPresi(P, r.evento) : null, impronta: RP.IMPRONTA };
+    btn.disabled = true; msg.textContent = g ? "Calcolo i punteggi dei ritrovamenti e del percorso…" : foto.inAttesa.length ? "Preparo le foto…" : "Salvataggio…";
     var daSalvare = fotoDisponibili() ? foto.inAttesa.slice() : [], salvate = [];
+    // i punteggi lungo il percorso richiedono un momento: il messaggio si vede prima che parta il calcolo
+    var inizio = !g ? Promise.resolve() : new Promise(function (ok) {
+      setTimeout(function () { gpsNelDoc(doc, g, t, spId); if (daSalvare.length) msg.textContent = "Preparo le foto…"; ok(); }, 30);
+    });
     daSalvare.reduce(function (c, f) {
       return c.then(function () { return riduciFoto(f.file); }).then(salvaFoto).then(function (ref) { salvate.push(ref); });
-    }, Promise.resolve()).then(function () {
+    }, inizio).then(function () {
       if (salvate.length) doc.foto = salvate;
       msg.textContent = "Salvataggio…";
       return diario.arch.aggiungi(doc);
     }).then(function () {
-      msg.textContent = "Uscita salvata" + (salvate.length ? " con " + (salvate.length === 1 ? "1 foto" : salvate.length + " foto") : "") + ".";
+      var con = [];
+      if (g && g.trovati.length) con.push(testoTrovati(g.trovati.length));
+      if (g && doc.percorso) con.push("il percorso");
+      if (salvate.length) con.push(salvate.length === 1 ? "1 foto" : salvate.length + " foto");
+      msg.textContent = "Uscita salvata" + (con.length ? " con " + elenco(con) : "") + ".";
       diario.esito = null; setPressed("#d-esito", "x"); document.getElementById("d-note").value = "";
       foto.inAttesa.forEach(function (f) { URL.revokeObjectURL(f.url); }); foto.inAttesa = []; renderAttesa();
+      if (g && gps.u === g) { gps.u = null; gpsSalva(); gpsRender(); aggiornaLuogoDiario(); }
     }).catch(function (err) {
       salvate.forEach(togliFoto);
       var c = err && err.code;
@@ -5163,11 +5227,309 @@ if (typeof module !== "undefined") module.exports = RP;
     }).then(function () { btn.disabled = false; });
   });
 
+  // ---------- uscita col GPS: percorso e ritrovamenti segnati sul posto ----------
+  // L'uscita in corso resta in questo telefono (memoria del browser) finché non la salvi nel diario o la scarti, così riprende
+  // anche se il telefono chiude l'app. Il percorso si registra solo con l'app aperta: con lo schermo spento il browser non dà la
+  // posizione. «Trovato qui» usa la posizione appena arrivata se è precisa, altrimenti ne chiede una nuova. Al salvataggio i
+  // punteggi dei ritrovamenti si ricalcolano per il giorno e la specie dell'uscita, insieme a quelli lungo il percorso.
+  var LS_GPS = "radar-porcini-uscita-gps";
+  // passo: metri minimi tra due punti del percorso (o l'errore del GPS, se è più grande); impreciso: oltre questi metri di errore
+  // la posizione non entra nel percorso; fresca: età massima (ms) della posizione che «Trovato qui» usa subito, se ha meno di 30 m
+  // di errore; vecchia: età massima di quella usata se il GPS non risponde; campioni: punti al massimo lungo il percorso, ogni almeno 100 m
+  var GPS = { passo: 25, impreciso: 100, maxPunti: 3000, maxTrovati: 200, fresca: 15000, vecchia: 120000, campioni: 60 };
+  var gps = { u: null, watch: null, ultimo: null, primo: true, quiS: null, errore: "", msg: "", msgFino: 0, annulla: false, tocco: 0, fine: 0, scarta: 0,
+    layer: null, linea: null, mQui: null, trov: null, kTrov: "", vista: null, layerVista: null };
+  var fmtHM = null;
+  try { fmtHM = new Intl.DateTimeFormat("it-IT", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome" }); } catch (e) {}
+  function oraIt(iso) { var d = new Date(iso); return fmtHM ? fmtHM.format(d) : String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function giornoDi(iso) { return isoOf(oggiMs(new Date(iso))); }
+  function tOggi() { return Math.round((oggiMs() - state.ref) / DAY); }
+  function testoKm(km) { return km < 1 ? Math.round(km * 100) * 10 + " m" : nf(km, 1) + " km"; }
+  function testoTrovati(n) { return n === 1 ? "1 ritrovamento" : n + " ritrovamenti"; }
+  var NOMI_FASE = { fuori: "Fuori stagione", secco: "Pioggia insufficiente", attesa: "Pioggia in arrivo", presto: "Troppo presto", prime: "Prime nascite", pieno: "Nel pieno", calo: "In calo", finita: "Finita" };
+  function nomeFase(id) { return Object.prototype.hasOwnProperty.call(NOMI_FASE, id) ? NOMI_FASE[id] : null; }
+  // il punto del modello in lat, lon (come per i posti, con quota e bosco delle carte) e il versante: quello scelto in alto o quello del terreno
+  function puntoIn(lat, lon) {
+    var ter = terrenoDEM(lat, lon), q = ter && ter.quota != null ? ter.quota : null;
+    var p = RP.punto(state.st, lat, lon, q, radarSerie(lat, lon), ter);
+    p.habitat = habitatPunto({ lat: lat, lon: lon });
+    return { p: p, versante: state.versante ? state.versante : (ter && ter.versante ? ter.versante : null) };
+  }
+  function stimaQui(lat, lon, t, sp) {
+    if (!state.st.length || t < -30 || t > 40) return null;
+    var q = puntoIn(lat, lon);
+    return RP.stima(q.p, t, { versante: q.versante, specie: sp });
+  }
+  function specieGps() { return document.getElementById("d-specie").value || "porcini"; }
+  function gpsSalva() { try { if (gps.u) localStorage.setItem(LS_GPS, JSON.stringify(gps.u)); else localStorage.removeItem(LS_GPS); } catch (e) {} }
+  function gpsDentro(la, lo) { return la >= 41.6 && la <= 45.1 && lo >= 8.8 && lo <= 13.2; }
+  function gpsValida(u) {
+    return !!u && typeof u === "object" && (u.stato === "corso" || u.stato === "finita") && !isNaN(Date.parse(u.inizio)) && numeroIn(u.km, 0, 1000) &&
+      Array.isArray(u.punti) && u.punti.every(function (q) { return Array.isArray(q) && numeroIn(q[0], 41.3, 45.2) && numeroIn(q[1], 8.5, 13.5); }) &&
+      Array.isArray(u.trovati) && u.trovati.every(function (x) { return x && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5) && !isNaN(Date.parse(x.ora)); });
+  }
+  // un'uscita lasciata aperta da un altro giorno, o ferma da 12 ore, si chiude da sola
+  function gpsVecchia(u) { return giornoDi(u.inizio) !== isoOf(oggiMs()) || Date.now() - Date.parse(u.agg || u.inizio) > 12 * 3600e3; }
+  function gpsStato(m) { gps.msg = m || ""; gps.msgFino = Date.now() + 30000; gpsRender(); setTimeout(gpsRender, 30100); }
+  function gpsQui() {
+    var q = gps.ultimo, r = q ? stimaQui(q.lat, q.lon, tOggi(), specieGps()) : null;
+    gps.quiS = r ? { score: r.score, fase: r.fase.nome, lat: q.lat, lon: q.lon } : null;
+  }
+  function gpsAggiungiPunto(la, lo, acc) {
+    var u = gps.u, P = u.punti, l = P[P.length - 1];
+    if (P.length >= GPS.maxPunti) return;
+    if (l) {
+      var d = RP.distanzaKm(l[0], l[1], la, lo);
+      if (d * 1000 < Math.max(GPS.passo, acc || 0)) return;
+      u.km += d;
+    }
+    P.push([+la.toFixed(5), +lo.toFixed(5)]);
+    u.agg = new Date().toISOString(); gpsSalva();
+  }
+  function gpsPosizione(p) {
+    var u = gps.u; if (!u || u.stato !== "corso") return;
+    var q = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy || 0, ms: Date.now() };
+    gps.errore = "";
+    if (!gpsDentro(q.lat, q.lon)) { gps.ultimo = null; gps.quiS = null; gps.errore = "Sei fuori dalla Toscana: qui l'app non ha dati."; gpsRender(); return; }
+    gps.ultimo = q;
+    if (q.acc <= GPS.impreciso) gpsAggiungiPunto(q.lat, q.lon, q.acc);
+    if (!gps.quiS || RP.distanzaKm(gps.quiS.lat, gps.quiS.lon, q.lat, q.lon) * 1000 >= GPS.passo) gpsQui();
+    if (gps.primo && mappa) { gps.primo = false; mappa.setView([q.lat, q.lon], Math.max(mappa.getZoom(), 13)); }
+    gpsRender();
+  }
+  function testoErroreGps(err) {
+    return err && err.code === 1 ? (PWA ? "La posizione non è permessa: consentila a questa app nelle impostazioni del telefono, poi riaprila."
+      : "La posizione non è permessa qui: usa la versione da installare sul telefono (link in alto).")
+      : "Il GPS non ha segnale in questo momento.";
+  }
+  function gpsErrore(err) { if (err && err.code === 1) gpsFerma(); gps.errore = testoErroreGps(err) + (err && err.code === 1 ? "" : " Il percorso riprende appena torna."); gpsRender(); }
+  function gpsFerma() { if (gps.watch != null) { try { navigator.geolocation.clearWatch(gps.watch); } catch (e) {} } gps.watch = null; }
+  function gpsAvvia() {
+    if (!navigator.geolocation || !gps.u || gps.u.stato !== "corso") return;
+    gpsFerma();
+    try { gps.watch = navigator.geolocation.watchPosition(gpsPosizione, gpsErrore, { enableHighAccuracy: true, maximumAge: 5000 }); }
+    catch (e) { gps.errore = "Questo browser non dà la posizione."; }
+  }
+  // il luogo dell'uscita: il ritrovamento più vicino al centro dei ritrovamenti; senza ritrovamenti, il punto del percorso più vicino al suo centro
+  function gpsCentro(u) {
+    var Q = u.trovati.length ? u.trovati.map(function (x) { return [x.lat, x.lon]; }) : u.punti;
+    if (!Q.length) return null;
+    var la = 0, lo = 0, best = Q[0], bd = Infinity;
+    Q.forEach(function (q) { la += q[0]; lo += q[1]; }); la /= Q.length; lo /= Q.length;
+    Q.forEach(function (q) { var d = RP.distanzaKm(la, lo, q[0], q[1]); if (d < bd) { bd = d; best = q; } });
+    return { lat: best[0], lon: best[1] };
+  }
+  // il modulo del diario prende giorno, esito proposto dal numero di ritrovamenti e, a «Fine», il punto dell'uscita sulla mappa
+  function gpsNelModulo(sposta) {
+    var u = gps.u; if (!u) return;
+    document.getElementById("d-data").value = giornoDi(u.inizio);
+    var n = u.trovati.length;
+    if (n) { diario.esito = n <= 3 ? 1 : n <= 9 ? 2 : 3; setPressed("#d-esito", diario.esito); }
+    if (sposta && u.centro) impostaPos({ nome: "Uscita col GPS", lat: u.centro.lat, lon: u.centro.lon }, false);
+    aggiornaLuogoDiario();
+  }
+  function gpsChiudi(quando, sposta) {
+    var u = gps.u; gpsFerma();
+    u.stato = "finita"; u.fine = quando; u.centro = gpsCentro(u);
+    gps.msg = ""; gps.errore = ""; gps.annulla = false; gps.ultimo = null; gps.quiS = null; gps.fine = 0;
+    gpsSalva(); gpsNelModulo(sposta); gpsRender();
+  }
+  function segnaTrovato(q, vecchia) {
+    var u = gps.u; if (!u || u.stato !== "corso") return;
+    if (!gpsDentro(q.lat, q.lon)) { gpsStato("Sei fuori dalla Toscana: qui l'app non ha dati."); return; }
+    if (!vecchia) gps.ultimo = q;
+    var x = { lat: +q.lat.toFixed(5), lon: +q.lon.toFixed(5), acc: Math.round(q.acc), ora: new Date().toISOString() };
+    var r = stimaQui(x.lat, x.lon, tOggi(), specieGps());
+    if (r) { x.stima = r.score; x.fase = r.fase.id; }
+    u.trovati.push(x); gpsAggiungiPunto(x.lat, x.lon, 0); u.agg = x.ora; gpsSalva();
+    gps.annulla = true;
+    try { if (navigator.vibrate) navigator.vibrate(80); } catch (e) {}
+    gpsStato("Segnato alle " + oraIt(x.ora) + " (GPS ±" + x.acc + " m" + (vecchia ? ", posizione di poco fa" : "") + ")." +
+      (r ? " Qui l'app dà " + r.score + " (" + LIV[livello(r.score)].toLowerCase() + "), " + r.fase.nome.toLowerCase() + "." : ""));
+  }
+  function testoTrovato(x) {
+    var t = x.ora ? "Trovato alle " + oraIt(x.ora) : "Trovato qui";
+    if (typeof x.stima === "number") t += ": l'app dava " + x.stima + " (" + LIV[livello(x.stima)].toLowerCase() + ")" + (nomeFase(x.fase) ? ", " + nomeFase(x.fase).toLowerCase() : "");
+    return t + (typeof x.acc === "number" ? " · GPS ±" + x.acc + " m" : "");
+  }
+  function markerTrovato(x) {
+    var m = L.circleMarker([x.lat, x.lon], { radius: 8, className: "m-trovato" + (typeof x.stima === "number" ? " lv" + livello(x.stima) : ""), bubblingMouseEvents: false });
+    // si mostra come testo, mai come HTML
+    m.bindTooltip(el("span", null, testoTrovato(x)), { direction: "top", offset: [0, -8] });
+    m.on("click", function () { impostaPos({ nome: "Ritrovamento" + (x.ora ? " delle " + oraIt(x.ora) : ""), lat: x.lat, lon: x.lon }, false); });
+    return m;
+  }
+  function gpsDisegna() {
+    if (!mappa) return;
+    var u = gps.u;
+    if (!u) { if (gps.layer) { mappa.removeLayer(gps.layer); gps.layer = gps.linea = gps.mQui = gps.trov = null; gps.kTrov = ""; } return; }
+    if (!gps.layer) {
+      gps.layer = L.layerGroup().addTo(mappa);
+      gps.linea = L.polyline([], { className: "m-percorso", interactive: false }).addTo(gps.layer);
+      gps.trov = L.layerGroup().addTo(gps.layer); gps.kTrov = "";
+    }
+    gps.linea.setLatLngs(u.punti);
+    var v = u.stato === "corso" ? gps.ultimo : null;
+    if (v) { if (gps.mQui) gps.mQui.setLatLng([v.lat, v.lon]); else gps.mQui = L.circleMarker([v.lat, v.lon], { radius: 7, className: "m-qui", interactive: false }).addTo(gps.layer); }
+    else if (gps.mQui) { gps.layer.removeLayer(gps.mQui); gps.mQui = null; }
+    var n = u.trovati.length, k = n + "|" + (n ? u.trovati[n - 1].ora : "");
+    if (k !== gps.kTrov) { gps.kTrov = k; gps.trov.clearLayers(); u.trovati.forEach(function (x) { gps.trov.addLayer(markerTrovato(x)); }); }
+  }
+  // un'uscita salvata sulla mappa (una alla volta); null la toglie
+  function mostraUscitaGps(u) {
+    if (gps.layerVista && mappa) mappa.removeLayer(gps.layerVista);
+    gps.layerVista = null; gps.vista = u ? u.id : null;
+    if (!u || !mappa) return;
+    var lay = L.featureGroup(), P = typeof u.percorso === "string" ? decodificaLinea(u.percorso) : [];
+    if (P.length > 1) lay.addLayer(L.polyline(P, { className: "m-percorso", interactive: false }));
+    (Array.isArray(u.ritrovamenti) ? u.ritrovamenti : []).forEach(function (x) { if (x && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5)) lay.addLayer(markerTrovato(x)); });
+    lay.addTo(mappa); gps.layerVista = lay;
+    var b = lay.getBounds(); if (b.isValid()) mappa.fitBounds(b, { maxZoom: 15, padding: [30, 30] });
+  }
+  function gpsRender() {
+    var u = gps.u, corso = !!u && u.stato === "corso", finita = !!u && u.stato === "finita", ora = Date.now();
+    document.getElementById("gps-barra").hidden = !corso;
+    document.body.classList.toggle("gps-on", corso);
+    if (corso) {
+      document.getElementById("gps-riass").textContent = "Uscita dalle " + oraIt(u.inizio) + " · " + testoKm(u.km) + " · " + testoTrovati(u.trovati.length) + " · " + nomeSpDiario(specieGps());
+      var st = (gps.msg && gps.msgFino > ora ? gps.msg : "") || gps.errore;
+      if (!st && !gps.ultimo) st = "Cerco il GPS…";
+      else if (!st) {
+        var eta = ora - gps.ultimo.ms;
+        st = (gps.quiS ? "Qui l'app dà " + gps.quiS.score + " (" + LIV[livello(gps.quiS.score)].toLowerCase() + "), " + gps.quiS.fase.toLowerCase() + " · " : "") +
+          "GPS ±" + Math.round(gps.ultimo.acc) + " m" + (eta > 90000 ? ", di " + Math.round(eta / 60000) + " min fa" : "");
+      }
+      document.getElementById("gps-stato").textContent = st;
+      document.getElementById("gps-annulla").hidden = !gps.annulla || !u.trovati.length;
+      var bf = document.getElementById("gps-fine"), cf = gps.fine > ora;
+      bf.textContent = cf ? "Conferma la fine" : "Fine"; bf.classList.toggle("conf", cf);
+    }
+    document.getElementById("gps").hidden = !diario.arch || !navigator.geolocation;
+    document.getElementById("gps-inizia").hidden = !!u;
+    var bs = document.getElementById("gps-scarta"), cs = gps.scarta > ora;
+    bs.hidden = !finita; bs.textContent = cs ? "Conferma: scarta" : "Scarta l'uscita col GPS"; bs.classList.toggle("conf", cs);
+    var tx = document.getElementById("gps-testo"), cosa = u ? testoKm(u.km) + ", " + testoTrovati(u.trovati.length) : "";
+    if (!u) tx.textContent = "Nel bosco: l'app segna il percorso e, ogni volta che premi «Trovato qui», il punto e il punteggio che dava lì, per vedere dove il modello sbaglia. Il percorso si registra mentre l'app è aperta. I punteggi sono per la specie scelta qui sotto.";
+    else if (corso) tx.textContent = "Uscita col GPS in corso dalle " + oraIt(u.inizio) + ": " + cosa + ". «Trovato qui» e «Fine» sono in fondo allo schermo.";
+    else tx.textContent = "Uscita col GPS " + (giornoDi(u.inizio) !== isoOf(oggiMs()) ? "del " + fmtShort.format(parseISO(giornoDi(u.inizio))) + " " : "") + "dalle " + oraIt(u.inizio) + (u.fine ? " alle " + oraIt(u.fine) : "") + ": " + cosa +
+      ". Il modulo qui sotto ha già il giorno e il luogo dell'uscita: indica cosa hai trovato e premi «Salva l'uscita», che salva anche percorso e ritrovamenti.";
+    gpsDisegna();
+  }
+  function gpsRipristina() {
+    var u = null;
+    try { u = JSON.parse(localStorage.getItem(LS_GPS) || "null"); } catch (e) {}
+    gps.u = gpsValida(u) ? u : null;
+    if (u && !gps.u) gpsSalva(); // dati rovinati: si tolgono
+    if (gps.u && gps.u.stato === "corso") { if (gpsVecchia(gps.u)) gpsChiudi(gps.u.agg || gps.u.inizio, false); else gpsAvvia(); }
+    else if (gps.u) gpsNelModulo(false);
+    gpsRender();
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible" || !gps.u || gps.u.stato !== "corso") return;
+    if (gpsVecchia(gps.u)) gpsChiudi(gps.u.agg || gps.u.inizio, false); else gpsAvvia(); // al ritorno il browser può aver fermato il GPS
+  });
+  document.getElementById("gps-inizia").addEventListener("click", function () {
+    var m = document.getElementById("gps-msg");
+    if (gps.u) return;
+    if (!navigator.geolocation) { m.textContent = "Questo browser non dà la posizione."; return; }
+    gps.u = { stato: "corso", inizio: new Date().toISOString(), agg: null, fine: null, punti: [], km: 0, trovati: [], centro: null };
+    gps.ultimo = null; gps.primo = true; gps.quiS = null; gps.errore = ""; gps.msg = ""; gps.annulla = false;
+    m.textContent = "";
+    if (gps.vista) { mostraUscitaGps(null); renderDiario(); }
+    gpsSalva(); gpsAvvia(); gpsRender();
+  });
+  document.getElementById("gps-trovato").addEventListener("click", function () {
+    var btn = this, u = gps.u;
+    if (!u || u.stato !== "corso" || Date.now() - gps.tocco < 1500) return; // un doppio tocco segna una volta sola
+    gps.tocco = Date.now();
+    if (u.trovati.length >= GPS.maxTrovati) { gpsStato("Hai già segnato " + GPS.maxTrovati + " ritrovamenti: premi «Fine» e inizia un'altra uscita."); return; }
+    var v = gps.ultimo;
+    if (v && Date.now() - v.ms < GPS.fresca && v.acc <= 30) { segnaTrovato(v, false); return; }
+    btn.disabled = true; gpsStato("Cerco la posizione…");
+    navigator.geolocation.getCurrentPosition(function (p) {
+      btn.disabled = false; gps.errore = "";
+      segnaTrovato({ lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy || 0, ms: Date.now() }, false);
+    }, function (err) {
+      btn.disabled = false;
+      var w = gps.ultimo;
+      if (err && err.code !== 1 && w && Date.now() - w.ms < GPS.vecchia) segnaTrovato(w, true);
+      else gpsStato(testoErroreGps(err) + " Il ritrovamento non è stato segnato: riprova.");
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+  });
+  document.getElementById("gps-annulla").addEventListener("click", function () {
+    var u = gps.u; if (!u || !u.trovati.length || !gps.annulla) return;
+    var x = u.trovati.pop(); gps.annulla = false; gpsSalva();
+    gpsStato("Tolto il ritrovamento delle " + oraIt(x.ora) + ".");
+  });
+  document.getElementById("gps-fine").addEventListener("click", function () {
+    if (!gps.u || gps.u.stato !== "corso") return;
+    if (gps.fine < Date.now()) { gps.fine = Date.now() + 5000; gpsRender(); setTimeout(gpsRender, 5100); return; } // secondo tocco per confermare
+    gpsChiudi(new Date().toISOString(), true);
+    vaiA("gps");
+  });
+  document.getElementById("gps-scarta").addEventListener("click", function () {
+    if (!gps.u || gps.u.stato !== "finita") return;
+    if (gps.scarta < Date.now()) { gps.scarta = Date.now() + 5000; gpsRender(); setTimeout(gpsRender, 5100); return; }
+    gps.scarta = 0; gps.u = null; gpsSalva(); gpsRender(); aggiornaLuogoDiario();
+    document.getElementById("gps-msg").textContent = "Uscita col GPS scartata.";
+  });
+  document.getElementById("d-specie").addEventListener("change", function () { if (gps.u && gps.u.stato === "corso") { gpsQui(); gpsRender(); } });
+
+  // percorso come polilinea di Google (precisione 1e-5): l'inverso di decodificaLinea
+  function codificaLinea(pts) {
+    var out = "", pa = 0, po = 0;
+    function num(v) { v = v < 0 ? ~(v << 1) : v << 1; while (v >= 32) { out += String.fromCharCode((32 | (v & 31)) + 63); v >>= 5; } out += String.fromCharCode(v + 63); }
+    pts.forEach(function (q) { var a = Math.round(q[0] * 1e5), o = Math.round(q[1] * 1e5); num(a - pa); num(o - po); pa = a; po = o; });
+    return out;
+  }
+  // punteggio lungo il percorso, per il giorno t e la specie sp: minimo, medio e massimo su punti ogni almeno 100 m
+  function stimaLungo(punti, km, t, sp) {
+    if (punti.length < 2) return null;
+    var passo = Math.max(100, km * 1000 / GPS.campioni), C = [punti[0]], dist = 0;
+    for (var i = 1; i < punti.length; i++) {
+      dist += RP.distanzaKm(punti[i - 1][0], punti[i - 1][1], punti[i][0], punti[i][1]) * 1000;
+      if (dist >= passo) { C.push(punti[i]); dist = 0; }
+    }
+    var v = C.map(function (q) { var x = puntoIn(q[0], q[1]); return RP.stima(x.p, t, { versante: x.versante, specie: sp }).score; });
+    return { n: v.length, min: Math.min.apply(null, v), media: Math.round(v.reduce(function (a, b) { return a + b; }, 0) / v.length), max: Math.max.apply(null, v) };
+  }
+  // con l'uscita si salvano i ritrovamenti (punteggio, fase, fattori, quota e bosco in quel punto), il percorso e un riassunto
+  function gpsNelDoc(doc, u, t, sp) {
+    var ok = t >= -30 && t <= 40 && state.st.length > 0;
+    doc.ritrovamenti = u.trovati.map(function (x) {
+      var o = { lat: x.lat, lon: x.lon, acc: typeof x.acc === "number" ? x.acc : null, ora: x.ora, quota: null, bosco: null, stima: null, stimaSpecie: null, fase: null, fattori: null };
+      if (ok) {
+        var q = puntoIn(x.lat, x.lon), r = RP.stima(q.p, t, { versante: q.versante, specie: sp }), h = q.p.habitat;
+        o.quota = numeroIn(q.p.quota, -50, 5000) ? Math.round(q.p.quota) : null;
+        o.bosco = h ? (h.scelto != null ? h.scelto : h.centro != null ? h.centro : null) : null;
+        o.stima = r.score; o.stimaSpecie = r.specie; o.fase = r.fase.id; o.fattori = fattoriPuliti(r.fattori);
+      }
+      return o;
+    });
+    doc.percorso = u.punti.length > 1 ? codificaLinea(u.punti) : null;
+    doc.gps = { inizio: u.inizio, fine: u.fine || null, km: Math.round(u.km * 100) / 100, punti: u.punti.length, lungo: ok ? stimaLungo(u.punti, u.km, t, sp) : null };
+  }
+  // la riga dell'uscita col GPS nell'elenco: punteggi dove hai trovato e lungo il percorso, e il tasto per vederla sulla mappa
+  function rigaGps(u) {
+    var box = el("span", "gps-uscita"), R = Array.isArray(u.ritrovamenti) ? u.ritrovamenti : [], g = u.gps && typeof u.gps === "object" ? u.gps : {};
+    var s = R.map(function (x) { return x && x.stima; }).filter(function (v) { return typeof v === "number"; });
+    var da = function (a, b, m) { return a === b ? String(a) : "da " + a + " a " + b + " (media " + m + ")"; };
+    var t = "Col GPS: " + testoTrovati(R.length) + (typeof g.km === "number" ? ", " + testoKm(g.km) : "");
+    if (s.length) t += ". Dove hai trovato l'app dava " + da(Math.min.apply(null, s), Math.max.apply(null, s), Math.round(s.reduce(function (a, b) { return a + b; }, 0) / s.length));
+    var l = g.lungo;
+    if (l && typeof l.min === "number") t += (s.length ? ", lungo il percorso " : ". Lungo il percorso l'app dava ") + da(l.min, l.max, l.media);
+    box.appendChild(el("span", null, t + "."));
+    var vista = gps.vista === u.id, b = el("button", "linkbtn piano", vista ? "Togli dalla mappa" : "Sulla mappa"); b.type = "button";
+    b.addEventListener("click", function () { if (vista) mostraUscitaGps(null); else { mostraUscitaGps(u); vaiA("mappa"); } renderDiario(); });
+    box.appendChild(b);
+    return box;
+  }
+
   // ---------- copia o sposta posti e diario tra le versioni ----------
   function pulito(x, campi) { var o = {}; campi.forEach(function (k) { if (x[k] !== undefined) o[k] = x[k]; }); return o; }
   var CAMPI_POSTO = ["nome", "lat", "lon", "quota", "bosco", "comune", "specie", "creato"];
   var CAMPI_USCITA = ["data", "lat", "lon", "quota", "comune", "bosco", "specie", "esito", "note", "stima", "stimaSpecie", "fase", "giorniDallaPioggia", "mmPioggia", "acqua", "datiDel", "salvato", "modello", "fattori", "mmUtili", "mmPrima", "acquaPrima",
-    "tm20", "giorniEq", "tipoPioggia", "pioggiaDa", "giorniPresi", "impronta"];
+    "tm20", "giorniEq", "tipoPioggia", "pioggiaDa", "giorniPresi", "impronta", "ritrovamenti", "gps"];
   // i fattori del punteggio salvati con l'uscita: solo quelli del modello, come numeri
   var CAMPI_FATTORI = ["pioggia", "tempo", "temperatura", "quota", "stagione", "bosco", "ph", "secco", "aria", "ristagno", "buttate"];
   function fattoriPuliti(f) {
@@ -5189,6 +5551,29 @@ if (typeof module !== "undefined") module.exports = RP;
     return n;
   }
   var CAMPI_NUMERI = [["mmUtili", 0, 2000], ["mmPrima", 0, 2000], ["acquaPrima", 0, 100], ["tm20", -30, 45], ["giorniEq", 0, 500], ["giorniPresi", 0, 100]];
+  // ritrovamenti, percorso e riassunto dell'uscita col GPS arrivati da un testo incollato o da un'altra versione: solo campi noti e numeri in scala
+  var FASI_ID = ["fuori", "secco", "attesa", "presto", "prime", "pieno", "calo", "finita"], ISTANTE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+  function ritrovamentiPuliti(a) {
+    if (!Array.isArray(a)) return null;
+    return a.filter(function (x) { return x && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5); }).slice(0, GPS.maxTrovati).map(function (x) {
+      return { lat: +Number(x.lat).toFixed(5), lon: +Number(x.lon).toFixed(5), acc: numeroIn(x.acc, 0, 10000) ? Math.round(x.acc) : null, ora: ISTANTE.test(String(x.ora)) ? String(x.ora) : null,
+        quota: numeroIn(x.quota, -50, 5000) ? Math.round(x.quota) : null, bosco: numeroIn(x.bosco, 0, 99) && Number(x.bosco) % 1 === 0 ? Number(x.bosco) : null,
+        stima: numeroIn(x.stima, 0, 100) ? Math.round(x.stima) : null, stimaSpecie: typeof x.stimaSpecie === "string" && Object.prototype.hasOwnProperty.call(RP.SP, x.stimaSpecie) ? x.stimaSpecie : null,
+        fase: FASI_ID.indexOf(x.fase) >= 0 ? x.fase : null, fattori: fattoriPuliti(x.fattori) };
+    });
+  }
+  function percorsoPulito(p) {
+    if (typeof p !== "string" || p.length > 60000 || !/^[\x3f-\x7e]+$/.test(p)) return null;
+    var P = decodificaLinea(p);
+    return P.length > 1 && P.every(function (q) { return numeroIn(q[0], 41.3, 45.2) && numeroIn(q[1], 8.5, 13.5); }) ? p : null;
+  }
+  function gpsPulito(g) {
+    if (!g || typeof g !== "object") return null;
+    var l = g.lungo, lo = l && typeof l === "object" && numeroIn(l.n, 1, 10000) && numeroIn(l.min, 0, 100) && numeroIn(l.media, 0, 100) && numeroIn(l.max, 0, 100)
+      ? { n: Math.round(l.n), min: Math.round(l.min), media: Math.round(l.media), max: Math.round(l.max) } : null;
+    return { inizio: ISTANTE.test(String(g.inizio)) ? String(g.inizio) : null, fine: ISTANTE.test(String(g.fine)) ? String(g.fine) : null,
+      km: numeroIn(g.km, 0, 1000) ? Math.round(g.km * 100) / 100 : null, punti: numeroIn(g.punti, 0, 100000) ? Math.round(g.punti) : null, lungo: lo };
+  }
   function postoValido(x) { return x && typeof x.nome === "string" && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5); }
   function uscitaValida(x) { return x && /^\d{4}-\d{2}-\d{2}$/.test(String(x.data)) && numeroIn(x.lat, 41.3, 45.2) && numeroIn(x.lon, 8.5, 13.5) && numeroIn(x.esito, 0, 3); }
   document.getElementById("sposta-copia").addEventListener("click", function () {
@@ -5213,9 +5598,10 @@ if (typeof module !== "undefined") module.exports = RP;
       uscite: (Array.isArray(d.uscite) ? d.uscite : []).filter(function (x) { return uscitaValida(x) && !hu[ku(x)]; }).slice(0, 300)
     };
   }
-  // conFoto: dallo stesso dispositivo le foto del diario restano valide
+  // conFoto: dallo stesso dispositivo le foto del diario restano valide, e si porta anche il percorso delle uscite col GPS
+  // (che resta fuori dal testo da copiare perché è lungo)
   function aggiungiDati(n, conFoto) {
-    var catena = Promise.resolve(), errori = 0, campiU = conFoto ? CAMPI_USCITA.concat(["foto"]) : CAMPI_USCITA;
+    var catena = Promise.resolve(), errori = 0, campiU = conFoto ? CAMPI_USCITA.concat(["foto", "percorso"]) : CAMPI_USCITA;
     n.posti.forEach(function (x) {
       var doc = pulito(x, CAMPI_POSTO); doc.nome = String(doc.nome).slice(0, 60); doc.comune = String(doc.comune || "").slice(0, 60); if (!doc.creato) doc.creato = new Date().toISOString();
       catena = catena.then(function () { return posti.arch.aggiungi(doc).then(null, function () { errori++; }); });
@@ -5228,6 +5614,9 @@ if (typeof module !== "undefined") module.exports = RP;
       if (doc.tipoPioggia !== undefined) doc.tipoPioggia = ["osservata", "prevista", "mista"].indexOf(doc.tipoPioggia) >= 0 ? doc.tipoPioggia : null;
       if (doc.pioggiaDa !== undefined) doc.pioggiaDa = doc.pioggiaDa === "radar" || doc.pioggiaDa === "stazioni" ? doc.pioggiaDa : null;
       if (doc.impronta !== undefined) doc.impronta = /^[0-9a-f]{8}$/.test(String(doc.impronta)) ? String(doc.impronta) : null;
+      if (doc.ritrovamenti !== undefined) doc.ritrovamenti = ritrovamentiPuliti(doc.ritrovamenti);
+      if (doc.percorso !== undefined) doc.percorso = percorsoPulito(doc.percorso);
+      if (doc.gps !== undefined) doc.gps = gpsPulito(doc.gps);
       catena = catena.then(function () { return diario.arch.aggiungi(doc).then(null, function () { errori++; }); });
     });
     return catena.then(function () { return errori; });
@@ -5690,6 +6079,7 @@ if (typeof module !== "undefined") module.exports = RP;
     disegnaAree();
     if (mappa) { provaTopo(); if (state.sentieri) disegnaSentieri(); }
     if (state.pos) impostaPos(state.pos, true); else aggiornaMappa();
+    gpsRipristina();
     var dopoTerreno = function () {
       caricaBoschi(leggi("geo-boschi"), function () {
         caricaSuolo(leggi("geo-suolo"), function () {

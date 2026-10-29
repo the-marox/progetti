@@ -24,7 +24,7 @@ name: Aggiorna Radar Porcini
 
 on:
   schedule:
-    - cron: "20 8 * * *"         # giro completo dopo la lettura delle 9 (ora solare), con gli avvisi
+    - cron: "20 8 * * *"         # giro completo dopo la lettura delle 9 (ora solare), con gli avvisi (se nessun giro l'ha gia' fatto)
     - cron: "20 9-18 * * *"      # ogni ora in giornata: solo misure e previsioni (completo se quello del mattino e' saltato)
                                   # tanti giri perche' GitHub ne ritarda o ne salta alcuni: se uno manca, c'e' quello dopo
   workflow_dispatch:              # pulsante "Run workflow" per lanciarlo a mano, e avvio dall'esterno agli orari (vedi README)
@@ -89,19 +89,19 @@ jobs:
 
           OGGI=$(date -u -d '+1 hour' +%F)   # oggi in ora solare, come le tabelle del CFR
           COMPLETO=no
+          ULTIMO=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["lettura"]["giorno"])' "$SITO/storico.json" 2>/dev/null)
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.completo }}" = "true" ]; then
             COMPLETO=si
-          elif [ "${{ github.event.schedule }}" = "20 8 * * *" ]; then
-            COMPLETO=si
-          else
+          elif [ "$ULTIMO" != "$OGGI" ]; then
             # GitHub a volte ritarda o salta gli orari programmati, e l'avvio dall'esterno chiede completo=false:
             # se oggi l'archivio non e' stato rifatto con le misure di oggi (giro completo saltato, o misure non arrivate),
             # lo fa questo
-            ULTIMO=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["lettura"]["giorno"])' "$SITO/storico.json" 2>/dev/null)
-            if [ "$ULTIMO" != "$OGGI" ]; then
-              COMPLETO=si
-              echo "Oggi l'archivio non e' stato rifatto con le misure di oggi (ultimo: ${ULTIMO:-mai}): faccio il giro completo"
-            fi
+            COMPLETO=si
+            echo "Oggi l'archivio non e' stato rifatto con le misure di oggi (ultimo: ${ULTIMO:-mai}): faccio il giro completo"
+          elif [ "${{ github.event.schedule }}" = "20 8 * * *" ]; then
+            # il giro del mattino arrivato in ritardo (anche di ore) dopo che un altro giro ha gia' fatto quello completo:
+            # resta un giro normale, cosi' la mail parte una volta sola al giorno
+            echo "Il giro completo di oggi e' gia' stato fatto: questo aggiorna solo misure e previsioni"
           fi
 
           echo "completo=$COMPLETO" >> "$GITHUB_OUTPUT"

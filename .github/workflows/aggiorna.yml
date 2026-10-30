@@ -156,7 +156,13 @@ jobs:
             echo "Nessun dato nuovo"
           else
             git commit -m "Radar Porcini: dati del $(date -u +'%Y-%m-%d %H:%M') UTC"
-            git pull --rebase -q origin gh-pages && git push origin HEAD:gh-pages
+            # GitHub a volte risponde "Internal Server Error" al push: si riprova qualche volta prima di arrendersi
+            for attesa in 10 30 60 0; do
+              git pull --rebase -q origin gh-pages && git push origin HEAD:gh-pages && exit 0
+              [ "$attesa" = 0 ] && exit 1
+              echo "Pubblicazione non riuscita, riprovo tra $attesa secondi"
+              sleep "$attesa"
+            done
           fi
 
       - name: Mail

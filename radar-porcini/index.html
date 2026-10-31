@@ -1433,7 +1433,8 @@ html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
         <li><b>Bosco.</b> Il tipo di bosco viene dalla Carta della vegetazione forestale della Regione Toscana: 18 tipi su celle di 250 m, rilevati a fine anni '90. Quella carta ha bosco su meno di un quarto della Toscana, mentre la copertura Copernicus del 2018 ne trova circa metà: dove Copernicus vede bosco e la carta no, conta come latifoglie o conifere senza tipo; dove la carta ha bosco e nel 2018 non c'è più, non conta. Per ogni stazione conta quanta parte dei 5 km attorno è un bosco adatto alla specie; per il tuo punto conta la cella del punto e i 500 m attorno, e puoi correggere il tipo di bosco se lo conosci. Senza bosco adatto il punteggio scende fino a un quarto.</li>
         <li><b>Suolo.</b> Il pH del suolo (media dei primi 15 cm) viene da SoilGrids, una carta mondiale stimata a 250 m. Porcino nero, porcino dei pini e gallinaccio preferiscono terreni acidi, porcino comune, ovolo, colombina e verdone un poco; prugnolo e spugnola terreni calcarei; le altre specie non hanno preferenze. Il peso è leggero (fino a un quarto in meno), perché la carta è solo una stima.</li>
         <li><b>Versante.</b> Il solatio è trattato come 1,5 °C più caldo e si asciuga fino al 40% più in fretta, nel suolo e nell'aria; il bacìo come 1,5 °C più fresco e si asciuga fino al 30% più piano. Così col caldo vince il bacìo, col fresco il solatio. L'esposizione del punto viene dal modello del terreno (media su circa 650 m): solatio se il versante guarda verso sud, bacìo se guarda verso nord, intermedio se guarda a est o a ovest o è quasi in piano. Lo sfondo «Versanti» della mappa la mostra ovunque.</li>
-        <li><b>Umidità, vento e nebbie.</b> Per oggi si usa la stazione più vicina e a quota simile, per i giorni coperti dalle previsioni i valori previsti. Umidità media sotto il 75% (e di più sotto il 55%) e vento forte abbassano il punteggio, tanto più quanti più giorni sono passati dalla pioggia. Tramontana, grecale e maestrale sono secchi e asciugano già da 10 km/h; libeccio e scirocco portano aria umida. Notti con umidità massima sopra il 97–98% (nebbia o rugiada forte) rallentano l'asciugatura. In tutto il vento pesa poco, perché sotto la chioma è molto più debole.</li>
+        <li><b>Umidità, vento e nebbie.</b> Per oggi si usa la stazione più vicina e a quota simile, per i giorni coperti dalle previsioni i valori previsti. Umidità media sotto il 75% (e di più sotto il 55%) e vento forte abbassano il punteggio, tanto più quanti più giorni sono passati dalla pioggia. Tramontana, grecale e maestrale sono secchi e asciugano già da 10 km/h; libeccio e scirocco portano aria umida. Notti con umidità massima sopra il 97–98% (nebbia o rugiada forte) rallentano l'asciugatura. In tutto il vento pesa poco, perché sotto la chioma è molto più debole: di più dove il bosco è esposto, quasi niente dove è riparato (vedi sotto).</li>
+        <li><b>Riparo dal vento.</b> Nel tuo punto, nei posti e nelle possibili fungaie si guarda da dove soffia il vento del giorno: il versante che guarda verso il vento e i crinali sono esposti, il versante sottovento, le conche e i fondovalle riparati. Col vento forte il punto esposto si asciuga fino al 50% più in fretta e sente il vento una volta e mezza; quello riparato si asciuga fino al 50% più piano e lo sente la metà. L'effetto cresce coi giorni senza pioggia, come per l'umidità. Pendenza, esposizione e posizione nel rilievo vengono dal modello del terreno (circa 650 m e 1,5 km): una piccola tasca riparata dentro un versante esposto non si vede. Le stazioni della mappa non hanno il terreno e non cambiano. Aggiunto dopo l'uscita del 31 ottobre, con porcini solo al riparo dal grecale.</li>
         <li><b>Quota e temperatura.</b> Ogni specie ha una fascia di quota e di temperatura media ideale; la temperatura è la media dei 20 giorni fino a quello scelto, misurati o previsti. Gelo e caldo eccessivo abbassano il punteggio, e il gelo si guarda giorno per giorno con la minima. Per il porcino comune la fascia ideale è 11–16 °C di media: lo studio sulle faggete tedesche, con la stessa media dei 20 giorni, trova il massimo intorno ai 13 °C e pochissime nascite tra 5 e 10 °C. Per i quattro porcini conta anche la media delle massime degli ultimi 7 giorni: il punteggio è pieno tra 15 e 29 °C e scende fino a un decimo verso i 6,5 e i 33 °C. Viene dalla regola dei cercatori (porcini con l'aria tra 15 e 25 °C, estremi di 5–8 e 28–30 °C), che parla dell'aria nel bosco: le stazioni misurano all'aperto, e sotto gli alberi le massime sono in media circa 4 °C più basse, di più nei giorni caldi (De Frenne e colleghi, 2019, su boschi di tutto il mondo). Per questo dal 31 ottobre 2026 il limite del caldo è di 4 °C più alto: con 40 °C in città il caldo non ferma più i porcini nei boschi sopra i 1.100–1.200 m, e nascono dopo circa 12 giorni come dice un video sui porcini in Toscana. Così un'ondata di freddo o di caldo si sente subito, mentre la media dei 20 giorni cambia piano. È una regola d'esperienza, non misurata: le uscite nel diario diranno se va bene. Le temperature previste sono riportate alla quota della stazione (0,65 °C ogni 100 m) e le minime corrette con quelle misurate, perché nei fondovalle il modello le dà spesso troppo alte.</li>
         <li><b>Il tuo punto.</b> La pioggia passata viene dal radar; se manca, è la media pesata delle 2–4 stazioni più vicine entro 25 km. La temperatura viene dai termometri vicini riportata alla quota del punto, le previsioni sono quelle della cella del modello. Quota, pendenza ed esposizione vengono da un modello del terreno con pixel di circa 220 m (Terrain Tiles, da SRTM ed EU-DEM). Il tasto «Dove sono» usa la posizione del telefono: dentro Claude il browser può non permetterlo, nella versione installata funziona.</li>
         <li><b>Parchi e riserve.</b> I confini di parchi nazionali, regionali e provinciali e delle riserve naturali regionali vengono dalla Regione Toscana, semplificati a circa 60 m: vicino al confine controlla sulla cartografia del parco.</li>
@@ -1445,7 +1446,7 @@ html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
         <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori, i numeri di pioggia e temperatura da cui vengono, se la pioggia è del radar o delle stazioni e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
         <li><b>Uscita col GPS.</b> Nel diario, «Inizia l'uscita col GPS» registra il percorso e, a ogni «Trovato qui», il punto, la precisione del GPS e il punteggio che l'app dà lì; durante l'uscita la barra in fondo allo schermo dice anche il punteggio dove sei. A «Fine» il modulo del diario prende il giorno dell'uscita e, come luogo, il ritrovamento più centrale (senza ritrovamenti, il punto più centrale del percorso): indichi cosa hai trovato e salvi. Al salvataggio l'app ricalcola, per il giorno e la specie dell'uscita, il punteggio di ogni ritrovamento con i suoi fattori, la quota e il bosco della carta in quel punto, e il punteggio lungo il percorso (al massimo 60 punti, almeno 100 m l'uno dall'altro): così si vede se dove hai trovato funghi il punteggio era più alto che nel resto del bosco, e quale fattore sbaglia. Tocca un ritrovamento sulla mappa per aprirne la scheda. Il percorso si registra solo con l'app aperta e lo schermo acceso: con lo schermo spento il telefono non dà la posizione all'app e, quando la riapri, il tratto mancante resta una linea dritta. «Trovato qui» invece chiede ogni volta la posizione, così i ritrovamenti sono sempre al loro posto. Per non perdere il percorso col telefono in tasca, prima di mettercelo premi «In tasca»: lo schermo resta acceso ma diventa nero, e i tocchi non premono niente. Per tornare all'app tieni premuto il cerchio per un secondo e mezzo; dopo 30 secondi senza tocchi lo schermo torna nero da solo, finché non premi «Fine» o «Lascia spegnere lo schermo». Così il telefono consuma più batteria. Se lo schermo si spegne lo stesso, per l'uscita metti il blocco automatico su «Mai» nelle impostazioni del telefono (su iPhone: Schermo e luminosità, Blocco automatico) e poi rimettilo com'era. L'uscita in corso resta nel telefono anche se l'app si chiude; salvata, sta nel diario come le altre uscite.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
-        <li><b>Cosa è misurato e cosa no.</b> I dati sono misure o previsioni: pioggia, temperature, umidità e vento delle stazioni, il radar, i modelli meteo, la carta dei boschi e il modello del terreno; il pH del suolo è una stima da carta mondiale. Dei legami tra tempo e funghi pochi sono misurati: il ritardo tra pioggia e pieno sull'Amiata (che per i porcini il modello allunga di una settimana, dopo le uscite in Appennino) e, nelle faggete tedesche, la temperatura migliore e il fatto che conti anche la pioggia del mese prima (studio non ancora rivisto da altri esperti). Il resto sono stime ragionate: quanto pesa la pioggia del mese prima, la soglia di pioggia e la sua curva, i tempi col caldo e col freddo, l'evaporazione nel bosco, il versante, il ristagno, le buttate precedenti, il peso di umidità e vento.</li>
+        <li><b>Cosa è misurato e cosa no.</b> I dati sono misure o previsioni: pioggia, temperature, umidità e vento delle stazioni, il radar, i modelli meteo, la carta dei boschi e il modello del terreno; il pH del suolo è una stima da carta mondiale. Dei legami tra tempo e funghi pochi sono misurati: il ritardo tra pioggia e pieno sull'Amiata (che per i porcini il modello allunga di una settimana, dopo le uscite in Appennino) e, nelle faggete tedesche, la temperatura migliore e il fatto che conti anche la pioggia del mese prima (studio non ancora rivisto da altri esperti). Il resto sono stime ragionate: quanto pesa la pioggia del mese prima, la soglia di pioggia e la sua curva, i tempi col caldo e col freddo, l'evaporazione nel bosco, il versante, il ristagno, le buttate precedenti, il peso di umidità e vento, il riparo dal vento.</li>
       </ul>
       <p>Il punteggio va da 0 a 100 ed è il prodotto di questi fattori. È una stima indicativa costruita su studi e regole di esperti, non un modello validato sui raccolti: quanto è battuto il bosco conta quanto la pioggia, i temporali cambiano molto da una valle all'altra e oltre i 10 giorni la stima suppone che non piova.</p>
       <p>L'app non serve a riconoscere i funghi. Nel dubbio fai controllare quelli raccolti all'Ispettorato micologico della ASL: per il consumo in famiglia il controllo è gratuito.</p>
@@ -1797,7 +1798,7 @@ var RP = (function modello() {
   // data dell'ultima modifica al calcolo (con .2, .3 se più d'una nello stesso giorno), da cambiare a ogni modifica: si salva
   // con ogni uscita del diario, così le uscite si possono confrontare versione per versione. Con l'uscita si salva anche
   // l'impronta del codice del modello, che cambia da sola a ogni modifica, anche se qui ci si dimentica di cambiare la data
-  var VERSIONE = "2026-10-31";
+  var VERSIONE = "2026-10-31.2";
 
   // Versante: il solatio è più caldo e si asciuga prima, il bacìo è più fresco e tiene l'umidità
   var VERSANTE = {
@@ -2313,13 +2314,31 @@ var RP = (function modello() {
   // Sotto la chioma il vento è molto più debole che sull'anemometro: effetto contenuto.
   // secco = quanto il vento viene da nord (1 tramontana, 0,85 grecale e maestrale, 0,5 levante e ponente,
   // 0,15 libeccio e scirocco, 0 da sud): da nord asciuga di più e già da 10 km/h, da sud pesa poco
-  function fattoreVento(v, secco) {
+  // esposto: quanto il punto è esposto al vento del giorno, da -1 (riparato) a +1 (esposto; vedi espostoVento):
+  // sul punto riparato il vento conta la metà, su quello esposto una volta e mezza
+  function fattoreVento(v, secco, esposto) {
     if (v == null) return 1;
-    var sc = secco == null ? 0.5 : secco;
+    var sc = secco == null ? 0.5 : secco, k = 1 + 0.5 * (esposto || 0);
     var soglia = 15 - 5 * sc;
+    v = v * k;
     if (v <= soglia) return 1;
-    var p = Math.min(0.12, (v - soglia) / 20 * 0.1);
-    return Math.max(0.78, 1 - p * (0.4 + 1.2 * sc));
+    var p = Math.min(0.12 * k, (v - soglia) / 20 * 0.1);
+    return Math.max(1 - 0.22 * k, 1 - p * (0.4 + 1.2 * sc));
+  }
+  // Riparo dal vento, dal modello del terreno e dalla direzione del vento del giorno (da dove soffia, in gradi):
+  // il versante che guarda verso il vento e il crinale sono esposti (fino a +1), il versante sottovento e la conca
+  // riparati (fino a -1). Con pendenza sotto i 4° conta solo la posizione nel rilievo.
+  function espostoVento(ter, dir) {
+    if (!ter || dir == null || ter.pendenza == null) return null;
+    var sopra = ter.azimut == null || ter.pendenza < 4 ? 0 : Math.cos((ter.azimut - dir) * Math.PI / 180) * Math.min(1, ter.pendenza / 15);
+    var cresta = clamp((ter.tpi || 0) / 40, -1, 1);
+    return clamp(0.6 * sopra + 0.4 * cresta, -1, 1);
+  }
+  // quanto soffia forte quel giorno, da 0 (sotto la soglia) a 1 (15 km/h sopra)
+  function forzaVento(v, secco) {
+    if (v == null) return 0;
+    var sc = secco == null ? 0.5 : secco;
+    return clamp((v - (15 - 5 * sc)) / 15, 0, 1);
   }
   function secchezzaDir(dir) { return dir == null ? null : (1 + Math.cos(dir * Math.PI / 180)) / 2; }
   // indice di nebbia o rugiada: umidità massima notturna da 92% (0) a 98% o più (1)
@@ -2424,7 +2443,7 @@ var RP = (function modello() {
     if (neb != null) bonus += 0.04 * neb * (v != null && v > 15 ? 0.5 : 1);
     if (sec != null && sec < 0.3 && ur != null && ur >= 70) bonus += 0.03;
     var settore = dir == null ? null : Math.round(dir / 45) % 8;
-    return { f: fu * fw, fu: fu, fw: fw, bonus: bonus, nebbia: neb, urMax: urMax, secchezza: sec, ur: ur == null ? null : r1(ur), vento: v == null ? null : r1(v),
+    return { f: fu * fw, fu: fu, fw: fw, bonus: bonus, nebbia: neb, urMax: urMax, secchezza: sec, ur: ur == null ? null : r1(ur), vento: v == null ? null : r1(v), dir: dir == null ? null : dir,
       ventoDir: settore == null ? null : DIREZIONI[settore], ventoNome: settore == null ? null : NOMI_VENTO[settore] };
   }
   function calcolaAria(s, idx) {
@@ -2679,7 +2698,7 @@ var RP = (function modello() {
     var q = quota == null || isNaN(quota) ? qStima : quota;
     var p = { stazione: "Punto scelto", virtuale: true, lat: lat, lon: lon, quota: q, quotaStimata: qStima, zona: usate[0].s.zona, prov: usate[0].s.prov, comune: usate[0].s.comune, ref: st._ref };
     // pendenza e posizione nel rilievo dal modello del terreno: servono per scorrimento e ristagno
-    p.terreno = ter && !ter.mare && ter.pendenza != null ? { pendenza: ter.pendenza, tpi: ter.tpi || 0 } : null;
+    p.terreno = ter && !ter.mare && ter.pendenza != null ? { pendenza: ter.pendenza, tpi: ter.tpi || 0, azimut: ter.azimut == null ? null : ter.azimut } : null;
     ["oggi", "oggi9", "g1", "g2", "g5", "g7", "g10", "g15", "g30", "ggSecchi"].forEach(function (k) {
       var n = 0, d = 0;
       usate.forEach(function (x, i) { if (x.s[k] != null) { n += w[i] * x.s[k]; d += w[i]; } });
@@ -2868,8 +2887,13 @@ var RP = (function modello() {
     var last = t >= 0 && t <= H ? S.L[t + J0] : -(s.ggSecchi || 0);
     var gg = Math.max(0, t - last);
     // mS per il suolo: il versante è già nel bilancio dell'acqua; m2 per l'aria, che sul solatio asciuga di più
-    var ar = ariaGiorno(s, t), neb = ar.nebbia || 0, m2 = molt * (1 - 0.4 * neb), mS = sp.secco * (1 - 0.4 * neb);
-    var fa = fattoreAria(ar.f == null ? null : ar.f, gg, m2) * (ar.bonus || 1);
+    var ar = ariaGiorno(s, t), neb = ar.nebbia || 0;
+    // riparo dal vento (solo nei punti, che hanno il terreno): col vento forte il punto esposto si asciuga fino al 50% più
+    // in fretta e quello riparato fino al 50% più piano, nell'aria e nel suolo
+    var esp = ar.vento != null ? espostoVento(s.terreno, ar.dir) : null, fv = esp == null ? 1 : 1 + 0.5 * esp * forzaVento(ar.vento, ar.secchezza);
+    var m2 = molt * (1 - 0.4 * neb) * fv, mS = sp.secco * (1 - 0.4 * neb) * fv;
+    var fAr = ar.f == null ? null : esp == null || ar.fu == null ? ar.f : ar.fu * fattoreVento(ar.vento, ar.secchezza, esp);
+    var fa = fattoreAria(fAr, gg, m2) * (ar.bonus || 1);
     var tt = tempoTermico(s, sp, dT), ct = ctAt(tt, t);
     var wb = bilancio(s, V), wt = acquaAl(wb, t), bt = buttate(s, sp, V, tt, wb), K = tempoDi(s, sp);
     var best = null;
@@ -2888,7 +2912,7 @@ var RP = (function modello() {
     var score = best ? Math.min(100, Math.round(100 * best.v)) : 0;
     var d = best ? t - best.e.x : null;
     return { score: score, _v: best ? best.v : 0, specie: sp.id, evento: best ? best.e : null, mmEff: best ? best.mmEff : 0, prima26: best ? best.prima : 0, extra26: best ? best.extra : 0, acqua: wt, acquaPrima: best ? best.w0 : null,
-      d: d, dEff: best ? best.dEff : null, vel: best && d > 0.5 ? best.dEff / d : velocita(tm, sp), tm: tm, tmin: tmin, tx7: tx7, gg: gg,
+      d: d, dEff: best ? best.dEff : null, esposto: esp, vel: best && d > 0.5 ? best.dEff / d : velocita(tm, sp), tm: tm, tmin: tmin, tx7: tx7, gg: gg,
       prevista: !!S.byT[t] && S.byT[t].tm != null, aria: ar, idoneita: idoneita(s.habitat, sp),
       zuppo: best ? best.gz : 0, buttata: best && best.bt.v > 0 ? best.bt : null,
       fattori: { pioggia: best ? best.fp : 0, tempo: best ? best.ft : 0, temperatura: fT, massime: fX, quota: fq, stagione: fS, bosco: fH, ph: fPH, secco: best ? best.fs : 1, aria: fa,
@@ -2946,7 +2970,7 @@ var RP = (function modello() {
     return ("0000000" + x.toString(16)).slice(-8);
   }
 
-  return { VERSANTE: VERSANTE, SPECIE: SPECIE, SP: SP, GRUPPI: GRUPPI, listaSpecie: listaSpecie, BOSCHI: BOSCHI, versanteDaTerreno: versanteDaTerreno,
+  return { VERSANTE: VERSANTE, SPECIE: SPECIE, SP: SP, GRUPPI: GRUPPI, listaSpecie: listaSpecie, BOSCHI: BOSCHI, versanteDaTerreno: versanteDaTerreno, espostoVento: espostoVento,
     prepara: prepara, punto: punto, svuota: svuota, distanzaKm: distanzaKm, stima: stima, finestra: finestra, idoneita: idoneita,
     stimaManuale: stimaManuale, finestraManuale: finestraManuale, etichettaPeriodo: etichettaPeriodo, velocita: velocita, fiducia: fiducia,
     fattoreStagione: fattoreStagione, fattoreSuolo: fattoreSuolo, fattoreSuoloW: fattoreSuoloW, fattorePH: fattorePH, nomePH: nomePH, storiaUtile: storiaUtile,
@@ -4735,6 +4759,7 @@ if (typeof module !== "undefined") module.exports = RP;
       var v = "vento massimo " + nf(a.vento) + " km/h";
       if (a.ventoDir) v += " da " + a.ventoDir + " (" + a.ventoNome + (a.secchezza != null && a.secchezza >= 0.7 ? ", asciuga" : a.secchezza != null && a.secchezza <= 0.3 ? ", umido" : "") + ")";
       aTxt.push(v + (a.prevista ? "" : " (a " + nf(a.ventoKm, 0) + " km)"));
+      if (r.esposto != null) aTxt.push(r.esposto >= 0.3 ? "qui il punto è esposto a questo vento: asciuga di più" : r.esposto <= -0.3 ? "qui il punto è riparato da questo vento: asciuga di meno" : "qui il punto è poco esposto a questo vento");
     } else aTxt.push("vento non disponibile");
     riga("Aria" + (a.prevista ? " prevista" : " di oggi e ieri") + ": " + aTxt.join("; "), "× " + nf(F.aria, 2));
     var tot = el("tr", "tot"); tot.appendChild(el("td", null, "Punteggio" + (r.perSpecie ? " (" + RP.SP[r.specie].nome.toLowerCase() + ")" : ""))); tot.appendChild(el("td", null, r.score + " / 100")); body.appendChild(tot);

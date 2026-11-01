@@ -13,7 +13,7 @@ Parti (ognuna scrive i suoi file nella cartella corrente solo se riesce e stampa
   python3 aggiorna.py [storico.json] [radar.json]  -> tutte le parti, una dopo l'altra
   python3 aggiorna.py valida <cartella>            -> copia nella cartella i soli file validi (e li elenca)
   python3 aggiorna.py avvisi <posti> <pagina.html> [avvisi.json di ieri] -> avvisi.json: punteggi dei posti salvati e
-                                                      testo della mail se un posto diventa buono o ottimo in un giorno nuovo
+                                                      oggetto della mail se un posto diventa buono o ottimo in un giorno nuovo
   python3 aggiorna.py mail <avvisi.json> <cartella stato> [indirizzo dell'app] -> manda la mail dei posti (segreti
                                                       GMAIL_USER e GMAIL_APP_PASSWORD) e ricorda i giorni segnalati
   python3 aggiorna.py newsletter <pagina.html> <cartella stato> [indirizzo dell'app] -> mail agli account iscritti alla
@@ -899,11 +899,17 @@ def radar_giorno(g):
     f = os.path.join(TMP, "radar_%s.tif" % g.isoformat())
     if not curl(j["url"], f):
         return None
+    # un'immagine rovinata (o una pagina d'errore al posto dell'immagine) o con un ritaglio diverso: manca solo quel giorno,
+    # e il resto del radar si aggiorna lo stesso
     try:
         a = np.array(Image.open(f), dtype=np.float32)
+    except Exception:
+        return None
     finally:
         os.remove(f)
     r0, c0 = int(round((47.58 - RLAT0) / 0.01)), int(round((RLON0 - 5.60) / 0.01))  # la griglia parte da 47,58 N e 5,60 E
+    if a.ndim != 2 or a.shape[0] < r0 + 2 * RNLAT or a.shape[1] < c0 + 2 * RNLON:
+        return None
     sub = a[r0:r0 + 2 * RNLAT, c0:c0 + 2 * RNLON].astype(np.float64).reshape(RNLAT, 2, RNLON, 2)
     ok = sub >= 0
     n = ok.sum(axis=(1, 3))
@@ -1123,7 +1129,7 @@ def oggetto_mail(nuovi):
                                          (" e un altro posto" if altri == 1 else " e altri %d posti" % altri) if altri > 0 else "")
 
 
-def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://claude.ai/artifact/QHRhL7qEY1tL79RvNu1wsQ"):
+def avvisi(origine, pagina, precedente=None, uscita="avvisi.json"):
     """Calcola nella pagina vera il punteggio dei posti salvati per oggi e i 10 giorni dopo, con i dati della cartella
     corrente. Prepara la mail se un posto arriva a «Buono» o «Ottimo» in un giorno che ieri non lo era."""
     posti = leggi_posti(origine)
@@ -1134,7 +1140,7 @@ def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://
             prima = json.load(open(precedente, encoding="utf-8")).get("segnalati") or {}
         except Exception:
             prima = {}
-    out = {"quando": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "posti": [], "segnalati": {}, "nuovi": [], "invia": False, "oggetto": "", "testo": ""}
+    out = {"quando": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "posti": [], "segnalati": {}, "nuovi": [], "invia": False, "oggetto": ""}
     if not posti:
         scrivi(out, uscita)
         return "nessun posto salvato"
@@ -1144,22 +1150,10 @@ def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://
     out["dati"] = stato
     out["posti"] = risultati
     out["segnalati"], nuovi = valuta(risultati, prima, oggi)
-    righe = []
-    for r in risultati:
-        buoni = [g for g in r["giorni"] if g["data"] >= oggi and g["livello"] >= 3]
-        if buoni:
-            righe.append("%s (%s%s m, %s): %s." % (r["nome"], (r["comune"].replace(" (", ", ").rstrip(")") + ", ") if r["comune"] else "",
-                                                   int(round(r["quota"] or 0)), r["nomeSpecie"],
-                                                   "; ".join("%s %s (%d)" % (g["nome"].lower(), giorno_it(g["data"]), g["score"]) for g in buoni)))
     out["nuovi"] = [notizia(r, g) for r, g in nuovi]
-    if nuovi:
+    if nuovi:  # il testo della mail lo compone mail() con componi()
         out["invia"] = True
         out["oggetto"] = oggetto_mail(nuovi)
-        out["testo"] = ("Buone notizie dai tuoi posti salvati in Radar Porcini.\n\n" + "\n".join(righe) +
-                        "\n\nPunteggio da 0 a 100: buono da 45, ottimo da 65. Dati CFR %s; stima indicativa, controlla la scheda del punto prima di andare.\n\n"
-                        "Apri l'app: %s\nVersione da installare sul telefono: https://the-marox.github.io/progetti/radar-porcini/\n\n"
-                        "Ricevi questa mail perché hai salvato dei posti nella versione di Radar Porcini dentro Claude. Per non riceverla più, "
-                        "elimina i posti o chiedi a Claude di togliere l'avviso." % ((stato or {}).get("pioggia_al") or "", app))
     scrivi(out, uscita)
     return "%d posti, %d giorni buoni o ottimi, %d nuovi%s" % (len(risultati), len(out["segnalati"]), len(nuovi), ": mail da inviare" if nuovi else "")
 

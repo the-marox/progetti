@@ -9,7 +9,8 @@ self.addEventListener("install", function (e) {
 });
 self.addEventListener("activate", function (e) {
   e.waitUntil(caches.keys().then(function (ks) {
-    return Promise.all(ks.filter(function (k) { return k !== VERSIONE && k !== DATI && k !== TESSERE && k !== FONT && k !== LIBRERIE; }).map(function (k) { return caches.delete(k); }));
+    // le cache sono di tutto the-marox.github.io: si tolgono solo le versioni vecchie di Radar Porcini (rp-), mai quelle di altre app
+    return Promise.all(ks.filter(function (k) { return k.indexOf("rp-") === 0 && k !== VERSIONE && k !== DATI && k !== TESSERE && k !== FONT && k !== LIBRERIE; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 

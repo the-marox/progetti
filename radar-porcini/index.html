@@ -1076,6 +1076,8 @@ html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
 .menu a { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: 99px; color: var(--ink); text-decoration: none; font-weight: 700; font-size: 0.95rem; white-space: nowrap; }
 @media (hover: hover) { .menu a:hover { background: var(--surface-2); } }
 .menu a[aria-current="page"] { background: var(--moss); color: var(--moss-ink); }
+.salta { position: absolute; left: 12px; top: -200px; z-index: 6000; padding: 10px 16px; border-radius: 8px; background: var(--moss); color: var(--moss-ink); font-weight: 700; text-decoration: none; }
+.salta:focus { top: calc(env(safe-area-inset-top, 0px) + 8px); }
 [data-scheda]:not(.attiva) { display: none; }
 .contesto { display: none; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px; margin-bottom: -14px; }
 .contesto p { flex: 1 1 auto; min-width: 0; text-align: center; font-weight: 700; line-height: 1.25; }
@@ -1108,6 +1110,7 @@ html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
 .lightbox img { max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px; }
 </style>
 
+<a class="salta" id="salta" href="#contenuto">Salta al contenuto</a>
 <nav class="menu" id="menu" aria-label="Sezioni dell'app">
   <div class="menu-in" id="menu-in">
     <a href="#/mappa" data-vai="mappa" aria-current="page">Mappa</a>
@@ -1123,6 +1126,7 @@ html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
 </nav>
 <div class="wrap">
  <div class="banner" id="banner" hidden></div>
+ <div class="banner" id="avviso-conto" role="alert" hidden></div>
  <div class="col col-a attiva" data-scheda="mappa">
   <header class="top">
     <div class="eyebrow">Toscana · stazioni CFR, radar e previsioni a 10 giorni</div>
@@ -1443,7 +1447,7 @@ html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
         <li><b>Possibili fungaie.</b> Nel raggio scelto attorno al tuo punto si guardano tutte le celle di circa 220 m della carta dei boschi. Restano quelle con un bosco adatto alla specie (il tipo della cella e quelli nei 500 m attorno, la quota e il suolo, come nella scheda del punto), con pendenza fino a 35° e a meno di 400 m da un sentiero CAI (esclusi quelli segnati come non percorribili); i boschi di tipo non noto restano fuori. L'area si divide in riquadri (circa 20 per lato) e per ognuno si tiene la cella più adatta. Per queste si calcola il punteggio del giorno scelto, lo stesso della scheda del punto, e si mostrano le migliori distanti almeno 1 km l'una dall'altra. La carta dei boschi ha celle di 250 m ed è di fine anni '90: una fungaia vera può essere più piccola, e il bosco può essere cambiato.</li>
         <li><b>I miei posti e avvisi.</b> I posti della versione installata restano nel telefono, oppure nel tuo account se accedi (lo vedi solo tu: ogni account legge e scrive soltanto i propri dati); quelli della versione dentro Claude nel database privato dell'app. Per gli avvisi via mail i posti si copiano con «Copia i miei dati» nel segreto POSTI del repository su GitHub: ogni mattina l'aggiornamento calcola il loro punteggio per i 10 giorni successivi e, se uno arriva a «Buono» o «Ottimo» in un giorno nuovo, manda una mail al tuo indirizzo Gmail.</li>
         <li><b>Foto.</b> «Da una foto» legge dalla foto (JPEG) la posizione e l'ora salvate dal telefono e mette lì il punto; la stessa foto si può allegare all'uscita nel diario. Prima di salvarla l'app la riduce a 1600 pixel e la ricomprime, così perde anche i dati nascosti: la posizione resta solo nel diario. Su Android il browser spesso toglie la posizione dalle foto prima di passarle alla pagina: dal computer, con la foto originale, funziona sempre. Dentro Claude le foto restano nell'app, visibili solo a te; nella versione installata restano nel telefono.</li>
-        <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori, i numeri di pioggia e temperatura da cui vengono, se la pioggia è del radar o delle stazioni e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice; con poche uscite il risultato resta vicino a quello di partenza.</li>
+        <li><b>Taratura col diario.</b> Ogni uscita salva il punteggio che l'app dava quel giorno, e dal 18/10/2026 anche i singoli fattori, i numeri di pioggia e temperatura da cui vengono, se la pioggia è del radar o delle stazioni e la versione del modello: con abbastanza uscite si potrà vedere quali fattori aiutano davvero a prevedere i ritrovamenti e quali no. Dalla decima uscita con la stima dell'app (quelle segnate entro un mese) si stima quanto spesso hai trovato funghi a ogni punteggio, e la scheda del punto lo dice: come intervallo («tra 3 e 7 volte su 10», al 90%), e solo per punteggi vicini a quelli delle tue uscite. Con poche uscite l'intervallo è largo e conta ancora l'ipotesi di partenza (18% a 0 punti, 82% a 100); si stringe con le uscite, anche quelle senza funghi.</li>
         <li><b>Uscita col GPS.</b> Nel diario, «Inizia l'uscita col GPS» registra il percorso e, a ogni «Trovato qui», il punto, la precisione del GPS e il punteggio che l'app dà lì; durante l'uscita la barra in fondo allo schermo dice anche il punteggio dove sei. A «Fine» il modulo del diario prende il giorno dell'uscita e, come luogo, il ritrovamento più centrale (senza ritrovamenti, il punto più centrale del percorso): indichi cosa hai trovato e salvi. Al salvataggio l'app ricalcola, per il giorno e la specie dell'uscita, il punteggio di ogni ritrovamento con i suoi fattori, la quota e il bosco della carta in quel punto, e il punteggio lungo il percorso (al massimo 60 punti, almeno 100 m l'uno dall'altro): così si vede se dove hai trovato funghi il punteggio era più alto che nel resto del bosco, e quale fattore sbaglia. Tocca un ritrovamento sulla mappa per aprirne la scheda. Il percorso si registra solo con l'app aperta e lo schermo acceso: con lo schermo spento il telefono non dà la posizione all'app e, quando la riapri, il tratto mancante resta una linea dritta. «Trovato qui» invece chiede ogni volta la posizione, così i ritrovamenti sono sempre al loro posto. Per non perdere il percorso col telefono in tasca, prima di mettercelo premi «In tasca»: lo schermo resta acceso ma diventa nero, e i tocchi non premono niente. Per tornare all'app tieni premuto il cerchio per un secondo e mezzo; dopo 30 secondi senza tocchi lo schermo torna nero da solo, finché non premi «Fine» o «Lascia spegnere lo schermo». Così il telefono consuma più batteria. Se lo schermo si spegne lo stesso, per l'uscita metti il blocco automatico su «Mai» nelle impostazioni del telefono (su iPhone: Schermo e luminosità, Blocco automatico) e poi rimettilo com'era. L'uscita in corso resta nel telefono anche se l'app si chiude; salvata, sta nel diario come le altre uscite.</li>
         <li><b>Luna.</b> Le fasi lunari non sono usate: uno studio svizzero su 18 anni di osservazioni non ha trovato alcun legame con le nascite (Egli, Ayer e Merlini, 2011).</li>
         <li><b>Cosa è misurato e cosa no.</b> I dati sono misure o previsioni: pioggia, temperature, umidità e vento delle stazioni, il radar, i modelli meteo, la carta dei boschi e il modello del terreno; il pH del suolo è una stima da carta mondiale. Dei legami tra tempo e funghi pochi sono misurati: il ritardo tra pioggia e pieno sull'Amiata (che per i porcini il modello allunga di una settimana, dopo le uscite in Appennino) e, nelle faggete tedesche, la temperatura migliore e il fatto che conti anche la pioggia del mese prima (studio non ancora rivisto da altri esperti). Il resto sono stime ragionate: quanto pesa la pioggia del mese prima, la soglia di pioggia e la sua curva, i tempi col caldo e col freddo, l'evaporazione nel bosco, il versante, il ristagno, le buttate precedenti, il peso di umidità e vento, il riparo dal vento.</li>
@@ -3215,9 +3219,18 @@ if (typeof module !== "undefined") module.exports = RP;
     if (voluto === (location.hash || "")) return;
     try { history.pushState(null, "", voluto || location.pathname + location.search); } catch (e) {}
   }
+  // tastiera e lettore di schermo vanno sul titolo della sezione scelta, invece di restare sul menù
+  function fuocoScheda(scorri) {
+    var id = schede.attuale === "mappa" ? "mappa" : schede.destra, n = document.querySelector('[data-scheda="' + id + '"]');
+    if (!n) return;
+    var lab = n.getAttribute("aria-labelledby"), t = (lab && document.getElementById(lab)) || n.querySelector("h1, h2") || n;
+    if (!t.hasAttribute("tabindex")) t.setAttribute("tabindex", "-1");
+    try { t.focus({ preventScroll: !scorri }); } catch (e) { t.focus(); }
+  }
   [].forEach.call(document.querySelectorAll("#menu-in a[data-vai]"), function (a) {
-    a.addEventListener("click", function (e) { e.preventDefault(); vaiScheda(a.dataset.vai, "menu"); });
+    a.addEventListener("click", function (e) { e.preventDefault(); vaiScheda(a.dataset.vai, "menu"); fuocoScheda(false); });
   });
+  document.getElementById("salta").addEventListener("click", function (e) { e.preventDefault(); fuocoScheda(true); });
   window.addEventListener("popstate", function () { mostraScheda(schedaIndirizzo(), "storia"); });
   window.addEventListener("hashchange", function () { mostraScheda(schedaIndirizzo(), "storia"); });
   if (largo) {
@@ -5244,7 +5257,10 @@ if (typeof module !== "undefined") module.exports = RP;
   function nomeSpDiario(id) { return id === "porcini" ? "porcini" : RP.SP[id] ? RP.SP[id].nome.toLowerCase() : id; }
 
   // Taratura: probabilità di trovare funghi in funzione del punteggio dell'app, regressione logistica sulle uscite del diario.
-  // Ipotesi di partenza: 18% a 0 punti, 82% a 100; con poche uscite il risultato resta vicino a questa.
+  // Ipotesi di partenza: 18% a 0 punti, 82% a 100; con poche uscite il risultato resta vicino a questa. La curvatura nel
+  // punto trovato (l'inverso dell'Hessiana, ipotesi di partenza compresa) dà l'incertezza: si dice un intervallo invece di
+  // un numero secco, e solo per i punteggi vicini a quelli delle uscite (fuori il diario non dice niente)
+  var TAR = { z: 1.645, margine: 5 }; // intervallo al 90%; punti di margine oltre il punteggio più basso e più alto
   function calcolaTaratura(L) {
     var dati = L.filter(function (u) { return u.stima != null && u.esito != null; }).map(function (u) { return [u.stima / 100, u.esito > 0 ? 1 : 0]; });
     if (dati.length < 10) return { n: dati.length };
@@ -5257,12 +5273,28 @@ if (typeof module !== "undefined") module.exports = RP;
       a -= da; b -= db;
       if (Math.abs(da) + Math.abs(db) < 1e-7) break;
     }
-    return { n: dati.length, a: a, b: b, trovati: dati.filter(function (d) { return d[1]; }).length };
+    var Haa = -1, Hab = 0, Hbb = -1;
+    dati.forEach(function (d) { var p = 1 / (1 + Math.exp(-(a + b * d[0]))), w = p * (1 - p); Haa -= w; Hab -= w * d[0]; Hbb -= w * d[0] * d[0]; });
+    var D = Haa * Hbb - Hab * Hab, xs = dati.map(function (d) { return d[0] * 100; });
+    return { n: dati.length, a: a, b: b, trovati: dati.filter(function (d) { return d[1]; }).length,
+      va: -Hbb / D, vb: -Haa / D, cab: Hab / D, min: Math.min.apply(null, xs), max: Math.max.apply(null, xs) };
   }
   function probTaratura(score) { var T = diario.taratura; return T && T.a != null ? 1 / (1 + Math.exp(-(T.a + T.b * score / 100))) : null; }
+  // volte su 10, dalla più bassa alla più alta credibile; null fuori dai punteggi delle uscite
+  function intervalloTaratura(score) {
+    var T = diario.taratura;
+    if (!T || T.a == null || score < T.min - TAR.margine || score > T.max + TAR.margine) return null;
+    var x = score / 100, m = T.a + T.b * x, sd = Math.sqrt(Math.max(0, T.va + x * x * T.vb + 2 * x * T.cab));
+    var s = function (v) { return 1 / (1 + Math.exp(-v)); };
+    return [Math.round(s(m - TAR.z * sd) * 10), Math.round(s(m + TAR.z * sd) * 10)];
+  }
+  function volteSu10(i) { return (i[0] === i[1] ? "circa " + i[0] : "tra " + i[0] + " e " + i[1]) + " volte su 10"; }
   function taraturaTesto(score) {
-    var p = probTaratura(score);
-    return p == null ? null : "Con le tue " + diario.taratura.n + " uscite: con punteggi così hai trovato funghi circa " + Math.round(p * 10) + " volte su 10.";
+    var T = diario.taratura;
+    if (!T || T.a == null) return null;
+    var i = intervalloTaratura(score);
+    if (!i) return "Le tue " + T.n + " uscite nel diario hanno punteggi tra " + Math.round(T.min) + " e " + Math.round(T.max) + ": per un punteggio come questo non dicono ancora niente.";
+    return "Con le tue " + T.n + " uscite: con punteggi così hai trovato funghi " + volteSu10(i) + "." + (T.n < 40 ? " Con più uscite l'intervallo si stringe." : "");
   }
 
   function renderDiario() {
@@ -5303,13 +5335,17 @@ if (typeof module !== "undefined") module.exports = RP;
     });
     var con = L.filter(function (u) { return u.stima != null; }), T = diario.taratura;
     if (T && T.a != null) {
-      var pr = function (s) { return Math.round(probTaratura(s) * 10); };
-      sint.appendChild(el("p", "diario-sintesi", "Taratura su " + T.n + " uscite (" + T.trovati + " con funghi): con punteggio 20 hai trovato funghi circa " + pr(20) + " volte su 10, con 45 circa " + pr(45) + ", con 70 circa " + pr(70) + ". La scheda del punto lo ricorda accanto al punteggio."));
+      // tre punteggi dentro quelli delle uscite (il più basso, quello in mezzo, il più alto), arrotondati a 5
+      var c5 = function (v) { return Math.round(v / 5) * 5; }, pti = [];
+      [T.min, (T.min + T.max) / 2, T.max].forEach(function (v) { var q = Math.min(100, Math.max(0, c5(v))); if (pti.indexOf(q) < 0 && intervalloTaratura(q)) pti.push(q); });
+      sint.appendChild(el("p", "diario-sintesi", "Taratura su " + T.n + " uscite (" + T.trovati + " con funghi), con punteggi tra " + Math.round(T.min) + " e " + Math.round(T.max) + ": " +
+        pti.map(function (q, k) { return (k ? "con " : "con punteggio ") + q + " " + (k ? "" : "hai trovato funghi ") + volteSu10(intervalloTaratura(q)); }).join(", ") +
+        ". Fuori da questi punteggi il diario non dice ancora niente" + (T.n < 40 ? "; con più uscite gli intervalli si stringono" : "") + ". La scheda del punto lo ricorda accanto al punteggio."));
     } else if (con.length >= 3) {
       var media = function (a) { return Math.round(a.reduce(function (x, u) { return x + u.stima; }, 0) / a.length); };
       var trov = con.filter(function (u) { return u.esito > 0; }), vuote = con.filter(function (u) { return u.esito === 0; });
       sint.appendChild(el("p", "diario-sintesi", "Su " + con.length + " uscite: " + (trov.length ? "quando hai trovato funghi la stima dell'app era in media " + media(trov) : "non hai ancora trovato funghi") +
-        (vuote.length ? "; quando non ne hai trovati, " + media(vuote) : "") + ". Dalla decima uscita l'app calcola la tua taratura."));
+        (vuote.length ? "; quando non ne hai trovati, " + media(vuote) : "") + ". Dalla decima uscita con la stima dell'app (quelle segnate entro un mese) l'app calcola la tua taratura."));
     }
   }
 
@@ -6135,10 +6171,10 @@ if (typeof module !== "undefined") module.exports = RP;
     var ku = function (x) { return x.data + "|" + Number(x.lat).toFixed(4) + "|" + Number(x.lon).toFixed(4) + "|" + x.specie + "|" + x.esito; };
     var hp = {}, hu = {};
     posti.lista.forEach(function (x) { hp[kp(x)] = 1; }); diario.lista.forEach(function (x) { hu[ku(x)] = 1; });
-    return {
-      posti: (Array.isArray(d.posti) ? d.posti : []).filter(function (x) { return postoValido(x) && !hp[kp(x)]; }).slice(0, 100),
-      uscite: (Array.isArray(d.uscite) ? d.uscite : []).filter(function (x) { return uscitaValida(x) && !hu[ku(x)]; }).slice(0, 300)
-    };
+    // al massimo 100 posti e 300 uscite per volta: quelli che restano si aggiungono la volta dopo (i doppioni si saltano)
+    var tp = (Array.isArray(d.posti) ? d.posti : []).filter(function (x) { return postoValido(x) && !hp[kp(x)]; });
+    var tu = (Array.isArray(d.uscite) ? d.uscite : []).filter(function (x) { return uscitaValida(x) && !hu[ku(x)]; });
+    return { posti: tp.slice(0, 100), uscite: tu.slice(0, 300), restano: Math.max(0, tp.length - 100) + Math.max(0, tu.length - 300) };
   }
   // conFoto: dallo stesso dispositivo le foto del diario restano valide, e si porta anche il percorso delle uscite col GPS
   // (che resta fuori dal testo da copiare perché è lungo)
@@ -6173,7 +6209,11 @@ if (typeof module !== "undefined") module.exports = RP;
     var n = daAggiungere(d);
     if (!n.posti.length && !n.uscite.length) { msg.textContent = "Niente di nuovo da aggiungere."; return; }
     msg.textContent = "Aggiungo…";
-    aggiungiDati(n, false).then(function (errori) { msg.textContent = "Aggiunti " + n.posti.length + " posti e " + n.uscite.length + " uscite" + (errori ? " (" + errori + " non salvati)" : "") + "."; ta.value = ""; });
+    aggiungiDati(n, false).then(function (errori) {
+      msg.textContent = "Aggiunti " + n.posti.length + " posti e " + n.uscite.length + " uscite" + (errori ? " (" + errori + " non salvati)" : "") + "." +
+        (n.restano ? " Ne restano " + n.restano + ": premi di nuovo «Aggiungi» per gli altri." : "");
+      if (!n.restano) ta.value = "";
+    });
   });
 
   // ---------- il tuo account (Firebase): posti, diario e impostazioni uguali su tutti i dispositivi ----------
@@ -6204,7 +6244,11 @@ if (typeof module !== "undefined") module.exports = RP;
     }, function (err) { conto.fb = null; throw err; });
     return conto.fb;
   }
-  function erroreConto(err) { msgConto("Una modifica non è arrivata nel tuo account (" + (err && err.code || "errore") + "): ricarica la pagina e controlla."); }
+  function erroreConto(err) {
+    var t = "Una modifica non è arrivata nel tuo account (" + (err && err.code || "errore") + "): ricarica la pagina e controlla.";
+    msgConto(t);
+    var av = document.getElementById("avviso-conto"); av.textContent = t; av.hidden = false; // si vede in ogni sezione, non solo in Account
+  }
   // come archivioDb, sulla raccolta utenti/<uid>/<nome>
   function archivioConto(fb, uid, nome, ordine) {
     var Fs = fb.F, col = Fs.collection(fb.db, "utenti", uid, nome);
@@ -6289,14 +6333,15 @@ if (typeof module !== "undefined") module.exports = RP;
     var n = daAggiungere({ posti: archivioLocale("posti").tutti(), uscite: archivioLocale("uscite").tutti() });
     if (!n.posti.length && !n.uscite.length) { try { localStorage.setItem(k, "1"); } catch (e) {} return; }
     conto.daImportare = n;
-    document.getElementById("acc-importa-testo").textContent = "Su questo dispositivo ci sono dati salvati fuori dall'account (" + testoDati(n) + "). Vuoi copiarli nel tuo account?";
+    document.getElementById("acc-importa-testo").textContent = "Su questo dispositivo ci sono dati salvati fuori dall'account (" + testoDati(n) + (n.restano ? ", più altri " + n.restano + " che ti propongo dopo" : "") + "). Vuoi copiarli nel tuo account?";
     document.getElementById("acc-importa").hidden = false;
   }
   function importFatto() { document.getElementById("acc-importa").hidden = true; try { localStorage.setItem(LS_IMPORTATO + conto.utente.uid, "1"); } catch (e) {} }
   document.getElementById("acc-importa-si").addEventListener("click", function () {
     var n = conto.daImportare; if (!n) return;
-    importFatto();
-    aggiungiDati(n, true).then(function (errori) { msgConto("Copiati nel tuo account " + testoDati(n) + (errori ? " (" + errori + " non salvati)" : "") + ". Restano anche su questo dispositivo, fuori dall'account."); });
+    // se ne restano altri la domanda torna alla prossima apertura, per quelli che mancano
+    if (n.restano) document.getElementById("acc-importa").hidden = true; else importFatto();
+    aggiungiDati(n, true).then(function (errori) { msgConto("Copiati nel tuo account " + testoDati(n) + (errori ? " (" + errori + " non salvati)" : "") + ". Restano anche su questo dispositivo, fuori dall'account." + (n.restano ? " Ne restano " + n.restano + ": riapri la pagina e te li propongo." : "")); });
   });
   document.getElementById("acc-importa-no").addEventListener("click", function () { importFatto(); msgConto("Va bene: restano solo su questo dispositivo. Puoi sempre copiarli con «Copia o sposta posti e diario»."); });
 
@@ -6436,10 +6481,12 @@ if (typeof module !== "undefined") module.exports = RP;
     var pw = document.getElementById("acc-elimina-pw").value, U = fb.U, Fs = fb.F, db = fb.db;
     if (conPassword(u) && !pw) { msgConto("Scrivi la tua password per confermare."); document.getElementById("acc-elimina-pw").focus(); return; }
     btn.disabled = true; msgConto("Elimino l'account…");
+    var fotoConto = []; // le foto delle uscite dell'account stanno solo sui dispositivi: quelle di questo si tolgono alla fine
     (conPassword(u) ? U.reauthenticateWithCredential(u, U.EmailAuthProvider.credential(u.email, pw)) : U.reauthenticateWithPopup(u, new U.GoogleAuthProvider())).then(function () {
       conto.utente = null; // niente più impostazioni da salvare
       return Promise.all(["posti", "uscite", "newsletter"].map(function (nome) {
         return Fs.getDocs(Fs.collection(db, "utenti", u.uid, nome)).then(function (snap) {
+          if (nome === "uscite") snap.docs.forEach(function (d) { var f = (d.data() || {}).foto; if (Array.isArray(f)) fotoConto = fotoConto.concat(f); });
           var lotti = [];
           for (var i = 0; i < snap.docs.length; i += 400) {
             var b = Fs.writeBatch(db);
@@ -6452,8 +6499,12 @@ if (typeof module !== "undefined") module.exports = RP;
     }).then(function () { return Fs.deleteDoc(Fs.doc(db, "utenti", u.uid)); })
       .then(function () { return U.deleteUser(u); })
       .then(function () {
-        try { localStorage.removeItem(LS_CONTO); localStorage.removeItem(LS_IMPORTATO + u.uid); sessionStorage.setItem(SS_MSG, "Account eliminato, con i posti, il diario e le impostazioni che conteneva."); } catch (e) {}
-        return Fs.terminate(db).then(function () { return Fs.clearIndexedDbPersistence(db); }).catch(function () {});
+        try { localStorage.removeItem(LS_CONTO); localStorage.removeItem(LS_IMPORTATO + u.uid); sessionStorage.setItem(SS_MSG, "Account eliminato, con i posti, il diario, le impostazioni e le foto delle uscite salvate su questo dispositivo."); } catch (e) {}
+        // tranne le foto che usa anche il diario tenuto fuori dall'account, su questo dispositivo
+        var usate = {};
+        archivioLocale("uscite").tutti().forEach(function (x) { (Array.isArray(x.foto) ? x.foto : []).forEach(function (r) { usate[r] = 1; }); });
+        return Promise.all(fotoConto.filter(function (r) { return !usate[r]; }).map(togliFoto))
+          .then(function () { return Fs.terminate(db); }).then(function () { return Fs.clearIndexedDbPersistence(db); }).catch(function () {});
       })
       .then(function () { location.reload(); }, function (err) { conto.utente = u; btn.disabled = false; erroreAccesso(err); });
   });

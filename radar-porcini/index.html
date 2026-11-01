@@ -1423,7 +1423,7 @@ html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px); }
       <ul>
         <li><b>Pioggia caduta e prevista.</b> Si cercano gli eventi di pioggia degli ultimi 50 giorni e quelli previsti: giorni con almeno 2 mm, con al massimo un giorno asciutto in mezzo. Per ogni giorno conta l'evento che dà la stima migliore; uno ormai finito però lascia il posto a quello dopo, appena cominciato, se questo vale almeno la metà. Sotto una soglia (10–15 mm secondo la specie) un evento non conta; poi il peso cresce con rendimento decrescente. Soglia e curva sono stime: gli studi non indicano una pioggia minima. Contano anche, per metà, le piogge arrivate al suolo nei 26 giorni prima dell'evento, fino al doppio della pioggia dell'evento stesso, così una pioggerella dopo un periodo piovoso non vale come un temporale. In dieci anni di faggete tedesche le nascite crescono con la pioggia dei 26 giorni prima, e i porcini comparivano soprattutto con 2–4 mm al giorno in media (Brejon Lamartiniere e Hoffman, 2025). La pioggia prevista pesa per intero fino a domani, poi sempre meno (90% dopodomani, poi 80, 70, 60%, fino al 35% al decimo giorno), perché più è lontana più è incerta. Una pioggia prevista rimette anche a zero i giorni senza pioggia.</li>
         <li><b>Previsioni.</b> Per i primi 4 giorni il modello ICON-EU (celle di circa 5×7 km), poi fino al decimo giorno il modello IFS del Centro europeo ECMWF (celle di circa 20×28 km), meno dettagliato. Oltre il decimo giorno la stima suppone che non piova. Nella tabella delle previsioni c'è anche la probabilità di superare 10 e 20 mm: quante delle 51 previsioni dell'insieme ECMWF li superano, su 24 ore dalle 13 alle 13. Quando la previsione singola dice pioggia e la probabilità è bassa, è meglio non contarci.</li>
-        <li><b>Archivio giornaliero.</b> Il giorno di pioggia va dalle 9 alle 9 del giorno dopo, come nell'archivio del Servizio Idrologico Regionale: con la lettura delle 9 la pioggia del giorno appena chiuso è esatta. Ogni giorno si salvano anche minima e massima di ieri; i giorni mancanti o incerti vengono dall'archivio. Se a una stazione manca un giorno anche lì, si usa la pioggia del radar nella cella della stazione, che vede anche i temporali di una sola valle, oppure, dove il radar non c'è, la media pesata delle stazioni vicine entro 25 km, invece di contarlo come asciutto. Così la stima conosce la pioggia giorno per giorno degli ultimi 90 giorni e le temperature vere degli ultimi 40.</li>
+        <li><b>Archivio giornaliero.</b> Il giorno di pioggia va dalle 9 alle 9 del giorno dopo, come nell'archivio del Servizio Idrologico Regionale: con la lettura delle 9 la pioggia del giorno appena chiuso è esatta. La pioggia di oggi dopo le 9 non si misura a parte: con le letture successive si stima in proporzione alle ore passate da mezzanotte. Ogni giorno si salvano anche minima e massima di ieri; i giorni mancanti o incerti vengono dall'archivio. Se a una stazione manca un giorno anche lì, si usa la pioggia del radar nella cella della stazione, che vede anche i temporali di una sola valle, oppure, dove il radar non c'è, la media pesata delle stazioni vicine entro 25 km, invece di contarlo come asciutto. Così la stima conosce la pioggia giorno per giorno degli ultimi 90 giorni e le temperature vere degli ultimi 40.</li>
         <li><b>Acqua nel suolo.</b> Giorno per giorno si fa un bilancio: entra la pioggia (meno quella trattenuta da chiome e lettiera), esce l'evaporazione stimata dalle temperature con la formula di Hargreaves, quella che la FAO indica quando mancano misure di sole, umidità e vento. Evapora di più d'estate, col caldo e sul solatio (fino al 40% in più), di meno sul bacìo (fino al 30% in meno) e quando il suolo è già asciutto. Ne viene un indice da 0 a 100% d'acqua in uno strato di circa 80 mm, quello del micelio. Prima della pioggia conta quanto era bagnato il suolo: secco, la pioggia rende fino a un terzo in meno; umido, fino al 15% in più. Dopo, se il suolo scende sotto il 30% le nascite rallentano, fino a dimezzarsi. La formula è collaudata ma pensata per un prato aperto: la correzione per il bosco, gli 80 mm e queste soglie sono stime. Nel grafico della pioggia del punto è la linea verde.</li>
         <li><b>Pendenza e ristagno.</b> Sui pendii ripidi una parte delle piogge forti scorre via: fino a circa un terzo sopra i 30° con più di 80 mm in un giorno, niente sotto i 20 mm, che la lettiera assorbe anche in pendio. L'acqua che lo strato del micelio non trattiene se ne va in un giorno sui pendii da 10° in su; sui terreni in piano scende più lentamente (un terzo al giorno), nei fondovalle ancora di più: il modello del terreno li riconosce perché sono più bassi dei dintorni (circa 1,5 km). Se ne resta tanta il suolo è zuppo e il micelio soffre senz'aria: ogni giorno da zuppo dall'inizio della pioggia toglie il 15% alla buttata, fino al 60%. Vale per il tuo punto, i posti e le possibili fungaie; non per le stazioni, che rappresentano i 5 km attorno. Manca una carta della tessitura del suolo: su sabbia, come nelle pinete della costa, l'acqua scende più in fretta di così, su argilla più piano.</li>
         <li><b>Buttate precedenti.</b> Una buttata consuma le riserve del micelio. Se una pioggia fa nascere funghi entro un mese da una buttata, rende meno: fino al 35% in meno subito dopo una buttata piena, sempre meno col passare dei giorni. Quanto era piena la buttata di prima si stima dal tempo di allora: pioggia, temperatura, stagione e acqua nel suolo. È un'ipotesi ragionata: non ci sono misure che dicano quanto vale.</li>
@@ -1798,7 +1798,7 @@ var RP = (function modello() {
   // data dell'ultima modifica al calcolo (con .2, .3 se più d'una nello stesso giorno), da cambiare a ogni modifica: si salva
   // con ogni uscita del diario, così le uscite si possono confrontare versione per versione. Con l'uscita si salva anche
   // l'impronta del codice del modello, che cambia da sola a ogni modifica, anche se qui ci si dimentica di cambiare la data
-  var VERSIONE = "2026-11-01.2";
+  var VERSIONE = "2026-11-01.3";
 
   // Versante: il solatio è più caldo e si asciuga prima, il bacìo è più fresco e tiene l'umidità
   var VERSANTE = {
@@ -2608,8 +2608,9 @@ var RP = (function modello() {
     if (!pv) return null;
     var n = pv.length, p = [], j, i;
     for (j = -NP; j <= -1; j++) { i = n + Hs.off + j; p.push(i >= 0 && i < n && pv[i] != null ? pv[i] / 10 : null); }
-    // ieri (dalle 9 di ieri alle 9 di oggi) non ancora in archivio: «1 giorno» più «oggi», esatto con la lettura delle 9
-    if (p[NP - 1] == null && s.g1 != null) p[NP - 1] = r1(s.g1 + (s.oggi || 0));
+    // ieri (dalle 9 di ieri alle 9 di oggi) non ancora in archivio: «1 giorno» più la parte di «oggi» prima delle 9.
+    // Con la lettura delle 9 è esatto; più tardi la parte dopo le 9 è già in oggi9 e non si conta due volte
+    if (p[NP - 1] == null && s.g1 != null) p[NP - 1] = r1(s.g1 + Math.max(0, (s.oggi || 0) - (s.oggi9 || 0)));
     var tn = null, tx = null, T = Hs.S.temperature;
     if (T && T.tmin && T.tmin[s.codice]) {
       var a = T.tmin[s.codice], b = T.tmax[s.codice], m = a.length;
@@ -2708,6 +2709,7 @@ var RP = (function modello() {
       completa(s, idx);
     });
     st._idx = idx; st._prev = prev; st._ref = ref; st._giorno = data.giorno; st._storico = !!Hs;
+    st._archivio = Hs ? { al: Hs.S.al, ritardo: Hs.off } : null; // ritardo: giorni che mancano tra l'archivio e ieri
     return st;
   }
 
@@ -3336,7 +3338,11 @@ if (typeof module !== "undefined") module.exports = RP;
     var conPrev = state.oriz >= 1, P = state.prev;
     if (P && P.corsa) item("Previsioni", conPrev ? "ICON-EU del " + fmtOra.format(Date.parse(P.corsa)) + (P.corsa_ecmwf ? ", poi ECMWF" + (P.corsa_ecmwf !== P.corsa ? " del " + fmtOra.format(Date.parse(P.corsa_ecmwf)) : "") : "") : "non aggiornate");
     else item("Previsioni", "non disponibili");
-    if (state.st._storico) item("Archivio", "piogge degli ultimi 90 giorni");
+    // l'archivio può essere più vecchio dei dati (non scaricato, si usa la copia salvata o quella nella pagina) o mancare
+    var arc = state.st._archivio;
+    if (arc && !arc.ritardo) item("Archivio", "piogge degli ultimi 90 giorni");
+    else if (arc) item("Archivio", "fermo " + pd("al", Date.parse(arc.al + "T00:00:00Z")) + ", non aggiornato");
+    else item("Archivio", "non disponibile");
     if (RADAR) item("Radar", "fino alle 9 " + pd("del", RADAR.al + DAY));
     f.appendChild(el("span", null, state.st.length + " stazioni"));
     var ban = document.getElementById("banner");
@@ -3346,6 +3352,10 @@ if (typeof module !== "undefined") module.exports = RP;
     } else if (state.start >= 2) {
       ban.hidden = false;
       ban.textContent = "I dati sono di " + state.start + " giorni fa (" + fmtShort.format(state.ref) + "): le piogge successive non sono incluse. Controlla che l'aggiornamento del mattino stia funzionando.";
+    } else if (!COPIA && (!arc || arc.ritardo >= 2)) {
+      ban.hidden = false;
+      ban.textContent = arc ? "L'archivio delle piogge è fermo " + pd("al", Date.parse(arc.al + "T00:00:00Z")) + ": per gli ultimi giorni la stima è meno precisa. Riapri la pagina quando hai una connessione migliore."
+        : "L'archivio delle piogge non è arrivato: la stima usa le piogge per periodo, meno precise. Riapri la pagina quando hai una connessione migliore.";
     } else ban.hidden = true;
     document.getElementById("foot-data").textContent = "Dati letti dal sito del CFR " + pd("il", state.ref) + ". Rete SIR, valori in tempo reale non validati." + (COPIA ? " Copia scaricata: dati e previsioni restano quelli del giorno del download." : "");
     renderConfronto();
@@ -4872,7 +4882,8 @@ if (typeof module !== "undefined") module.exports = RP;
     for (var j = j0; j <= j1; j++) {
       var o = j < 0 ? (s.storia.p[j + RP.NP] || 0) : j === 0 ? (s.oggi9 || 0) : 0;
       var d = s.serie && s.serie.byT[j], f = j >= 0 && d ? d.mm : 0;
-      vals.push({ j: j, o: o, f: f });
+      var manca = j < 0 && s.storia.p[j + RP.NP] == null, preso = j < 0 && !!(s.storia.presi && s.storia.presi[j + RP.NP]);
+      vals.push({ j: j, o: o, f: f, manca: manca, preso: preso });
     }
     var W = 340, Hh = 96, Lm = 24, R = 6, T = 8, B = 20, n = vals.length;
     var mx = Math.max(10, Math.max.apply(null, vals.map(function (v) { return v.o + v.f; })));
@@ -4887,6 +4898,9 @@ if (typeof module !== "undefined") module.exports = RP;
       var x = Lm + i * bw + 0.5, w = Math.max(1, bw - 1), inEv = e && v.j >= e.inizio && v.j <= e.fine;
       if (v.o > 0) svg.appendChild(sv("rect", { x: x, y: y(v.o), width: w, height: y(0) - y(v.o), fill: inEv ? "var(--rain)" : "color-mix(in srgb, var(--rain) 45%, var(--surface-2))" }));
       if (v.f > 0) svg.appendChild(sv("rect", { x: x, y: y(v.o + v.f), width: w, height: y(v.o) - y(v.o + v.f), fill: "color-mix(in srgb, var(--rain) 22%, transparent)", stroke: "var(--rain)", "stroke-width": 0.8, "stroke-dasharray": "2 1.5" }));
+      // giorno preso dal radar o dalle stazioni vicine: pallino vuoto sopra la barra; giorno senza dato: pallino grigio sotto la linea
+      if (v.preso) svg.appendChild(sv("circle", { cx: x + w / 2, cy: y(v.o) - 3.5, r: 1.8, fill: "none", stroke: "var(--muted)", "stroke-width": 1 }));
+      if (v.manca) svg.appendChild(sv("circle", { cx: x + w / 2, cy: y(0) + 4, r: 1.6, fill: "var(--muted)" }));
     });
     // acqua nel suolo (bilancio pioggia meno evaporazione): da 0 in basso a 100% in alto
     var wb = RP.bilancio(s, V), conW = false;
@@ -4907,10 +4921,13 @@ if (typeof module !== "undefined") module.exports = RP;
     var box = el("div", "gpioggia"); box.appendChild(svg);
     var presiK = s.storia && s.storia.presi ? Object.keys(s.storia.presi).filter(function (k) { return +k >= RP.NP + j0; }) : [], presi = presiK.length;
     var daRadar = presiK.filter(function (k) { return s.storia.presi[k] === "radar"; }).length;
+    var mancano = vals.filter(function (v) { return v.manca; }).length;
     var fontePresi = daRadar === presi ? "dal radar" : daRadar ? "dal radar e dalle stazioni vicine" : "dalle stazioni vicine";
     box.appendChild(el("p", "note", "Ogni barra è la pioggia dalle 9 del giorno alle 9 del giorno dopo, come nell'archivio del Servizio Idrologico. Barre piene: pioggia " + (s.storia && s.storia.radar ? "stimata dal radar corretto coi pluviometri" : "misurata") + " (più scure quelle della pioggia che conta per la stima). Barre tratteggiate: pioggia prevista. Ultimi 30 giorni: " + nf(tot30) + " mm" + (totF >= 0.5 ? "; previsti " + nf(totF) + " mm." : ".") +
       (!presi ? "" : s.virtuale ? (presi === 1 ? " Un giorno mancava a tutte le stazioni vicine: la sua pioggia viene da stazioni più lontane o dal radar." : " " + presi + " giorni mancavano a tutte le stazioni vicine: la loro pioggia viene da stazioni più lontane o dal radar.")
         : presi === 1 ? " Un giorno mancava nell'archivio della stazione: la sua pioggia viene " + fontePresi + "." : " " + presi + " giorni mancavano nell'archivio della stazione: la loro pioggia viene " + fontePresi + ".") +
+      (presi ? (presi === 1 ? " È segnato" : " Sono segnati") + " da un pallino vuoto sopra la barra." : "") +
+      (!mancano ? "" : mancano === 1 ? " Un giorno non ha nessun dato (pallino grigio sotto la linea): conta come asciutto." : " " + mancano + " giorni non hanno nessun dato (pallino grigio sotto la linea): contano come asciutti.") +
       (conW ? " Linea verde: acqua nel suolo, dalla pioggia meno l'evaporazione (in basso secco, in alto pieno)." : "")));
     return box;
   }

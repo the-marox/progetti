@@ -202,3 +202,17 @@ jobs:
         with:
           path: ${{ runner.temp }}/stato
           key: avvisi-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Misure di oggi
+        # la sera (dalle 18 alle 22 UTC), se le misure di oggi del CFR non sono mai arrivate, il giro diventa rosso e GitHub lo
+        # segnala con una mail; di giorno no, perche' le misure in ritardo le prende il giro dopo
+        if: ${{ !cancelled() }}
+        run: |
+          OGGI=$(date -u -d '+1 hour' +%F)   # oggi in ora solare, come le tabelle del CFR
+          ORA=$(date -u +%-H)
+          G=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["giorno"])' "$APP/data.json" 2>/dev/null || true)
+          if [ "$G" != "$OGGI" ] && [ "$ORA" -ge 18 ] && [ "$ORA" -le 22 ]; then
+            echo "::error::Le misure del CFR di oggi ($OGGI) non sono arrivate: le ultime pubblicate sono del ${G:-giorno sconosciuto}. Guarda esito.json."
+            exit 1
+          fi
+          echo "Misure pubblicate: ${G:-nessuna} (oggi $OGGI)"

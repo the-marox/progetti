@@ -46,6 +46,67 @@ def scrivi(obj, percorso):
     os.replace(percorso + ".tmp", percorso)
 
 
+def oggi_it(adesso=None):
+    """Il giorno di oggi in ora solare italiana (UTC+1), come le tabelle del CFR, il modello e il flusso."""
+    return ((adesso or dt.datetime.now(UTC)) + dt.timedelta(hours=1)).date().isoformat()
+
+
+# Limiti fisici dei valori letti dal SIR e dal CFR (dati in tempo reale non validati): un valore fuori da questi e' un
+# guasto della stazione o una colonna della tabella spostata, e si scarta (diventa «manca») invece di entrare nei punteggi.
+PIOGGIA_MAX = 600.0       # mm in un giorno: molto oltre i nubifragi piu' forti
+TEMP_MIN, TEMP_MAX = -30.0, 50.0
+VENTO_MAX = 300.0         # km/h, raffiche comprese
+FINESTRE = (1, 2, 5, 7, 10, 15, 30)  # giorni delle piogge cumulate g1 ... g30 di data.json
+
+
+def scarta_impossibili(d):
+    """Toglie da data.json i valori impossibili; restituisce quanti ne ha tolti. Pioggia: negativa, piu' di PIOGGIA_MAX in un
+    giorno, o cumulate che scendono (la pioggia di 2 giorni non puo' essere meno di quella di 1); da li' in poi le cumulate
+    comprendono il dato sbagliato e si tolgono tutte. Temperature fuori da TEMP_MIN-TEMP_MAX, o minima sopra la massima."""
+    tolti = 0
+    for m in d.get("misure") or []:
+        if m[1] is not None and not (0 <= m[1] <= PIOGGIA_MAX):
+            m[1], tolti = None, tolti + 1
+        prima_n, prima_v, prima_i, rotta = 0, 0.0, None, False
+        for i, n in enumerate(FINESTRE, start=2):
+            v = m[i]
+            if v is None:
+                continue
+            if not rotta and v < prima_v - 0.5 and prima_i is not None:
+                m[prima_i], tolti = None, tolti + 1  # scendono: non si sa quale dei due e' sbagliato
+                rotta = True
+            if rotta or v < 0 or v - prima_v > PIOGGIA_MAX * (n - prima_n):
+                m[i], tolti, rotta = None, tolti + 1, True
+                continue
+            prima_n, prima_v, prima_i = n, v, i
+        if m[9] is not None and m[9] < 0:
+            m[9], tolti = None, tolti + 1
+        for a, b in ((10, 11), (12, 13)):
+            for i in (a, b):
+                if m[i] is not None and not (TEMP_MIN <= m[i] <= TEMP_MAX):
+                    m[i], tolti = None, tolti + 1
+            if m[a] is not None and m[b] is not None and m[a] > m[b] + 0.5:
+                m[a], m[b], tolti = None, None, tolti + 2
+    return tolti
+
+
+def scarta_impossibili_aria(a):
+    """Come scarta_impossibili, per aria.json: umidita' fuori da 0-100 % (o minima sopra la massima), vento negativo o oltre VENTO_MAX."""
+    tolti = 0
+    for r in a.get("umidita") or []:
+        for i in (4, 5, 6, 7):
+            if r[i] is not None and not (0 <= r[i] <= 100):
+                r[i], tolti = None, tolti + 1
+        for x, y in ((4, 5), (6, 7)):
+            if r[x] is not None and r[y] is not None and r[x] > r[y] + 0.5:
+                r[x], r[y], tolti = None, None, tolti + 2
+    for r in a.get("vento") or []:
+        for i in (4, 5, 6, 7):
+            if r[i] is not None and not (0 <= r[i] <= VENTO_MAX):
+                r[i], tolti = None, tolti + 1
+    return tolti
+
+
 def curl(url, out=None, head=False, intervallo=None, corpo=None):
     a = ["curl", "-sf", "--retry", "2", "-m", "90"] + (["-I"] if head else []) + (["-r", intervallo] if intervallo else [])
     if corpo is not None:
@@ -145,8 +206,9 @@ def leggi_cfr(out="."):
                 d = json.loads(page.evaluate(JS_DATA))
                 if len(d["misure"]) < 300:
                     raise RuntimeError("solo %d stazioni" % len(d["misure"]))
+                tolti = scarta_impossibili(d)
                 scrivi(d, os.path.join(out, "data.json"))
-                esito["data"] = "pioggia al %s, %d stazioni" % (d["pioggia_al"], len(d["misure"]))
+                esito["data"] = "pioggia al %s, %d stazioni%s" % (d["pioggia_al"], len(d["misure"]), ", %d valori impossibili scartati" % tolti if tolti else "")
                 break
             except Exception as e:
                 esito["data"] = "errore: %s" % breve(e)
@@ -159,8 +221,9 @@ def leggi_cfr(out="."):
                 a = json.loads(page.evaluate(JS_ARIA))
                 if len(a["umidita"]) < 100 or len(a["vento"]) < 50:
                     raise RuntimeError("umidita %d, vento %d" % (len(a["umidita"]), len(a["vento"])))
+                tolti = scarta_impossibili_aria(a)
                 scrivi(a, os.path.join(out, "aria.json"))
-                esito["aria"] = "umidita e vento al %s" % a["umidita_al"]
+                esito["aria"] = "umidita e vento al %s%s" % (a["umidita_al"], ", %d valori impossibili scartati" % tolti if tolti else "")
                 break
             except Exception as e:
                 esito["aria"] = "errore: %s" % breve(e)
@@ -613,9 +676,11 @@ def analizza(h, tipo, anno):
                     out[giorno] = 0.0
                 elif s:
                     try:
-                        out[giorno] = float(s.replace(",", "."))
+                        v = float(s.replace(",", "."))
                     except ValueError:
-                        pass
+                        continue
+                    if 0 <= v <= PIOGGIA_MAX:  # un valore impossibile resta «manca»: lo prende il radar
+                        out[giorno] = v
             else:
                 vals = []
                 for x in re.split(r"<br\s*/?>", c)[:2]:
@@ -626,6 +691,9 @@ def analizza(h, tipo, anno):
                         vals.append(None)
                 while len(vals) < 2:
                     vals.append(None)
+                vals = [v if v is not None and TEMP_MIN <= v <= TEMP_MAX else None for v in vals]
+                if vals[0] is not None and vals[1] is not None and vals[1] > vals[0] + 0.5:
+                    vals = [None, None]  # minima sopra la massima
                 if vals[0] is not None or vals[1] is not None:
                     out[giorno] = (vals[1], vals[0])  # (minima, massima): la massima e' scritta per prima
     return out
@@ -680,20 +748,27 @@ def aggiorna_storico(dati="data.json", precedente=None, uscita="storico.json", m
             vecchia = "convenzione" not in s  # file della prima versione: pioggia con la data di fine
             sposta = GIORNO if vecchia else dt.timedelta(0)
 
-            def giorni(arr, k=dt.timedelta(0)):
+            sbagliati = {"pluvio": set(), "termo": set()}
+
+            def giorni(arr, c, tipo, k=dt.timedelta(0)):
+                # un valore impossibile salvato prima dei controlli torna «manca», e si riprende dall'archivio
+                lim = (0.0, PIOGGIA_MAX) if tipo == "pluvio" else (TEMP_MIN, TEMP_MAX)
                 for i, v in enumerate(arr):
+                    if v is not None and not (lim[0] <= v / 10 <= lim[1]):
+                        sbagliati[tipo].add(c)
+                        v = None
                     yield al0 - (len(arr) - 1 - i) * GIORNO - k, (None if v is None else v / 10)
 
             for c, arr in s["pioggia"]["valori"].items():
                 if c in live:
-                    for g, x in giorni(arr, sposta):
+                    for g, x in giorni(arr, c, "pluvio", sposta):
                         if giorniP[0] <= g <= al and not (vecchia and g == al0 - GIORNO):
                             P[c][g] = x
             for k, i in (("tmin", 0), ("tmax", 1)):
                 for c, arr in s["temperature"][k].items():
                     if c in live:
                         termo.add(c)
-                        for g, x in giorni(arr):
+                        for g, x in giorni(arr, c, "termo"):
                             if giorniT[0] <= g <= al:
                                 t = list(T[c].get(g, (None, None)))
                                 t[i] = x
@@ -706,7 +781,8 @@ def aggiorna_storico(dati="data.json", precedente=None, uscita="storico.json", m
                             stime[c].add(g)
                 for tipo in verif:
                     for c, g in ((s.get("verificato") or {}).get(tipo) or {}).items():
-                        verif[tipo][c] = dt.date.fromisoformat(g)
+                        if c not in sbagliati[tipo]:  # con un valore tolto l'archivio della stazione si cerca di nuovo
+                            verif[tipo][c] = dt.date.fromisoformat(g)
         except Exception as e:
             print("storico precedente non leggibile:", e, file=sys.stderr)
     # pioggia di ieri (dalle 9 di ieri alle 9 di oggi) e minime e massime di ieri dalle tabelle in tempo reale
@@ -1051,7 +1127,7 @@ def avvisi(origine, pagina, precedente=None, uscita="avvisi.json", app="https://
     """Calcola nella pagina vera il punteggio dei posti salvati per oggi e i 10 giorni dopo, con i dati della cartella
     corrente. Prepara la mail se un posto arriva a «Buono» o «Ottimo» in un giorno che ieri non lo era."""
     posti = leggi_posti(origine)
-    oggi = dt.datetime.now(UTC).date().isoformat()
+    oggi = oggi_it()
     prima = {}
     if precedente and os.path.exists(precedente):
         try:
@@ -1144,7 +1220,7 @@ def frase_posto(r, g):
 def componi(a, sito, oggi=None, piede=PIEDE_POSTI):
     """Testo semplice e HTML della mail, dai punteggi dei posti calcolati nella pagina."""
     import html
-    oggi = oggi or dt.datetime.now(UTC).date().isoformat()
+    oggi = oggi or oggi_it()
     posti = []
     for r in a.get("posti") or []:
         g = [x for x in r["giorni"] if x["data"] >= oggi]
@@ -1307,7 +1383,11 @@ def notizie_mail_posti(cartella_stato, oggi):
         a = json.load(open(f, encoding="utf-8"))
     except Exception:
         return set()
-    if not str(a.get("inviata") or "").startswith(oggi):
+    try:
+        inviata = oggi_it(dt.datetime.strptime(a.get("inviata") or "", "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC))
+    except ValueError:
+        return set()
+    if inviata != oggi:
         return set()
     return set(a.get("nuovi") or [])
 
@@ -1355,7 +1435,7 @@ def newsletter(pagina, cartella_stato, sito):
         prima = {}
     con_posti = [x for x in iscritti if x["posti"]]
     stato, risultati = punteggi_pagina(pagina, [x["posti"] for x in con_posti]) if con_posti else (None, [])
-    oggi = dt.datetime.now(UTC).date().isoformat()
+    oggi = oggi_it()
     dopo, inviate, errori, rimandate, coperte, posta = {}, 0, 0, 0, 0, None
     attivi = {x["uid"] for x in iscritti}
     # chi riceve anche la mail del segreto POSTI (l'indirizzo GMAIL_USER) non ha due mail uguali: se quella e' partita oggi

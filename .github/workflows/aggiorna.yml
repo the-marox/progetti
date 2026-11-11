@@ -66,7 +66,18 @@ jobs:
           git show FETCH_HEAD:.github/requisiti/aggiorna.txt > "$RUNNER_TEMP/requisiti-aggiorna.txt"
           git show FETCH_HEAD:.github/requisiti/newsletter.txt > "$RUNNER_TEMP/requisiti-newsletter.txt"
           pip install -q --require-hashes -r "$RUNNER_TEMP/requisiti-aggiorna.txt"
-          python -m playwright install --with-deps chromium
+          # il browser per i punteggi. I pacchetti di sistema arrivano dai server di Ubuntu, che a volte non
+          # rispondono (11/11: «Temporary failure resolving»): si riprova, e se non vanno si installa solo il
+          # browser, perche' le librerie che servono sono gia' nella macchina di GitHub (mancano solo dei caratteri)
+          for i in 1 2 3; do
+            if timeout 300 python -m playwright install --with-deps chromium; then break; fi
+            if [ "$i" = 3 ]; then
+              echo "::warning::Pacchetti di sistema non scaricati: installo solo il browser"
+              python -m playwright install chromium
+            else
+              sleep 30
+            fi
+          done
 
       - name: Avvisi gia' segnalati
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5

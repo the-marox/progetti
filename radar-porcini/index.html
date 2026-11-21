@@ -3362,6 +3362,11 @@ if (typeof module !== "undefined") module.exports = RP;
     if (COPIA && state.start >= 1) {
       ban.hidden = false;
       ban.textContent = "Questa è una copia scaricata con i dati CFR " + pd("del", state.ref) + ": non si aggiorna da sola. Per i dati di oggi apri la versione online di Radar Porcini.";
+    } else if (state.start >= 2 && !COPIA && reteDati !== "rete") {
+      // il telefono non è riuscito a scaricare i dati nuovi: mostra quelli salvati l'ultima volta (non è un guasto dell'aggiornamento)
+      ban.hidden = false;
+      ban.textContent = reteDati == null ? "Sto scaricando i dati di oggi…"
+        : "Senza connessione: stai vedendo i dati salvati sul telefono " + pd("il", state.ref) + ", senza le piogge successive. Appena torna il campo si aggiornano da soli (o riapri la pagina).";
     } else if (state.start >= 2) {
       ban.hidden = false;
       ban.textContent = "I dati sono di " + state.start + " giorni fa (" + fmtShort.format(state.ref) + "): le piogge successive non sono incluse. Controlla che l'aggiornamento del mattino stia funzionando.";
@@ -6700,8 +6705,16 @@ if (typeof module !== "undefined") module.exports = RP;
   }
   // versioni più recenti pubblicate accanto alla pagina dall'aggiornamento del mattino
   function piuNuovo(a, b, k) { return a && a[k] && (!b || !b[k] || Date.parse(a[k]) > Date.parse(b[k])); }
-  function prendi(nome) { return fetch(nome, { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
-  if (!COPIA) try {
+  // da dove arrivano i dati: "rete" (scaricati ora), "salvata" (copia sul telefono, senza connessione), null finché si scarica
+  var reteDati = null, scaricando = false;
+  function prendi(nome) {
+    return fetch(nome, { cache: "no-store" }).then(function (r) {
+      if (nome === "data.json") reteDati = r.ok && !r.headers.get("X-RP-Salvata") ? "rete" : "salvata";
+      return r.ok ? r.json() : null;
+    }).catch(function () { if (nome === "data.json") reteDati = "salvata"; return null; });
+  }
+  function scaricaDati() {
+    if (scaricando) return; scaricando = true;
     Promise.all([prendi("data.json"), prendi("aria.json"), prendi("previsioni.json"), prendi("storico.json"), prendi("radar.json")]).then(function (res) {
       var d = res[0], a = res[1], p = res[2], h = res[3], rr = res[4];
       if (rr && rr.png && piuNuovo(rr, radarSeed, "aggiornato")) caricaRadar(rr, function (ok) {
@@ -6720,9 +6733,15 @@ if (typeof module !== "undefined") module.exports = RP;
         load(seed, ariaSeed, prevSeed, storicoSeed);
         ricollegaMarcatori();
         if (state.pos) impostaPos(state.pos, true); else renderAll();
-      }
-      pronto.dati = true;
-    });
+      } else if (state.anag) renderFonte(); // l'avviso in alto dice se i dati sono di oggi o salvati sul telefono
+      pronto.dati = true; scaricando = false;
+    }, function () { pronto.dati = true; pronto.radar = true; scaricando = false; });
+  }
+  if (!COPIA) try {
+    scaricaDati();
+    // senza campo si riprova da soli quando torna la connessione o quando si torna sulla pagina
+    window.addEventListener("online", function () { if (reteDati !== "rete") scaricaDati(); });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden && reteDati !== "rete") scaricaDati(); });
   } catch (e) { pronto.dati = true; pronto.radar = true; }
 
   // la sezione scritta nell'indirizzo (#/diario), quando mappa, account e dati sono pronti

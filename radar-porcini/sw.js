@@ -1,7 +1,7 @@
 /* Radar Porcini: lavoro senza rete. La pagina e i dati si prendono prima dalla rete (sempre i più recenti) e, senza
    campo, dalla copia salvata; le tessere della mappa topografica restano salvate dopo la prima volta, come la libreria
    dell'account (Firebase), così l'account si apre anche senza rete. */
-var VERSIONE = "rp-5c19e2d0a4", DATI = "rp-dati", TESSERE = "rp-tessere", FONT = "rp-font", LIBRERIE = "rp-librerie";
+var VERSIONE = "rp-5c19e2d0a5", DATI = "rp-dati", TESSERE = "rp-tessere", FONT = "rp-font", LIBRERIE = "rp-librerie";
 var GUSCIO = ["./", "./index.html", "./manifest.webmanifest", "./icona-192.png", "./icona-512.png", "./icona-maskable-512.png"];
 
 self.addEventListener("install", function (e) {
@@ -19,7 +19,12 @@ function primaRete(req, nome) {
     if (r && r.ok) { var copia = r.clone(); caches.open(nome).then(function (c) { c.put(req, copia); }); }
     return r;
   }).catch(function (err) {
-    return caches.match(req, { ignoreSearch: true }).then(function (m) { if (m) return m; throw err; });
+    return caches.match(req, { ignoreSearch: true }).then(function (m) {
+      if (!m) throw err;
+      // la pagina deve sapere che è la copia salvata, per non dire che l'aggiornamento del mattino è fermo
+      var h = new Headers(m.headers); h.set("X-RP-Salvata", "1");
+      return new Response(m.body, { status: m.status, statusText: m.statusText, headers: h });
+    });
   });
 }
 function primaCache(req, nome) {
